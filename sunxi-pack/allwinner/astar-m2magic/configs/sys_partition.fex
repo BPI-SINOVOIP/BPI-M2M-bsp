@@ -23,7 +23,7 @@ size = 16384
 ;    downloadfile = "123.fex"   ; //下载文件的路径和名称，可以使用相对路径，相对是指相对于image.cfg文件所在分区。也可以使用绝对路径
 ;    keydata     = 1            ; //私有数据分区，重新量产数据将不丢失
 ;    encrypt     = 1            ; //采用加密方式烧录，将提供数据加密，但损失烧录速度
-;	   = ?            ; //私有用法
+;    	   = ?            ; //私有用法
 ;    verify      = 1            ; //要求量产完成后校验是否正确
 ;
 ; 注：1、name唯一, 不允许同名
@@ -65,15 +65,6 @@ size = 16384
 [partition]
     name         = private
     size         = 2048
-    user_type    = 0x8000
-
-;   recovery分区说明
-;   如果启用了OTA升级，默认以boot_initramfs.img作为recovery.fex，否则recovery.fex为空
-
-[partition]
-    name         = recovery
-    size         = 32768
-    downloadfile = "recovery.fex"
     user_type    = 0x8000
 
 [partition]

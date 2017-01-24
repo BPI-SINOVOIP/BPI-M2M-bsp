@@ -267,7 +267,7 @@
 #define CONFIG_SYS_LONGHELP				/* undef to save memory */
 #define CONFIG_SYS_HUSH_PARSER			/* use "hush" command parser	*/
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
-#define CONFIG_SYS_PROMPT		"sunxi#"
+#define CONFIG_SYS_PROMPT		"IoT# "
 #define CONFIG_SYS_CBSIZE	256			/* Console I/O Buffer Size */
 #define CONFIG_SYS_PBSIZE	384			/* Print Buffer Size */
 #define CONFIG_SYS_MAXARGS	16			/* max number of command args */
@@ -320,18 +320,19 @@
 #define CONFIG_CMD_SAVEENV
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"bootdelay=3\0" \
-	"bootcmd=run setargs_nand boot_normal\0" \
+	"bootdelay=5\0" \
+	"bootcmd=run setargs_mmc boot_normal\0" \
 	"console=ttyS0,115200\0" \
+	"fbconsole=tty0\0" \
 	"nand_root=/dev/nandd\0" \
-	"mmc_root=/dev/mmcblk0p7\0" \
+	"mmc_root=/dev/mmcblk0p2\0" \
 	"init=/init\0" \
 	"loglevel=8\0" \
-	"setargs_nand=setenv bootargs console=${console} root=${nand_root}" \
+	"setargs_nand=setenv bootargs console=${console} console=${fbconsole} root=${nand_root}init=${init} loglevel=${loglevel} partitions=${partitions}" \
 	"init=${init} loglevel=${loglevel} partitions=${partitions}\0" \
-	"setargs_mmc=setenv bootargs console=${console} root=${mmc_root}" \
+	"setargs_mmc=setenv bootargs console=${console} console=${fbconsole} root=${mmc_root} init=${init} loglevel=${loglevel} partitions=${partitions}" \
 	"init=${init} loglevel=${loglevel} partitions=${partitions}\0" \
-	"boot_normal=sunxi_flash read 40007800 boot;boota 40007800\0" \
+	"boot_normal=fatload mmc 0:1 0x43000000 script.bin;fatload mmc 0:1 40007800 uimage;bootm 40007800\0" \
 	"boot_recovery=sunxi_flash read 40007800 recovery;boota 40007800\0" \
 	"boot_fastboot=fastboot\0"
 
@@ -350,5 +351,7 @@
 #define CONFIG_CMD_BOOTA		/* boot android image */
 #define CONFIG_CMD_RUN			/* run a command */
 #define CONFIG_CMD_BOOTD		/* boot the default command */
+#define CONFIG_CMD_ECHO
+#define CONFIG_CMD_EXT2
 
 #endif /* __CONFIG_H */

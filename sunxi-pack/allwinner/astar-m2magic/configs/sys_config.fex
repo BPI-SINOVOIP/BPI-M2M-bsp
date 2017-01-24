@@ -10,7 +10,7 @@
 
 [product]
 version = "100"
-machine = "parrot"
+machine = "bpi-m2m"
 
 ;---------------------------------------------------------------------------------------------------------
 ; eraseflag - 1 erase data partition, 0 - do not erase data partition
@@ -681,12 +681,12 @@ vip_csi_d7               = port:PE11<2><default><default><default>
 vip_csi_sck              = port:PE12<2><default><default><default>
 vip_csi_sda              = port:PE13<2><default><default><default>
 
- 
-vip_dev0_mname           = "gc0308"
+
+vip_dev0_mname           = "ov5640"
 vip_dev0_pos             = "rear"
 vip_dev0_lane            = 1
 vip_dev0_twi_id          = 2
-vip_dev0_twi_addr        = 0x42
+vip_dev0_twi_addr        = 0x78
 vip_dev0_isp_used        = 0
 vip_dev0_fmt             = 0
 vip_dev0_stby_mode       = 1
@@ -715,12 +715,74 @@ vip_dev0_af_pwdn         =
 ;--------------------------------------------------------------------------------
 [led_para]
 led_used                = 1
-led_num                 = 2
-led1                    = port:PE17<1><default><default><default>
-led1_trigger           = "none"
-led2                    = port:PE16<1><default><default><default>
-led2_trigger           = "none"
-;led3                    = port:PH01<1><default><default><default>
+led_num                 = 3
+;led_num                 = 31
+led1                   = port:PL3<1><default><default><default>
+;#led1_trigger           = "default-on"
+led1_trigger           = "heartbeat"
+led2                   = port:PL2<1><default><default><default>
+led2_trigger           = "heartbeat"
+led3                   = port:PC7<1><default><default><default>
+led3_trigger           = "none"
+;#40pin
+;#40pin(1-39 side)
+;led4                   = port:PH5<1><default><default><default>
+;led4_trigger           = "heartbeat"
+;led5                   = port:PH4<1><default><default><default>
+;led5_trigger           = "heartbeat"
+;led6                   = port:PH1<1><default><default><default>
+;led6_trigger           = "heartbeat"
+;led7                   = port:PH6<1><default><default><default>
+;led7_trigger           = "heartbeat"
+;led8                   = port:PH7<1><default><default><default>
+;led8_trigger           = "heartbeat"
+;led9                   = port:PG12<1><default><default><default>
+;led9_trigger           = "heartbeat"
+;led10                   = port:PC0<1><default><default><default>
+;led10_trigger           = "heartbeat"
+;led11                   = port:PC1<1><default><default><default>
+;led11_trigger           = "heartbeat"
+;led12                   = port:PC2<1><default><default><default>
+;led12_trigger           = "heartbeat"
+;led13                   = port:PD19<1><default><default><default>
+;led13_trigger           = "heartbeat"
+;led14                   = port:PD18<1><default><default><default>
+;led14_trigger           = "heartbeat"
+;led15                   = port:PD21<1><default><default><default>
+;led15_trigger           = "heartbeat"
+;led16                   = port:PD20<1><default><default><default>
+;led16_trigger           = "heartbeat"
+;led17                   = port:PD25<1><default><default><default>
+;led17_trigger           = "heartbeat"
+;led18                   = port:PD24<1><default><default><default>
+;led18_trigger           = "heartbeat"
+;#40pin(2-40 side)
+;led19                   = port:PB0<1><default><default><default>
+;led19_trigger           = "heartbeat"
+;led20                   = port:PB1<1><default><default><default>
+;led20_trigger           = "heartbeat"
+;led21                   = port:PB3<1><default><default><default>
+;led21_trigger           = "heartbeat"
+;led22                   = port:PB2<1><default><default><default>
+;led22_trigger           = "heartbeat"
+;led23                   = port:PG11<1><default><default><default>
+;led23_trigger           = "heartbeat"
+;led24                   = port:PG10<1><default><default><default>
+;led24_trigger           = "heartbeat"
+;led25                   = port:PC3<1><default><default><default>
+;led25_trigger           = "heartbeat"
+;led26                   = port:PG13<1><default><default><default>
+;led26_trigger           = "heartbeat"
+;led27                   = port:PL11<1><default><default><default>
+;led27_trigger           = "heartbeat"
+;led28                   = port:PD23<1><default><default><default>
+;led28_trigger           = "heartbeat"
+;led29                   = port:PD22<1><default><default><default>
+;led29_trigger           = "heartbeat"
+;led30                   = port:PD27<1><default><default><default>
+;led30_trigger           = "heartbeat"
+;led31                   = port:PD26<1><default><default><default>
+;led31_trigger           = "heartbeat"
 
 ;-------------------------------------------------------------------------------
 ;   mmc configuration
@@ -750,7 +812,7 @@ led2_trigger           = "none"
 ;-------------------------------------------------------------------------------
 [mmc0_para]
 sdc_used          = 1
-sdc_detmode       = 1
+sdc_detmode       = 2
 sdc_buswidth      = 4
 sdc_d1            = port:PF00<2><1><2><default>
 sdc_d0            = port:PF01<2><1><2><default>
@@ -758,7 +820,7 @@ sdc_clk           = port:PF02<2><1><2><default>
 sdc_cmd           = port:PF03<2><1><2><default>
 sdc_d3            = port:PF04<2><1><2><default>
 sdc_d2            = port:PF05<2><1><2><default>
-sdc_det           = port:PD14<0><1><2><default>
+sdc_det           = port:PB04<4><1><2><default>
 sdc_power_supply  = "axp22_dcdc1"
 sdc_use_wp        = 0
 sdc_wp            =
@@ -820,7 +882,7 @@ sdc_regulator     = "none"
 usb_used            = 1
 usb_port_type       = 2
 usb_detect_type     = 1
-usb_id_gpio         = port:PD10<0><1><default><default>
+usb_id_gpio         = port:PH8<0><1><default><default>
 usb_det_vbus_gpio   = "axp_ctrl"
 usb_drv_vbus_gpio   = port:power4<1><0><default><0>
 usb_restrict_gpio   = 
@@ -1170,28 +1232,20 @@ audio_hp_ldo       		= "none"
 headphone_vol			= 0x3b
 earpiece_vol 			= 0x3e
 cap_vol					= 0x5
-pa_single_vol			= 0x3a
-pa_double_used			= 1
+pa_single_vol			= 0x3e
+pa_double_used			= 0
 pa_double_vol			= 0x3e
 headphone_direct_used	= 1
-headset_mic_vol 		= 3
-main_mic_vol        	= 1
-mic1_used				= 1
-mic2_used				= 0
-linein_to_spk_used     	= 1
-linein_to_hp_used 		= 0
-linein_to_aif2_used     = 0
-audio_lowlevel_detect	= 1
-sysaudio_to_aif2_used	= 0
-audio_linein_ctrl      	= port:PB07<0><default><default><0>
-audio_pa_ctrl          	= port:PD11<1><default><default><0>
-aif2_used              	= 0
-aif3_used              	= 0
-headphone_mute_used 	= 0
+headset_mic_vol = 3
+main_mic_vol        = 1
+audio_pa_ctrl          = port:PD11<1><default><default><0>
+aif2_used              = 0
+aif3_used              = 0
+headphone_mute_used = 0
 DAC_VOL_CTRL_SPK        = 0xa0a0
-DAC_VOL_CTRL_HEADPHONE 	= 0xa0a0
-agc_used				= 1
-drc_used				= 0
+DAC_VOL_CTRL_HEADPHONE = 0xa0a0
+agc_used	= 0
+drc_used	= 0
 ;-------------------------------------------------------------------------------------
 ;pmu_used                    ---0:not used,1:used
 ;pmu_twi_addr                ---slave address
@@ -1375,7 +1429,7 @@ pmu_hot_shutdowm           = 1
 pmu_inshort                = 0
 power_start                = 0
 
-pmu_temp_enable            = 0
+pmu_temp_enable            = 1
 pmu_charge_ltf             = 2261
 pmu_charge_htf             = 388
 pmu_discharge_ltf          = 3200
