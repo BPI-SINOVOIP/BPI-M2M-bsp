@@ -8,7 +8,7 @@
 
 *.rej
 *.orig
-*.a
+#*.a
 *.o
 *~
 *.swp
