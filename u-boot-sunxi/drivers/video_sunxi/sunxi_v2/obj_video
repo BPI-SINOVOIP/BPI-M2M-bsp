@@ -52,10 +52,17 @@ SUNXI_VIDEO_OBJ = sunxi_v2/dev_disp.o\
 					sunxi_v2/de_bsp/de/lowlevel_sun8iw5/iep_drc_ebios.o sunxi_v2/de_bsp/de/lowlevel_sun8iw5/sat.o sunxi_v2/de_bsp/de/disp_features.o\
 					sunxi_v2/de_bsp/de/disp_lcd.o sunxi_v2/de_bsp/de/disp_layer.o sunxi_v2/de_bsp/de/disp_manager.o sunxi_v2/de_bsp/de/disp_private.o\
 					sunxi_v2/de_bsp/de/disp_smart_backlight.o sunxi_v2/de_bsp/de/disp_smart_color.o sunxi_v2/de_bsp/de/disp_display.o\
-					sunxi_v2/de_bsp/lcd/lcd_panel_cfg.o  sunxi_v2/de_bsp/lcd/dev_lcd.o sunxi_v2/de_bsp/lcd/lcd_source_interface.o\
-					sunxi_v2/de_bsp/lcd/panels/panels.o sunxi_v2/de_bsp/lcd/panels/default_panel.o sunxi_v2/de_bsp/lcd/panels/tft720x1280.o sunxi_v2/de_bsp/lcd/panels/lp907qx.o\
-					sunxi_v2/de_bsp/lcd/panels/starry768x1024.o sunxi_v2/de_bsp/lcd/panels/sl698ph_720p.o\
-					sunxi_v2/de_bsp/lcd/panels/lp079x01.o sunxi_v2/de_bsp/lcd/panels/B116XAN03.o
+					sunxi_v2/de_bsp/lcd/lcd_panel_cfg.o  sunxi_v2/de_bsp/lcd/dev_lcd.o\
+					sunxi_v2/de_bsp/lcd/lcd_source_interface.o\
+					sunxi_v2/de_bsp/lcd/panels/panels.o\
+					sunxi_v2/de_bsp/lcd/panels/default_panel.o\
+					sunxi_v2/de_bsp/lcd/panels/tft720x1280.o\
+					sunxi_v2/de_bsp/lcd/panels/lp907qx.o\
+					sunxi_v2/de_bsp/lcd/panels/starry768x1024.o\
+					sunxi_v2/de_bsp/lcd/panels/sl698ph_720p.o\
+					sunxi_v2/de_bsp/lcd/panels/lp079x01.o\
+					sunxi_v2/de_bsp/lcd/panels/B116XAN03.o\
+					sunxi_v2/de_bsp/lcd/panels/LHR050H41_MIPI_RGB.o\
 
 endif
 
