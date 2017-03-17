@@ -19,7 +19,7 @@ machine = "bpi-m2m"
 [platform]
 eraseflag   = 0
 next_work = 2
-debug_mode =1
+debug_mode =0x15
 
 ;----------------------------------------------------------------------------------
 ;[target]  system bootup configuration
@@ -29,7 +29,6 @@ debug_mode =1
 [target]
 boot_clock     = 1008
 storage_type  	= -1
-burn_key = 1
 
 ;----------------------------------------------------------------------------------
 ;dcdc1_vol	---set dcdc1 voltage,mV,1600-3400,100mV/step
@@ -48,10 +47,11 @@ dcdc4_vol       = 0
 dcdc5_vol       = 1500
 aldo2_vol       = 2500
 aldo3_vol       = 3000
-;csi
+;BPI-M2I CSI
 dldo3_vol       = 2800
-eldo2_vol       = 1800
-gpio0_vol       = 2800
+eldo2_vol       = 1500
+axp22_ldoio0    = 2800
+axp22_ldoio1    = 3300
 
 ;---------------------------------------------------------------------------------
 ; uboot key detect enable
@@ -112,7 +112,7 @@ sdc_d7          = port:PC15<3><1><2><default>
 ;twi_port	= twi controller ID
 ;----------------------------------------------------------------------------------
 [twi_para]
-twi_port        = 0
+twi_port        = 1
 twi_scl         = port:PH02<2><default><default><default>
 twi_sda         = port:PH03<2><default><default><default>
 
@@ -173,7 +173,7 @@ standby_mode		= 1
 ;*****************************************************************************
 [dram_para]
 
-dram_clk        = 552
+dram_clk        = 600
 dram_type       = 3
 dram_zq         = 0x3bbb
 dram_odt_en     = 1
@@ -231,7 +231,7 @@ dram_selfresh_en= 1
 dram_freq	= 36
 wakeup_src_wl 	= port:PL07<4><default><default><0>
 wakeup_src_bt 	= port:PL09<4><default><default><0>
-bb_wake_ap	= port:PL02<4><default><default><0>
+bb_wake_ap	= port:PE16<4><default><default><0>
 
 ;----------------------------------------------------------------------------------
 ;i2c configuration
@@ -243,13 +243,13 @@ twi_scl         = port:PH02<2><default><default><default>
 twi_sda         = port:PH03<2><default><default><default>
 
 [twi1]
-twi_used        = 1
+twi_used        = 0
 twi_scl         = port:PH04<2><default><default><default>
 twi_sda         = port:PH05<2><default><default><default>
 
 
 [twi2]
-twi_used        = 1
+twi_used        = 0
 twi_scl         = port:PE12<3><default><default><default>
 twi_sda         = port:PE13<3><default><default><default>
 
@@ -277,10 +277,12 @@ uart_cts        = port:PG09<2><1><default><default>
 [uart2]
 uart_used       = 1
 uart_type       = 4
+;uart_tx         = port:PD06<2><1><default><default>
+;uart_rx         = port:PD07<2><1><default><default>
 uart_tx         = port:PB00<2><1><default><default>
 uart_rx         = port:PB01<2><1><default><default>
-uart_rts        = port:PB02<2><1><default><default>
-uart_cts        = port:PB03<2><1><default><default>
+;uart_rts        = port:PB02<2><1><default><default>
+;uart_cts        = port:PB03<2><1><default><default>
 
 [uart3]
 uart_used       = 0
@@ -305,7 +307,7 @@ uart_cts        = port:PA07<2><1><default><default>
 ;spi_cs_bitmap  = SPI bit mapping
 ;----------------------------------------------------------------------------------
 [spi0]
-spi_used       = 1
+spi_used       = 0
 spi_cs_bitmap  = 1
 spi_mosi       = port:PC00<3><default><default><default>
 spi_miso       = port:PC01<3><default><default><default>
@@ -330,7 +332,6 @@ spi_dev_num = 1
 ;----------------------------------------------------------------------------------
 ;[spi_board0] spi device configuration
 ;modalias      = spi device name
-;sflash_size    = spi flash size, optional, if spi_board0 is nor flash , carefully
 ;max_speed_hz  = max transfer speed
 ;bus_num       = bus ID
 ;chip_select   = chip select, 0,1
@@ -338,7 +339,6 @@ spi_dev_num = 1
 ;----------------------------------------------------------------------------------
 [spi_board0]
 modalias      = "at25df641"
-sflash_size   = 32
 max_speed_hz  = 50000000
 bus_num       = 0
 chip_select   = 0
@@ -357,19 +357,19 @@ mode          = 0
 ;----------------------------------------------------------------------------------
 [ctp_para]
 ctp_used            = 1
-ctp_name            = "gt82x"
+ctp_name            = "gt9xx_ts"
 ctp_twi_id          = 0
 ctp_twi_addr        = 0x5d
-ctp_screen_max_x    = 1280
-ctp_screen_max_y    = 800
+ctp_screen_max_x    = 720
+ctp_screen_max_y    = 1280
 ctp_revert_x_flag   = 1
 ctp_revert_y_flag   = 1
 ctp_exchange_x_y_flag = 1
 
-ctp_int_port        = port:PL04<4><default><default><default>
-ctp_wakeup          = port:PL03<1><default><default><1>
-ctp_power_ldo       = 
-ctp_power_ldo_vol   = 
+ctp_int_port        = port:PB05<4><default><default><default>
+ctp_wakeup          = port:PD14<1><default><default><1>
+ctp_power_ldo       = "axp22_ldoio1"
+ctp_power_ldo_vol   = 3300
 ctp_power_io        =
 
 ;--------------------------------------------------------------------------------
@@ -379,16 +379,16 @@ ctp_power_io        =
 ;--------------------------------------------------------------------------------
 [ctp_list_para]
 ctp_det_used              = 1
-ft5x_ts                   = 1
-gt82x                     = 1
-gslX680                   = 1
+ft5x_ts                   = 0
+gt82x                     = 0
+gslX680                   = 0
 gslX680new                = 0
 gt9xx_ts                  = 1
 gt9xxf_ts                 = 0
 tu_ts                     = 0
-gt818_ts                  = 1
-zet622x                   = 1
-aw5306_ts                 = 1
+gt818_ts                  = 0
+zet622x                   = 0
+aw5306_ts                 = 0
 icn83xx_ts                = 0
 ;----------------------------------------------------------------------------------
 ;touch key configuration
@@ -453,7 +453,7 @@ cooler3 =  "648000 4 4294967295 0"
 [nand0_para]
 nand_support_2ch    = 0
 
-nand0_used          = 1
+nand0_used          = 0
 nand0_we            = port:PC00<2><default><default><default>
 nand0_ale           = port:PC01<2><default><default><default>
 nand0_cle           = port:PC02<2><default><default><default>
@@ -530,20 +530,27 @@ lcd1_hue                 = 50
 ;lcd0 configuration
 
 ;lcd_if:               0:hv(sync+de); 1:8080; 2:ttl; 3:lvds; 4:dsi; 5:edp; 6:extend dsi
+;lcd_dsi_if:           0:Non-burst mode with sync pulses; 1:Command Mode; 2:Burst mode
+;lcd_dsi_lane:         1:1 data lane; 2:2 data lane; 3:3 data lane; 4:4 data lane
+;lcd_dsi_format:       0:Package Pixel Stream, 24bit RGB; 1:Loosely Package Pixel Stream, 18bit RGB;
+;                      2:Package Pixel Stream, 18bit RGB; 3:Package Pixel Stream, 16bit RGB
+;lcd_dsi_te:           0:frame trigged automatically; 1:frame trigged by te rising edge; 2:frame trigged by te falling edge
 ;lcd_x:                lcd horizontal resolution
 ;lcd_y:                lcd vertical resolution
 ;lcd_width:            width of lcd in mm
 ;lcd_height:           height of lcd in mm
-;lcd_dclk_freq:        in MHZ unit
-;lcd_pwm_freq:         in HZ unit
-;lcd_pwm_pol:          lcd backlight PWM polarity
-;lcd_pwm_max_limit     lcd backlight PWM max limit(<=255)
+;lcd_hspw:             Horizontal Sync Pulse Width
 ;lcd_hbp:              hsync back porch
 ;lcd_ht:               hsync total cycle
 ;lcd_vbp:              vsync back porch
 ;lcd_vt:               vysnc total cycle
-;lcd_hspw:             hsync plus width
 ;lcd_vspw:             vysnc plus width
+;lcd_dclk_freq:        in MHZ unit
+;lcd_pwm_used:         if used pwm
+;lcd_pwm_ch:           pwm channel used
+;lcd_pwm_freq:         in HZ unit
+;lcd_pwm_pol:          lcd backlight PWM polarity
+;lcd_pwm_max_limit     lcd backlight PWM max limit(<=255)
 ;lcd_lvds_if:          0:single link;  1:dual link
 ;lcd_lvds_colordepth:  0:8bit; 1:6bit
 ;lcd_lvds_mode:        0:NS mode; 1:JEIDA mode
@@ -561,48 +568,50 @@ lcd1_hue                 = 50
 [lcd0_para]
 lcd_used            = 1
 
-lcd_driver_name     = "default_lcd"
-lcd_if              = 3
-lcd_x               = 1280
-lcd_y               = 800
-lcd_width           = 150
-lcd_height          = 94
-lcd_dclk_freq       = 71
+lcd_driver_name     = "LHR050H41_MIPI_RGB"
+lcd_if              = 4
+lcd_dsi_if          = 0
+lcd_dsi_lane        = 4
+lcd_dsi_format      = 0
+lcd_dsi_te          = 0
+
+lcd_x               = 720
+lcd_y               = 1280
+lcd_width           = 62
+lcd_height          = 110
+
+lcd_hspw            = 20
+lcd_hbp             = 30
+lcd_ht              = 780
+lcd_vspw            = 10
+lcd_vbp             = 20
+lcd_vt              = 1320
+lcd_dclk_freq       = 62
+
 lcd_pwm_used        = 1
 lcd_pwm_ch          = 0
-lcd_pwm_freq        = 50000
-lcd_pwm_pol         = 1
-lcd_hbp             = 20
-lcd_ht              = 1418
-lcd_hspw            = 10
-lcd_vbp             = 10
-lcd_vt              = 830
-lcd_vspw            = 5
-lcd_lvds_if         = 0
-lcd_lvds_colordepth = 1
-lcd_lvds_mode       = 0
+lcd_pwm_freq        = 10000
+lcd_pwm_pol         = 0
+lcd_pwm_max_limit   = 150
+lcd_bl_en           = port:PL04<1><0><default><1>
+
+; LCD-RST
+lcd_gpio_0          = port:PL05<1><0><default><1>
+
+; LCD-PWR-EN
+lcd_gpio_1          = port:PB07<1><0><default><1>
+
+lcd_power           = ""
+lcd_power1          = ""
+
+
 lcd_frm             = 1
 lcd_gamma_en        = 0
 lcd_bright_curve_en = 0
 lcd_cmap_en         = 0
-
 deu_mode            = 0
 lcdgamma4iep        = 22
-smart_color        = 90
-
-lcd_bl_en           = port:PD13<1><0><default><1>
-lcd_power           = "axp22_dc1sw"
-
-lcdd0               = port:PD18<3><0><default><default>
-lcdd1               = port:PD19<3><0><default><default>
-lcdd2               = port:PD20<3><0><default><default>
-lcdd3               = port:PD21<3><0><default><default>
-lcdd4               = port:PD22<3><0><default><default>
-lcdd5               = port:PD23<3><0><default><default>
-lcdd6               = port:PD24<3><0><default><default>
-lcdd7               = port:PD25<3><0><default><default>
-lcdd8               = port:PD26<3><0><default><default>
-lcdd9               = port:PD27<3><0><default><default>
+smart_color         = 90
 
 ;----------------------------------------------------------------------------------
 ;pwm config
@@ -650,7 +659,6 @@ pwm_positive        = port:PH01<2><0><default><default>
 
 [csi0]
 
-
 vip_used                 = 1
 vip_mode                 = 0
 vip_dev_qty              = 1
@@ -668,27 +676,27 @@ vip_csi_d5               = port:PE09<2><default><default><default>
 vip_csi_d6               = port:PE10<2><default><default><default>
 vip_csi_d7               = port:PE11<2><default><default><default>
 
-;vip_csi_sck              = port:PE12<2><default><default><default>
-;vip_csi_sda              = port:PE13<2><default><default><default>
+vip_csi_sck              = port:PE12<2><default><default><default>
+vip_csi_sda              = port:PE13<2><default><default><default>
 
-
+ 
 vip_dev0_mname           = "ov5640"
 vip_dev0_pos             = "rear"
-vip_dev0_lane            = 1
+vip_dev0_lane            = 4
 vip_dev0_twi_id          = 2
 vip_dev0_twi_addr        = 0x78
 vip_dev0_isp_used        = 0
 vip_dev0_fmt             = 0
 vip_dev0_stby_mode       = 1
-vip_dev0_vflip           = 0
-vip_dev0_hflip           = 0
-vip_dev0_iovdd           = ""
+vip_dev0_vflip           = 1
+vip_dev0_hflip           = 1
+vip_dev0_iovdd           = "axp22_dldo3"
 vip_dev0_iovdd_vol       = 2800000
-vip_dev0_avdd            = ""
+vip_dev0_avdd            = "axp22_ldoio0"
 vip_dev0_avdd_vol        = 2800000
-vip_dev0_dvdd            = ""
-vip_dev0_dvdd_vol        = 1800000
-vip_dev0_afvdd           = ""
+vip_dev0_dvdd            = "axp22_eldo2"
+vip_dev0_dvdd_vol        = 1500000
+vip_dev0_afvdd           = "axp22_dldo3"
 vip_dev0_afvdd_vol       = 2800000
 vip_dev0_power_en        =
 vip_dev0_reset           = port:PE14<1><default><default><0>
@@ -697,83 +705,59 @@ vip_dev0_flash_en        =
 vip_dev0_flash_mode      =
 vip_dev0_af_pwdn         =
 
+vip_dev0_act_used        = 0
+vip_dev0_act_name        = "dw9714_act"
+vip_dev0_act_slave       = 0x18
 
 
+;----------------------------------------------------------------------------------
+;userspace gpio interface
+; ** COMMENT THE PINS USED IN OTHER INTERFACES (I2C, SPI, 1-WIRE...)
+;----------------------------------------------------------------------------------
+[gpio_para]
+gpio_used       = 1
+gpio_num        = 30
+gpio_pin_1      = port:PL02<1><default><default><0>
+gpio_pin_2      = port:PC07<1><default><default><0>
+gpio_pin_3      = port:PH5<1><default><default><0>
+gpio_pin_4      = port:PH4<1><default><default><0>
+gpio_pin_5      = port:PH1<1><default><default><0>
+gpio_pin_6      = port:PH6<1><default><default><0>
+gpio_pin_7      = port:PH7<1><default><default><0>
+gpio_pin_8      = port:PG12<1><default><default><0>
+gpio_pin_9      = port:PC0<1><default><default><0>
+gpio_pin_10     = port:PC1<1><default><default><0>
+gpio_pin_11     = port:PC2<1><default><default><0>
+gpio_pin_12     = port:PD19<1><default><default><0>
+gpio_pin_13     = port:PD18<1><default><default><0>
+gpio_pin_14     = port:PD21<1><default><default><0>
+gpio_pin_15     = port:PD20<1><default><default><0>
+gpio_pin_16     = port:PD25<1><default><default><0>
+gpio_pin_17     = port:PD24<1><default><default><0>
+gpio_pin_18     = port:PB3<1><default><default><0>
+gpio_pin_19     = port:PB2<1><default><default><0>
+gpio_pin_20     = port:PG11<1><default><default><0>
+gpio_pin_21     = port:PG10<1><default><default><0>
+gpio_pin_22     = port:PC3<1><default><default><0>
+gpio_pin_23     = port:PG13<1><default><default><0>
+gpio_pin_24     = port:PL11<1><default><default><0>
+gpio_pin_25     = port:PD23<1><default><default><0>
+gpio_pin_26     = port:PD22<1><default><default><0>
+gpio_pin_27     = port:PD27<1><default><default><0>
+gpio_pin_28     = port:PD26<1><default><default><0>
+;gpio_pin_29     = port:PB0<1><default><default><0>
+;gpio_pin_30     = port:PB1<1><default><default><0>
 
 ;--------------------------------------------------------------------------------
 ;leds
 ;--------------------------------------------------------------------------------
 [led_para]
-led_used                = 1
-led_num                 = 3
-;led_num                 = 31
-led1                   = port:PL3<1><default><default><default>
-;#led1_trigger           = "default-on"
-led1_trigger           = "heartbeat"
-led2                   = port:PL2<1><default><default><default>
-led2_trigger           = "heartbeat"
-led3                   = port:PC7<1><default><default><default>
-;led3_trigger           = "none"
-led3_trigger           = "heartbeat"
-;#40pin
-;#40pin(1-39 side)
-;led4                   = port:PH5<1><default><default><default>
-;led4_trigger           = "heartbeat"
-;led5                   = port:PH4<1><default><default><default>
-;led5_trigger           = "heartbeat"
-;led6                   = port:PH1<1><default><default><default>
-;led6_trigger           = "heartbeat"
-;led7                   = port:PH6<1><default><default><default>
-;led7_trigger           = "heartbeat"
-;led8                   = port:PH7<1><default><default><default>
-;led8_trigger           = "heartbeat"
-;led9                   = port:PG12<1><default><default><default>
-;led9_trigger           = "heartbeat"
-;led10                   = port:PC0<1><default><default><default>
-;led10_trigger           = "heartbeat"
-;led11                   = port:PC1<1><default><default><default>
-;led11_trigger           = "heartbeat"
-;led12                   = port:PC2<1><default><default><default>
-;led12_trigger           = "heartbeat"
-;led13                   = port:PD19<1><default><default><default>
-;led13_trigger           = "heartbeat"
-;led14                   = port:PD18<1><default><default><default>
-;led14_trigger           = "heartbeat"
-;led15                   = port:PD21<1><default><default><default>
-;led15_trigger           = "heartbeat"
-;led16                   = port:PD20<1><default><default><default>
-;led16_trigger           = "heartbeat"
-;led17                   = port:PD25<1><default><default><default>
-;led17_trigger           = "heartbeat"
-;led18                   = port:PD24<1><default><default><default>
-;led18_trigger           = "heartbeat"
-;#40pin(2-40 side)
-;led19                   = port:PB0<1><default><default><default>
-;led19_trigger           = "heartbeat"
-;led20                   = port:PB1<1><default><default><default>
-;led20_trigger           = "heartbeat"
-;led21                   = port:PB3<1><default><default><default>
-;led21_trigger           = "heartbeat"
-;led22                   = port:PB2<1><default><default><default>
-;led22_trigger           = "heartbeat"
-;led23                   = port:PG11<1><default><default><default>
-;led23_trigger           = "heartbeat"
-;led24                   = port:PG10<1><default><default><default>
-;led24_trigger           = "heartbeat"
-;led25                   = port:PC3<1><default><default><default>
-;led25_trigger           = "heartbeat"
-;led26                   = port:PG13<1><default><default><default>
-;led26_trigger           = "heartbeat"
-;led27                   = port:PL11<1><default><default><default>
-;led27_trigger           = "heartbeat"
-;led28                   = port:PD23<1><default><default><default>
-;led28_trigger           = "heartbeat"
-;led29                   = port:PD22<1><default><default><default>
-;led29_trigger           = "heartbeat"
-;led30                   = port:PD27<1><default><default><default>
-;led30_trigger           = "heartbeat"
-;led31                   = port:PD26<1><default><default><default>
-;led31_trigger           = "heartbeat"
+led_used                = 0
+led_num                 = 2
+led1                    = port:PE17<1><default><default><default>
+led1_trigger           = "none"
+led2                    = port:PE16<1><default><default><default>
+led2_trigger           = "none"
 
 ;-------------------------------------------------------------------------------
 ;   mmc configuration
@@ -835,7 +819,7 @@ sdc_isio          = 1
 sdc_regulator     = "none"
 
 [mmc2_para]
-sdc_used          = 0
+sdc_used          = 1
 sdc_detmode       = 3
 sdc_buswidth      = 8
 sdc_2xmode	  = 1
@@ -924,7 +908,7 @@ luns                = 3
 gsensor_used        = 0
 gsensor_twi_id      = 1
 gsensor_twi_addr    = 0x18
-gsensor_int1        = port:PL02<4><1><default><default>
+gsensor_int1        = port:PB06<4><1><default><default>
 gsensor_int2        =
 
 ;--------------------------------------------------------------------------------
@@ -1045,7 +1029,7 @@ gps_clk               = "ac10032k3"
 ;3G configuration
 ;--------------------------------------------------------------------------------
 [3g_para]
-3g_used   	= 1
+3g_used   	= 0
 3g_usbc_num	= 1
 3g_uart_num	= 2
 bb_name		= "em66"
@@ -1206,43 +1190,43 @@ frame_width 		= 1
 tx_data_mode 		= 0
 rx_data_mode 		= 0
 i2s1_mclk            =
-i2s1_bclk            = port:PG11<2><1><default><default>
-i2s1_lrclk           = port:PG10<2><1><default><default>
-i2s1_dout            = port:PG12<2><1><default><default>
-i2s1_din             = port:PG13<2><1><default><default>
+i2s1_bclk            = 
+i2s1_lrclk           = 
+i2s1_dout            = 
+i2s1_din             = 
 
 ;--------------------------------------------------------------------------------
 ;pa_single_vol,pa_double_vol,earpiece_vol: 64 level,1db/step.0x3f is the large volume.
 ;cap_vol:use for system record,0x0--0db,0x1--24db,0x2--27db,0x3--30db,0x4--33db,0x5--36db,0x6--39db,0x7--42db
 ;headset_mic_vol: headset mic(mic2) vol,use for phone headset mic call
 ;main_mic_vol: main mic(mic1) vol,use for phone main mic call
+;audio_lowlevel_detect: 1: while linein plug in is low level; 0: while linein plug in is high level;
 ;--------------------------------------------------------------------------------
 [audio0]
-audio_used		= 1
-audio_hp_ldo		= "none"
-headphone_vol		= 0x3b
-earpiece_vol		= 0x3e
-cap_vol			= 0x5
-pa_single_vol		= 0x3e
-pa_double_used		= 0
-pa_double_vol		= 0x3e
+audio_used          	= 1
+audio_hp_ldo       		= "none"
+headphone_vol			= 0x3b
+earpiece_vol 			= 0x3e
+cap_vol					= 0x5
+pa_single_vol			= 0x3e
+pa_double_used			= 1
+pa_double_vol			= 0x3e
 headphone_direct_used	= 1
-headset_mic_vol		= 3
-main_mic_vol		= 1
-mic1_used				= 1
-mic2_used				= 0
-linein_to_spk_used	= 0
-linein_to_hp_used	= 0
-linein_to_aif2_used     = 0
-audio_pa_ctrl           = port:PH09<1><default><default><0>
-;audio_linein_ctrl	= port:PE14<0><default><default><0>
-aif2_used		= 0
-aif3_used		= 0
-headphone_mute_used	= 0
+headset_mic_vol 		= 3
+main_mic_vol        	= 1
+linein_to_spk_used     	= 0
+linein_to_aif2_used    	= 0
+audio_lowlevel_detect	= 1
+sysaudio_to_aif2_used	= 0
+audio_linein_ctrl      	= port:PE17<0><default><default><0>
+audio_pa_ctrl          	= port:PH09<1><default><default><0>
+aif2_used              	= 0
+aif3_used              	= 0
+headphone_mute_used 	= 0
 DAC_VOL_CTRL_SPK        = 0xa0a0
-DAC_VOL_CTRL_HEADPHONE = 0xa0a0
-agc_used	= 0
-drc_used	= 0
+DAC_VOL_CTRL_HEADPHONE 	= 0xa0a0
+agc_used				= 0
+drc_used				= 0
 ;-------------------------------------------------------------------------------------
 ;pmu_used                    ---0:not used,1:used
 ;pmu_twi_addr                ---slave address
@@ -1407,8 +1391,8 @@ pmu_usbvol_pc              = 4400
 pmu_usbcur_pc              = 500
 pmu_pwroff_vol             = 3300
 pmu_pwron_vol              = 2600
-pmu_pekoff_time            = 6000
-pmu_pekoff_func            = 1
+pmu_pekoff_time            = 4000
+pmu_pekoff_func            = 0
 pmu_pekoff_en              = 1
 pmu_peklong_time           = 1500
 pmu_pekon_time             = 1000
@@ -1559,8 +1543,12 @@ s_powchk_used      = 0x80000000
 s_power_reg        = 0x00008061
 s_system_power     = 50
 
-[gpu_mali400_0]
-freq = 384
+[mali_para]
+mali_used = 1
+mali_clkdiv = 1
+mali_extreme_freq = 408
+mali_extreme_vol = 1100
+
 
 ;----------------------------------------------------------------------------------
 ; dram dvfs voltage-frequency table configuration
