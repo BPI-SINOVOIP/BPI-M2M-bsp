@@ -27,4 +27,4 @@ uenvcmd=run aload_script aload_kernel aboot
 #bootargs=board=bpi-m2m enforcing=1 console=ttyS0,115200 console=tty1 root=/dev/mmcblk0p2 rootwait init=/init ion_cma_list="8m,32m,64m,128m,256m" loglevel=8 bootmenutimeout=10 datadev=mmcblk0p2
 #
 #bootargs=board=bpi-m2m enforcing=1 console=ttyS2,115200 root=/dev/mmcblk0p2 rw rootwait init=/sbin/init ion_cma_list="8m,32m,64m,128m,256m" loglevel=8 bootmenutimeout=10 datadev=mmcblk0p2
-bootargs=board=bpi-m2m enforcing=1 console=ttyS2,115200 root=/dev/mmcblk0p2 rw rootwait init=/sbin/init ion_cma_list="8m,32m,64m,128m,256m" loglevel=8 bootmenutimeout=10 datadev=mmcblk0p2
+bootargs=board=bpi-m2m enforcing=1 console=ttyS2,115200 console=tty1 root=/dev/mmcblk0p2 rw rootwait init=/sbin/init ion_cma_list="8m,32m,64m,128m,256m" loglevel=8 bootmenutimeout=10 datadev=mmcblk0p2

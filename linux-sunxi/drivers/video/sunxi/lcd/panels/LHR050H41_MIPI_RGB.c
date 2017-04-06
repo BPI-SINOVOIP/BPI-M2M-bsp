@@ -126,6 +126,7 @@ static s32 LCD_close_flow(u32 sel)
 
 static void LCD_power_on(u32 sel)
 {
+    pr_info("[BPI]%s\n", __func__);
     sunxi_lcd_power_enable(sel, 0);//config lcd_power pin to open lcd power0
     sunxi_lcd_pin_cfg(sel, 1);
 }
@@ -138,6 +139,7 @@ static void LCD_power_off(u32 sel)
 
 static void LCD_bl_open(u32 sel)
 {
+    pr_info("[BPI]%s\n", __func__);
     sunxi_lcd_pwm_enable(sel);//open pwm module
     sunxi_lcd_backlight_enable(sel);//config lcd_bl_en pin to open lcd backlight
 }
@@ -371,6 +373,8 @@ static struct lcd_setting_table lcm_initialization_setting[] = {
 static void LCD_panel_init(u32 sel)
 {
     u32 i;
+
+    pr_info("[BPI]%s\n", __func__);
 
     panel_pwr(1);
     sunxi_lcd_delay_ms(5);

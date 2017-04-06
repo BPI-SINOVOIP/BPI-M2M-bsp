@@ -17,7 +17,6 @@
 
 extern __lcd_panel_t sl698ph_720p_panel;
 extern __lcd_panel_t lp079x01_panel;
-extern __lcd_panel_t LHR050H41_MIPI_RGB_panel;
 
 __lcd_panel_t* panel_array[] = {
 	&default_panel,
