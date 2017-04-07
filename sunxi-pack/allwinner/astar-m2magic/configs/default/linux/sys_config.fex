@@ -19,7 +19,7 @@ machine = "bpi-m2m"
 [platform]
 eraseflag   = 0
 next_work = 2
-debug_mode = 0
+debug_mode = 0x15
 
 ;----------------------------------------------------------------------------------
 ;[target]  system bootup configuration
@@ -357,17 +357,18 @@ mode          = 0
 ;----------------------------------------------------------------------------------
 [ctp_para]
 ctp_used            = 1
-ctp_name            = "gt9xx_ts"
+ctp_name            = "gt9xxnew_ts"
 ctp_twi_id          = 0
 ctp_twi_addr        = 0x5d
 ctp_screen_max_x    = 720
 ctp_screen_max_y    = 1280
-ctp_revert_x_flag   = 1
-ctp_revert_y_flag   = 1
-ctp_exchange_x_y_flag = 1
+ctp_revert_x_flag   = 0
+ctp_revert_y_flag   = 0
+ctp_exchange_x_y_flag = 0
+ctp_gesture_wakeup  = 0
 
 ctp_int_port        = port:PB05<4><default><default><default>
-ctp_wakeup          = port:PD14<1><default><default><1>
+ctp_wakeup          = port:PB06<1><default><default><default>
 ctp_power_ldo       = "axp22_ldoio1"
 ctp_power_ldo_vol   = 3300
 ctp_power_io        =
@@ -383,7 +384,8 @@ ft5x_ts                   = 0
 gt82x                     = 0
 gslX680                   = 0
 gslX680new                = 0
-gt9xx_ts                  = 1
+gt9xx_ts                  = 0
+gt9xxnew_ts		  = 1
 gt9xxf_ts                 = 0
 tu_ts                     = 0
 gt818_ts                  = 0

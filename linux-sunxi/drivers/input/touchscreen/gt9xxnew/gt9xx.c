@@ -306,8 +306,8 @@ void gtp_io_init(int ms)
         
         ctp_wakeup(1, 0);
         msleep(6);       
-	gpio_direction_output(config_info.wakeup_gpio.gpio,1); 
-	gtp_int_sync(50);
+		gpio_direction_output(config_info.wakeup_gpio.gpio,1); 
+		gtp_int_sync(50);
 }
 /*******************************************************************************/
 static ssize_t gtp_gesture_enable_store(struct device *dev,struct device_attribute *attr,const char *buf, size_t count)
@@ -3265,16 +3265,17 @@ static int __devinit goodix_ts_init(void)
     type = script_get_item("ctp_para", "ctp_gesture_wakeup", &val);
     if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
                 printk("%s: ctp_gesture_wakeup script_get_item  err. \n", __func__);
-        	return 0;
+        	//return 0;
         }
-	
+
+	val.val = 0;
     if (val.val == 1){
-	gtp_gesture_wakeup = 1;
+		gtp_gesture_wakeup = 1;
         dprintk(DEBUG_INIT,"GTP driver gesture wakeup is used!\n");
        }
 	
     if(!gtp_gesture_wakeup)
-	gtp_power_ctrl_sleep = 1;	
+		gtp_power_ctrl_sleep = 1;	
 
     input_set_power_enable(&(config_info.input_type), 1);
     msleep(10);
