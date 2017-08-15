@@ -243,7 +243,7 @@ twi_scl         = port:PH02<2><default><default><default>
 twi_sda         = port:PH03<2><default><default><default>
 
 [twi1]
-twi_used        = 0
+twi_used        = 1
 twi_scl         = port:PH04<2><default><default><default>
 twi_sda         = port:PH05<2><default><default><default>
 
@@ -277,20 +277,18 @@ uart_cts        = port:PG09<2><1><default><default>
 [uart2]
 uart_used       = 1
 uart_type       = 4
-;uart_tx         = port:PD06<2><1><default><default>
-;uart_rx         = port:PD07<2><1><default><default>
 uart_tx         = port:PB00<2><1><default><default>
 uart_rx         = port:PB01<2><1><default><default>
-;uart_rts        = port:PB02<2><1><default><default>
-;uart_cts        = port:PB03<2><1><default><default>
+uart_rts        = port:PB02<2><1><default><default>
+uart_cts        = port:PB03<2><1><default><default>
 
 [uart3]
-uart_used       = 0
-uart_type       = 4
+uart_used       = 1
+uart_type       = 2
 uart_tx         = port:PH06<3><1><default><default>
 uart_rx         = port:PH07<3><1><default><default>
-uart_rts        = port:PH08<3><1><default><default>
-uart_cts        = port:PH09<3><1><default><default>
+;uart_rts        = port:PH08<3><1><default><default>
+;uart_cts        = port:PH09<3><1><default><default>
 
 [uart4]
 uart_used       = 0
@@ -307,7 +305,7 @@ uart_cts        = port:PA07<2><1><default><default>
 ;spi_cs_bitmap  = SPI bit mapping
 ;----------------------------------------------------------------------------------
 [spi0]
-spi_used       = 0
+spi_used       = 1
 spi_cs_bitmap  = 1
 spi_mosi       = port:PC00<3><default><default><default>
 spi_miso       = port:PC01<3><default><default><default>
@@ -338,11 +336,11 @@ spi_dev_num = 1
 ;mode          = SPI transfer mode
 ;----------------------------------------------------------------------------------
 [spi_board0]
-modalias      = "at25df641"
+modalias      = "spidev"
 max_speed_hz  = 50000000
 bus_num       = 0
 chip_select   = 0
-mode          = 0
+mode          = 3
 
 
 ;----------------------------------------------------------------------------------
@@ -718,7 +716,7 @@ vip_dev0_act_slave       = 0x18
 ;----------------------------------------------------------------------------------
 [gpio_para]
 gpio_used       = 1
-gpio_num        = 30
+gpio_num        = 28
 gpio_pin_1      = port:PL02<1><default><default><0>
 gpio_pin_2      = port:PC07<1><default><default><0>
 gpio_pin_3      = port:PH5<1><default><default><0>
@@ -747,8 +745,6 @@ gpio_pin_25     = port:PD23<1><default><default><0>
 gpio_pin_26     = port:PD22<1><default><default><0>
 gpio_pin_27     = port:PD27<1><default><default><0>
 gpio_pin_28     = port:PD26<1><default><default><0>
-;gpio_pin_29     = port:PB0<1><default><default><0>
-;gpio_pin_30     = port:PB1<1><default><default><0>
 
 ;--------------------------------------------------------------------------------
 ;leds
