@@ -355,7 +355,7 @@ mode          = 3
 ;----------------------------------------------------------------------------------
 [ctp_para]
 ctp_used            = 1
-ctp_name            = "gt9xxnew_ts"
+ctp_name            = "gt9147_bpi"
 ctp_twi_id          = 0
 ctp_twi_addr        = 0x5d
 ctp_screen_max_x    = 720
