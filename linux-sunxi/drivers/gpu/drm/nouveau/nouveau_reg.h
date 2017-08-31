@@ -1,3 +1,14 @@
+/*
+ * drivers/gpu/drm/nouveau/nouveau_reg.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 
 #define NV04_PFB_BOOT_0						0x00100000
 #	define NV04_PFB_BOOT_0_RAM_AMOUNT			0x00000003

@@ -1,4 +1,15 @@
 /*
+ * arch/x86/kernel/cpu/mcheck/therm_throt.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Thermal throttle event support code (such as syslog messaging and rate
  * limiting) that was factored out from x86_64 (mce_intel.c) and i386 (p4.c).
  *

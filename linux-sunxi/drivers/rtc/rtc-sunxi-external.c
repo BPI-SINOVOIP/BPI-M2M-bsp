@@ -714,7 +714,7 @@ void sunxi_rtc_hw_init(struct sunxi_rtc *rtc_dev)
 		rtc_write_reg(rtc_dev->ac100, ALM_INT_STA_REG_OFF, 1);
 }
 
-static int __init sunxi_rtc_probe(struct platform_device *pdev)
+static int sunxi_rtc_probe(struct platform_device *pdev)
 {
 	struct sunxi_rtc *rtc_dev;
 	int err = 0;
@@ -785,7 +785,7 @@ static int __init sunxi_rtc_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int __exit sunxi_rtc_remove(struct platform_device *pdev)
+static int __devexit sunxi_rtc_remove(struct platform_device *pdev)
 {
 	struct rtc_device *rtc_dev = platform_get_drvdata(pdev);
 

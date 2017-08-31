@@ -1,3 +1,14 @@
+/*
+ * drivers/video/riva/nv_type.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/nv/nv_type.h,v 1.35 2002/08/05 20:47:06 mvojkovi Exp $ */
 
 #ifndef __NV_STRUCT_H__

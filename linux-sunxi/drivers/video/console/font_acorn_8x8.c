@@ -1,3 +1,14 @@
+/*
+ * drivers/video/console/font_acorn_8x8.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* Acorn-like font definition, with PC graphics characters */
 
 #include <linux/font.h>

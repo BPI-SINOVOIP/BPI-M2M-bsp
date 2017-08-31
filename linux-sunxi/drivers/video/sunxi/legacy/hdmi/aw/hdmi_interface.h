@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/legacy/hdmi/aw/hdmi_interface.h
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

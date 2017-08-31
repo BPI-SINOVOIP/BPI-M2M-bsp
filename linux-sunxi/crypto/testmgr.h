@@ -14485,7 +14485,7 @@ static const struct {
 
 static struct pcomp_testvec zlib_comp_tv_template[] = {
 	{
-		.params = &deflate_comp_params,
+		.params = (void *)&deflate_comp_params,
 		.paramsize = sizeof(deflate_comp_params),
 		.inlen	= 70,
 		.outlen	= 38,
@@ -14497,7 +14497,7 @@ static struct pcomp_testvec zlib_comp_tv_template[] = {
 			  "\x48\x55\x28\xce\x4f\x2b\x29\x07"
 			  "\x71\xbc\x08\x2b\x01\x00",
 	}, {
-		.params = &deflate_comp_params,
+		.params = (void *)&deflate_comp_params,
 		.paramsize = sizeof(deflate_comp_params),
 		.inlen	= 191,
 		.outlen	= 122,
@@ -14525,7 +14525,7 @@ static struct pcomp_testvec zlib_comp_tv_template[] = {
 
 static struct pcomp_testvec zlib_decomp_tv_template[] = {
 	{
-		.params = &deflate_decomp_params,
+		.params = (void *)&deflate_decomp_params,
 		.paramsize = sizeof(deflate_decomp_params),
 		.inlen	= 122,
 		.outlen	= 191,
@@ -14549,7 +14549,7 @@ static struct pcomp_testvec zlib_decomp_tv_template[] = {
 			"compression algorithm.  This document defines the application of "
 			"the DEFLATE algorithm to the IP Payload Compression Protocol.",
 	}, {
-		.params = &deflate_decomp_params,
+		.params = (void *)&deflate_decomp_params,
 		.paramsize = sizeof(deflate_decomp_params),
 		.inlen	= 38,
 		.outlen	= 70,

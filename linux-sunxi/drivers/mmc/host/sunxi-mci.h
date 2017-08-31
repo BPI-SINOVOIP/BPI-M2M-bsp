@@ -23,7 +23,7 @@
 #endif
 
 #define DRIVER_NAME "sunxi-mmc"
-#define DRIVER_RIVISION "v1.116 2015-7-11 11:55"
+#define DRIVER_RIVISION "v1.123 2017-01-11 15:04"
 #define DRIVER_VERSION "SD/MMC/SDIO Host Controller Driver(" DRIVER_RIVISION ")" \
 			" Compiled in " __DATE__ " at " __TIME__""
 
@@ -239,6 +239,7 @@
 #if defined CONFIG_ARCH_SUN8IW5 || defined CONFIG_ARCH_SUN8IW6 || defined CONFIG_ARCH_SUN8IW8 \
 	|| defined (CONFIG_ARCH_SUN8IW7) || defined CONFIG_ARCH_SUN8IW9
 #define SDXC_REG_NTSR       ( 0x5C )//SMC Newtiming Set Register
+#define SDXC_REG_AUTO_PH    (0x60)
 #endif
 #define SDXC_REG_HWRST	( 0x78 ) // SMC Card Hardware Reset for Register
 #define SDXC_REG_DMAC	( 0x80 ) // SMC IDMAC Control Register
@@ -403,10 +404,12 @@ struct sunxi_mmc_ctrl_regs {
 	u32 clkc;
 	u32 timeout;
 	u32 buswid;
+	u32 imask;
 	u32 waterlvl;
 	u32 funcsel;
 	u32 debugc;
 	u32 idmacc;
+	u32 thldc;
 	u32 ntsr;
 	
 };
@@ -619,5 +622,9 @@ struct sunxi_mmc_host {
 #ifndef	__io_address
 #define __io_address(n)     IOMEM(IO_ADDRESS(n))
 #endif
+
+
+extern void sunxi_mci_regs_save(struct sunxi_mmc_host *smc_host);
+extern void sunxi_mci_regs_restore(struct sunxi_mmc_host *smc_host);
 
 #endif

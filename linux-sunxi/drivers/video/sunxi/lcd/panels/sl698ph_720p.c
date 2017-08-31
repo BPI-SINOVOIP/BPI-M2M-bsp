@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/lcd/panels/sl698ph_720p.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

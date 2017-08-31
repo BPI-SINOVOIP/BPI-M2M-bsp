@@ -1,3 +1,14 @@
+/*
+ * drivers/video/sbuslib.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* sbuslib.h: SBUS fb helper library interfaces */
 #ifndef _SBUSLIB_H
 #define _SBUSLIB_H

@@ -1,4 +1,15 @@
 /*
+ * drivers/spi/spi-bitbang-txrx.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Mix this utility code with some glue code to get one of several types of
  * simple SPI master driver.  Two do polled word-at-a-time I/O:
  *

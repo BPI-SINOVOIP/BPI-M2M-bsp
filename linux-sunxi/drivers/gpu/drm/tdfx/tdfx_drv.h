@@ -1,3 +1,14 @@
+/*
+ * drivers/gpu/drm/tdfx/tdfx_drv.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* tdfx.h -- 3dfx DRM template customization -*- linux-c -*-
  * Created: Wed Feb 14 12:32:32 2001 by gareth@valinux.com
  */

@@ -1,3 +1,14 @@
+/*
+ * drivers/scsi/bnx2fc/57xx_hsi_bnx2fc.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #ifndef __57XX_FCOE_HSI_LINUX_LE__
 #define __57XX_FCOE_HSI_LINUX_LE__
 

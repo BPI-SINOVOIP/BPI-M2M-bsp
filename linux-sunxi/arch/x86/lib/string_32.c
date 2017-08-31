@@ -1,4 +1,15 @@
 /*
+ * arch/x86/lib/string_32.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Most of the string-functions are rather heavily hand-optimized,
  * see especially strsep,strstr,str[c]spn. They should work, but are not
  * very easy to understand. Everything is done entirely within the register

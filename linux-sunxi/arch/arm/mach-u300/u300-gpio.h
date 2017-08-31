@@ -1,4 +1,15 @@
 /*
+ * arch/arm/mach-u300/u300-gpio.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Individual pin assignments for the B26/S26. Notice that the
  * actual usage of these pins depends on the PAD MUX settings, that
  * is why the same number can potentially appear several times.

@@ -1,3 +1,14 @@
+/*
+ * drivers/char/applicom.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* $Id: applicom.h,v 1.2 1999/08/28 15:09:49 dwmw2 Exp $ */
 
 

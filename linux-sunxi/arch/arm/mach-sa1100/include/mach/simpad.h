@@ -1,6 +1,17 @@
 /*
  * arch/arm/mach-sa1100/include/mach/simpad.h
  *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
+ * arch/arm/mach-sa1100/include/mach/simpad.h
+ *
  * based of assabet.h same as HUW_Webpanel
  *
  * This file contains the hardware specific definitions for SIMpad

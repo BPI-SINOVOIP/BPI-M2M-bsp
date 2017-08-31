@@ -1,4 +1,15 @@
 /*
+ * drivers/net/hamradio/6pack.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * 6pack.c	This module implements the 6pack protocol for kernel-based
  *		devices like TTY. It interfaces between a raw TTY and the
  *		kernel's AX.25 protocol layers.

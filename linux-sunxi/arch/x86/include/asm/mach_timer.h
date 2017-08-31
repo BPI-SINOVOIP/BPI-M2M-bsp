@@ -1,4 +1,15 @@
 /*
+ * arch/x86/include/asm/mach_timer.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  *  Machine specific calibrate_tsc() for generic.
  *  Split out from timer_tsc.c by Osamu Tomita <tomita@cinet.co.jp>
  */

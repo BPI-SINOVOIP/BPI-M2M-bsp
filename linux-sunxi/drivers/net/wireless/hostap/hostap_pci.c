@@ -1,3 +1,14 @@
+/*
+ * drivers/net/wireless/hostap/hostap_pci.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #define PRISM2_PCI
 
 /* Host AP driver's support for Intersil Prism2.5 PCI cards is based on

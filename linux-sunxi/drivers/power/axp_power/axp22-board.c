@@ -1,3 +1,14 @@
+/*
+ * drivers/power/axp_power/axp22-board.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/platform_device.h>
@@ -510,6 +521,7 @@ static struct axp_funcdev_info axp_regldevs[] = {
 	}
 };
 
+#ifndef CONFIG_AW_AXP259
 static struct power_supply_info battery_data ={
 	.name ="PTI PL336078",
 	.technology = POWER_SUPPLY_TECHNOLOGY_LiFe,
@@ -538,12 +550,18 @@ static struct axp_funcdev_info axp_splydev[]={
 		.platform_data = &axp_sply_init_data,
 	},
 };
+#endif
 
 static struct axp_platform_data axp_pdata = {
 	.num_regl_devs = ARRAY_SIZE(axp_regldevs),
-	.num_sply_devs = ARRAY_SIZE(axp_splydev),
 	.regl_devs = axp_regldevs,
+#ifndef CONFIG_AW_AXP259
+	.num_sply_devs = ARRAY_SIZE(axp_splydev),
 	.sply_devs = axp_splydev,
+#else
+	.num_sply_devs = 0,
+	.sply_devs = NULL,
+#endif
 };
 
 static struct axp_mfd_chip_ops axp22_ops[] = {
@@ -668,12 +686,17 @@ static int __init axp22_board_init(void)
 {
 	int ret = 0;
 
+#ifdef CONFIG_AW_AXP259
+	ret = axp_fetch_sysconfig_para("pmu2_para", &axp22_config);
+#else
 	ret = axp_fetch_sysconfig_para("pmu1_para", &axp22_config);
+#endif
 	if (ret) {
 		printk("%s fetch sysconfig err", __func__);
 		return -1;
 	}
 	if (axp22_config.pmu_used) {
+#ifndef CONFIG_AW_AXP259
 		battery_data.voltage_max_design = axp22_config.pmu_init_chgvol;
 		battery_data.voltage_min_design = axp22_config.pmu_pwroff_vol;
 		battery_data.energy_full_design = axp22_config.pmu_battery_cap;
@@ -684,6 +707,7 @@ static int __init axp22_board_init(void)
 		axp_sply_init_data.sample_time = axp22_config.pmu_init_adc_freq;
 		axp_sply_init_data.chgpretime = axp22_config.pmu_init_chg_pretime;
 		axp_sply_init_data.chgcsttime = axp22_config.pmu_init_chg_csttime;
+#endif
 #ifdef	CONFIG_AXP_TWI_USED
 		axp_mfd_i2c_board_info[0].addr = axp22_config.pmu_twi_addr;
 		axp_mfd_i2c_board_info[0].irq = axp22_config.pmu_irq_id;

@@ -1,4 +1,15 @@
 /*
+ * fs/quota/quota.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Quota code necessary even when VFS quota support is not compiled
  * into the kernel.  The interesting stuff is over in dquot.c, here
  * we have symbols for initial quotactl(2) handling, the sysctl(2)

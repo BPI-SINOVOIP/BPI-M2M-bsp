@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/lcd/panels/lp907qx.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

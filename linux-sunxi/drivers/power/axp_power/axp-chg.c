@@ -338,8 +338,7 @@ int axp_chg_init(struct axp_charger *charger)
 		/* set usb cur-vol limit*/
 		INIT_DELAYED_WORK(&(charger->usbwork), axp_usb);
 		axp_usb_ac_check_status(charger);
-		power_supply_changed(&charger->ac);
-		power_supply_changed(&charger->usb);
+		axp_usb(NULL);
 		schedule_delayed_work(&(charger->usbwork), msecs_to_jiffies(30* 1000));
 	}
 	return ret;

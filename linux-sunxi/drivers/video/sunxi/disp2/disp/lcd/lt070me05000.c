@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/disp2/disp/lcd/lt070me05000.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

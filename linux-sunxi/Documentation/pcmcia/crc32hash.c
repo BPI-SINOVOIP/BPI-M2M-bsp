@@ -1,3 +1,14 @@
+/*
+ * Documentation/pcmcia/crc32hash.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* crc32hash.c - derived from linux/lib/crc32.c, GNU GPL v2 */
 /* Usage example:
 $ ./crc32hash "Dual Speed"

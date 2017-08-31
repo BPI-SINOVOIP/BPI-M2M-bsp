@@ -1,3 +1,14 @@
+/*
+ * drivers/input/touchscreen/gslx680new/AW_GSL3675B_102460_A83_SOS.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #ifndef _AW_GSL3675B_102460_A83_SOS_H_
 #define _AW_GSL3675B_102460_A83_SOS_H_
 

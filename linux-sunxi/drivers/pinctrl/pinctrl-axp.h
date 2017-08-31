@@ -36,7 +36,11 @@
 * GPIO3<-->CHGLED/MOTODRV(PIN 52)
 * GPIO4<-->N_VBUSEN(PIN 11)
 */
-#ifdef CONFIG_AW_AXP22
+#ifdef CONFIG_AW_AXP259
+#define AXP_GPIO1_CFG                   (AXP259_GPIO1_CTL)
+#define AXP_GPIO2_CFG                   (AXP259_GPIO2_CTL)
+#define AXP_GPIO01_STATE                (AXP259_GPIO01_SIGNAL)
+#elif defined(CONFIG_AW_AXP22)
 #define AXP_GPIO0_CFG                   (AXP22_GPIO0_CTL)//0x90
 #define AXP_GPIO1_CFG                   (AXP22_GPIO1_CTL)//0x92
 #define AXP_GPIO2_CFG                   (AXP22_LDO_DC_EN2)//0x12

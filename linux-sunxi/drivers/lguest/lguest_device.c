@@ -1,3 +1,14 @@
+/*
+ * drivers/lguest/lguest_device.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /*P:050
  * Lguest guests use a very simple method to describe devices.  It's a
  * series of device descriptors contained just above the top of normal Guest

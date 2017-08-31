@@ -1,3 +1,14 @@
+/*
+ * drivers/mmc/host/imxmmc.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #define MMC_REG_STR_STP_CLK		0x00
 #define MMC_REG_STATUS			0x04
 #define MMC_REG_CLK_RATE		0x08

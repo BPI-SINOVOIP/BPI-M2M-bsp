@@ -1,4 +1,15 @@
 /*
+ * arch/x86/xen/enlighten.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Core of Xen paravirt_ops implementation.
  *
  * This file contains the xen_paravirt_ops structure itself, and the

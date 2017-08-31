@@ -42,6 +42,12 @@
 #include <mach/sunxi-chip.h>
 #include <mach/sunxi-smc.h>
 
+#include <linux/gpio.h>
+
+#if defined(CONFIG_ARCH_SUN8IW8P1) && defined(CONFIG_SUNXI_KEY_POWER)
+extern u32 sun8i_pwr_pin;
+#endif
+
 #ifdef CONFIG_SMP
 extern struct smp_operations sunxi_smp_ops;
 #endif
@@ -464,6 +470,23 @@ void __init sunxi_map_io(void)
 #endif
 }
 
+static void sunxi_power_off(void)
+{
+#if defined(CONFIG_ARCH_SUN8IW8P1) && defined(CONFIG_SUNXI_KEY_POWER)
+	gpio_request(sun8i_pwr_pin, NULL);
+	gpio_direction_output(sun8i_pwr_pin, 0);
+	gpio_set_value(sun8i_pwr_pin, 0);
+	gpio_free(sun8i_pwr_pin);
+#endif
+	return;
+}
+
+static void sunxi_power_off_prepare(void)
+{
+	printk(KERN_INFO "%s: prepare power off  system\n", __func__);
+	return;
+}
+
 static void __init sunxi_dev_init(void)
 {
 #ifdef CONFIG_OF
@@ -482,6 +505,13 @@ static void __init sunxi_dev_init(void)
 	/*	ram console	platform device initialize*/
 	ram_console_device_init();
 #endif
+
+if (!pm_power_off)
+	pm_power_off = sunxi_power_off;
+
+if (!pm_power_off_prepare)
+	pm_power_off_prepare = sunxi_power_off_prepare;
+
 
 }
 

@@ -431,7 +431,7 @@ static int test_aead(struct crypto_aead *tfm, int enc,
 
 			ret = crypto_aead_setkey(tfm, key,
 						 template[i].klen);
-			if (!ret == template[i].fail) {
+			if (template[i].fail == !ret) {
 				printk(KERN_ERR "alg: aead: setkey failed on "
 				       "test %d for %s: flags=%x\n", j, algo,
 				       crypto_aead_get_flags(tfm));
@@ -521,7 +521,7 @@ static int test_aead(struct crypto_aead *tfm, int enc,
 			key = template[i].key;
 
 			ret = crypto_aead_setkey(tfm, key, template[i].klen);
-			if (!ret == template[i].fail) {
+			if (template[i].fail == !ret) {
 				printk(KERN_ERR "alg: aead: setkey failed on "
 				       "chunk test %d for %s: flags=%x\n", j,
 				       algo, crypto_aead_get_flags(tfm));
@@ -725,7 +725,7 @@ static int test_cipher(struct crypto_cipher *tfm, int enc,
 
 		ret = crypto_cipher_setkey(tfm, template[i].key,
 					   template[i].klen);
-		if (!ret == template[i].fail) {
+		if (template[i].fail == !ret) {
 			printk(KERN_ERR "alg: cipher: setkey failed "
 			       "on test %d for %s: flags=%x\n", j,
 			       algo, crypto_cipher_get_flags(tfm));
@@ -823,7 +823,7 @@ static int test_skcipher(struct crypto_ablkcipher *tfm, int enc,
 
 			ret = crypto_ablkcipher_setkey(tfm, template[i].key,
 						       template[i].klen);
-			if (!ret == template[i].fail) {
+			if (template[i].fail == !ret) {
 				printk(KERN_ERR "alg: skcipher: setkey failed "
 				       "on test %d for %s: flags=%x\n", j,
 				       algo, crypto_ablkcipher_get_flags(tfm));
@@ -889,7 +889,7 @@ static int test_skcipher(struct crypto_ablkcipher *tfm, int enc,
 
 			ret = crypto_ablkcipher_setkey(tfm, template[i].key,
 						       template[i].klen);
-			if (!ret == template[i].fail) {
+			if (template[i].fail == !ret) {
 				printk(KERN_ERR "alg: skcipher: setkey failed "
 				       "on chunk test %d for %s: flags=%x\n",
 				       j, algo,

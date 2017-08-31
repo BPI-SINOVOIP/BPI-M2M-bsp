@@ -57,8 +57,8 @@ int wl_cfgp2p_if_stop(struct net_device *net);
 #if defined(WL_ENABLE_P2P_IF)
 static int wl_cfgp2p_start_xmit(struct sk_buff *skb, struct net_device *ndev);
 static int wl_cfgp2p_do_ioctl(struct net_device *net, struct ifreq *ifr, int cmd);
-static int wl_cfgp2p_if_open(struct net_device *net);
-static int wl_cfgp2p_if_stop(struct net_device *net);
+int wl_cfgp2p_if_open(struct net_device *net);
+int wl_cfgp2p_if_stop(struct net_device *net);
 
 static const struct net_device_ops wl_cfgp2p_if_ops = {
 	.ndo_open       = wl_cfgp2p_if_open,
@@ -783,7 +783,7 @@ wl_cfgp2p_disable_discovery(struct bcm_cfg80211 *cfg)
 	CFGP2P_DBG((" enter\n"));
 	wl_clr_p2p_status(cfg, DISCOVERY_ON);
 
-	if(!cfg->p2p) { // terence 20130113: Fix for p2p NULL pointer
+	if (!cfg->p2p) { // terence 20130113: Fix for p2p NULL pointer
 		ret = BCME_ERROR;
 		CFGP2P_ERR(("wl->p2p is NULL\n"));
 		goto exit;
@@ -1653,15 +1653,24 @@ wl_cfgp2p_listen_complete(struct bcm_cfg80211 *cfg, bcm_struct_cfgdev *cfgdev,
 			wl_get_drv_status_all(cfg, FAKE_REMAINING_ON_CHANNEL))
 #endif /* WL_CFG80211_VSDB_PRIORITIZE_SCAN_REQUEST */
 		{
-			WL_DBG(("Listen DONE for ramain on channel expired\n"));
+			WL_DBG(("Listen DONE for remain on channel expired\n"));
 			wl_clr_drv_status(cfg, REMAINING_ON_CHANNEL, ndev);
 #ifdef WL_CFG80211_VSDB_PRIORITIZE_SCAN_REQUEST
 			wl_clr_drv_status(cfg, FAKE_REMAINING_ON_CHANNEL, ndev);
 #endif /* WL_CFG80211_VSDB_PRIORITIZE_SCAN_REQUEST */
 			if (ndev && (ndev->ieee80211_ptr != NULL)) {
 #if defined(WL_CFG80211_P2P_DEV_IF)
-				cfg80211_remain_on_channel_expired(bcmcfg_to_p2p_wdev(cfg),
-					cfg->last_roc_id, &cfg->remain_on_chan, GFP_KERNEL);
+				if (cfgdev && ((struct wireless_dev *)cfgdev)->wiphy) {
+					/*
+					 * To prevent kernel panic,
+					 * if cfgdev->wiphy may be invalid, adding explicit check
+					 */
+					cfg80211_remain_on_channel_expired(cfgdev, cfg->last_roc_id,
+						&cfg->remain_on_chan, GFP_KERNEL);
+				} else {
+					CFGP2P_ERR(("Invalid cfgdev. Dropping the"
+						"remain_on_channel_expired event.\n"));
+				}
 #else
 				cfg80211_remain_on_channel_expired(cfgdev, cfg->last_roc_id,
 					&cfg->remain_on_chan, cfg->remain_on_chan_type, GFP_KERNEL);
@@ -2659,7 +2668,7 @@ wl_cfgp2p_register_ndev(struct bcm_cfg80211 *cfg)
 #endif /* WL_NEWCFG_PRIVCMD_SUPPORT */
 	cfg->p2p_net = net;
 
-	printk("%s: P2P Interface Registered\n", net->name);
+	printf("%s: P2P Interface Registered\n", net->name);
 
 	return ret;
 }
@@ -2719,10 +2728,11 @@ static int wl_cfgp2p_do_ioctl(struct net_device *net, struct ifreq *ifr, int cmd
 #endif /* WL_ENABLE_P2P_IF || WL_NEWCFG_PRIVCMD_SUPPORT || defined(P2PONEINT) */
 
 #if defined(WL_ENABLE_P2P_IF) || defined(P2PONEINT)
+int
 #ifdef  P2PONEINT
-int wl_cfgp2p_if_open(struct net_device *net)
+wl_cfgp2p_if_open(struct net_device *net)
 #else
-static int wl_cfgp2p_if_open(struct net_device *net)
+wl_cfgp2p_if_open(struct net_device *net)
 #endif
 {
 	struct wireless_dev *wdev = net->ieee80211_ptr;
@@ -2745,10 +2755,11 @@ static int wl_cfgp2p_if_open(struct net_device *net)
 	return 0;
 }
 
+int
 #ifdef  P2PONEINT
-int wl_cfgp2p_if_stop(struct net_device *net)
+wl_cfgp2p_if_stop(struct net_device *net)
 #else
-static int wl_cfgp2p_if_stop(struct net_device *net)
+wl_cfgp2p_if_stop(struct net_device *net)
 #endif
 {
 	struct wireless_dev *wdev = net->ieee80211_ptr;
@@ -2795,7 +2806,8 @@ wl_cfgp2p_add_p2p_disc_if(struct bcm_cfg80211 *cfg)
 
 	if (cfg->p2p_wdev) {
 		CFGP2P_ERR(("p2p_wdev defined already.\n"));
-#if (defined(CUSTOMER_HW10) && defined(CONFIG_ARCH_ODIN))
+//#if (defined(CUSTOMER_HW10) && defined(CONFIG_ARCH_ODIN))
+#if 1 // after android stop; start, wpa_supplicant start fail because of "Failed to create a P2P Device interface p2p-dev-wlan0"
 		wl_cfgp2p_del_p2p_disc_if(cfg->p2p_wdev, cfg);
 		CFGP2P_ERR(("p2p_wdev deleted.\n"));
 #else
@@ -2826,7 +2838,7 @@ wl_cfgp2p_add_p2p_disc_if(struct bcm_cfg80211 *cfg)
 	/* store p2p wdev ptr for further reference. */
 	cfg->p2p_wdev = wdev;
 
-	WL_TRACE(("P2P interface registered\n"));
+	printf("P2P interface registered\n");
 
 	return wdev;
 }
@@ -2856,7 +2868,7 @@ wl_cfgp2p_start_p2p_device(struct wiphy *wiphy, struct wireless_dev *wdev)
 
 	p2p_on(cfg) = true;
 
-	CFGP2P_DBG(("P2P interface started\n"));
+	printf("P2P interface started\n");
 
 exit:
 	return ret;
@@ -2888,7 +2900,7 @@ wl_cfgp2p_stop_p2p_device(struct wiphy *wiphy, struct wireless_dev *wdev)
 
 	p2p_on(cfg) = false;
 
-	CFGP2P_DBG(("P2P interface stopped\n"));
+	printf("P2P interface stopped\n");
 
 	return;
 }
@@ -2922,7 +2934,7 @@ wl_cfgp2p_del_p2p_disc_if(struct wireless_dev *wdev, struct bcm_cfg80211 *cfg)
 	if (cfg)
 		cfg->p2p_wdev = NULL;
 
-	CFGP2P_ERR(("P2P interface unregistered\n"));
+	printf("P2P interface unregistered\n");
 
 	return 0;
 }

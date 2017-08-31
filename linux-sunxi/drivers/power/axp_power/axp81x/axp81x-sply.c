@@ -43,6 +43,8 @@ static enum power_supply_property axp_battery_props[] = {
 	POWER_SUPPLY_PROP_CURRENT_NOW,
 	POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN,
 	POWER_SUPPLY_PROP_CAPACITY,
+	POWER_SUPPLY_PROP_CAPACITY_ALERT_MIN,
+	POWER_SUPPLY_PROP_CAPACITY_ALERT_MAX,
 	POWER_SUPPLY_PROP_TEMP,
 };
 
@@ -133,6 +135,12 @@ static int axp_battery_get_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_CAPACITY:
 		val->intval = charger->rest_vol;
+		break;
+	case POWER_SUPPLY_PROP_CAPACITY_ALERT_MIN:
+		val->intval = charger->bat_warning_level2;
+		break;
+	case POWER_SUPPLY_PROP_CAPACITY_ALERT_MAX:
+		val->intval = charger->bat_warning_level1;
 		break;
 	case POWER_SUPPLY_PROP_ONLINE:
 	{

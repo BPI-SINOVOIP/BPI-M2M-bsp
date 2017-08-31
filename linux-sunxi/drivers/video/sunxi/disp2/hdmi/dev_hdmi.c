@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/disp2/hdmi/dev_hdmi.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *
@@ -183,7 +184,7 @@ static ssize_t hdmi_hdcp_enable_store(struct device *dev,
 
 static DEVICE_ATTR(hdcp_enable, S_IRUGO|S_IWUSR|S_IWGRP,hdmi_hdcp_enable_show, hdmi_hdcp_enable_store);
 
-static int __init hdmi_probe(struct platform_device *pdev)
+static int hdmi_probe(struct platform_device *pdev)
 {
 	__inf("hdmi_probe call\n");
 	memset(&ghdmi, 0, sizeof(hdmi_info_t));
@@ -205,14 +206,14 @@ static int hdmi_suspend(struct platform_device *pdev, pm_message_t state)
 	return 0;
 }
 
-static int hdmi_resume(struct platform_device *pdev)
+static int __devexit hdmi_resume(struct platform_device *pdev)
 {
 	return 0;
 }
 static struct platform_driver hdmi_driver =
 {
 	.probe	  = hdmi_probe,
-	.remove	 = hdmi_remove,
+	.remove	 = __exit_p(hdmi_remove),
 	.suspend	= hdmi_suspend,
 	.resume	 = hdmi_resume,
 	.driver	 =

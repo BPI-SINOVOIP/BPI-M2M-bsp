@@ -684,7 +684,7 @@ static struct snd_soc_dai_driver sunxi_hdmiaudio_dai = {
 	.ops 		= &sunxi_hdmiaudio_dai_ops,
 };		
 
-static int __init sunxi_hdmiaudio_dev_probe(struct platform_device *pdev)
+static int sunxi_hdmiaudio_dev_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	u32 reg_val;
@@ -762,7 +762,7 @@ static int __init sunxi_hdmiaudio_dev_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int __exit sunxi_hdmiaudio_dev_remove(struct platform_device *pdev)
+static int __devexit sunxi_hdmiaudio_dev_remove(struct platform_device *pdev)
 {
 	if (!pdev) {
 		pr_err("error:%s,line:%d\n", __func__, __LINE__);

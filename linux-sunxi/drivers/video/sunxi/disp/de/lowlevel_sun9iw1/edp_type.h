@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/disp/de/lowlevel_sun9iw1/edp_type.h
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

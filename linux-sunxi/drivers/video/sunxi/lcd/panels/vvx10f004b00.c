@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/lcd/panels/vvx10f004b00.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

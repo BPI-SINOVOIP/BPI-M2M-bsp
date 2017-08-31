@@ -1,4 +1,15 @@
 /*
+ * drivers/net/ethernet/icplus/ipg.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Include file for Gigabit Ethernet device driver for Network
  * Interface Cards (NICs) utilizing the Tamarack Microelectronics
  * Inc. IPG Gigabit or Triple Speed Ethernet Media Access

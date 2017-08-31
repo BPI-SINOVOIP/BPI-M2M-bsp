@@ -1,4 +1,15 @@
 /*
+ * arch/x86/pci/xen.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Xen PCI - handle PCI (INTx) and MSI infrastructure calls for PV, HVM and
  * initial domain support. We also handle the DSDT _PRT callbacks for GSI's
  * used in HVM and initial domain mode (PV does not parse ACPI, so it has no

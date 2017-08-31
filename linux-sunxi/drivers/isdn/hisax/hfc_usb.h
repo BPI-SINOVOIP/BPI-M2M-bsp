@@ -1,4 +1,15 @@
 /*
+ * drivers/isdn/hisax/hfc_usb.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * hfc_usb.h
  *
  * $Id: hfc_usb.h,v 1.1.2.5 2007/08/20 14:36:03 mbachem Exp $

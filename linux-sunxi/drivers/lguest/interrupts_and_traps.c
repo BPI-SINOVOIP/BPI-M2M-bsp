@@ -1,3 +1,14 @@
+/*
+ * drivers/lguest/interrupts_and_traps.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /*P:800
  * Interrupts (traps) are complicated enough to earn their own file.
  * There are three classes of interrupts:

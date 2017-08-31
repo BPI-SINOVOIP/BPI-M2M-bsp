@@ -1,4 +1,15 @@
 /*
+ * lib/crc32defs.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * There are multiple 16-bit CRC polynomials in common use, but this is
  * *the* standard CRC-32 polynomial, first popularized by Ethernet.
  * x^32+x^26+x^23+x^22+x^16+x^12+x^11+x^10+x^8+x^7+x^5+x^4+x^2+x^1+x^0

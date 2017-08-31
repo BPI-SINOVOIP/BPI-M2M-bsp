@@ -1,3 +1,14 @@
+/*
+ * drivers/power/axp_power/axp81x/axp81x-regu.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #ifndef _LINUX_AXP81X_REGU_H_
 #define _LINUX_AXP81X_REGU_H_
 /*Schematic_name	regulator_ID	virtual_consumer_name	max_voltage 	min_voltage   step

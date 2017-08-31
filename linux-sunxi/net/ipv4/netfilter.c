@@ -1,3 +1,14 @@
+/*
+ * net/ipv4/netfilter.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* IPv4 specific functions of netfilter core */
 #include <linux/kernel.h>
 #include <linux/netfilter.h>

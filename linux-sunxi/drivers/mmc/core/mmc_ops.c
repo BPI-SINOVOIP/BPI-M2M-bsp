@@ -402,13 +402,6 @@ int mmc_switch(struct mmc_card *card, u8 set, u8 index, u8 value,
     /* Must check status to be sure of no errors */
 	do {
 
-        /*The purpose of set clk here is to make 2x mode to reset the sample point
-         * Because if switch to new timing mode,device's timing maybe change,so we
-        * should reset the sample point to get new sample point
-        * If our controller not use 2x mode,the change below will have no harm
-        * */
-        mmc_set_clock(card->host,card->host->ios.clock);
-
 		err = mmc_send_status(card, &status);
 		if (err)
 			return err;

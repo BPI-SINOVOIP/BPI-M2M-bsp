@@ -1,4 +1,5 @@
 /*
+ * drivers/clk/sunxi/clk-sun8iw7_tbl.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

@@ -1,3 +1,14 @@
+/*
+ * sound/oss/midi_ctrl.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 static unsigned char ctrl_def_values[128] =
 {
 	0x40,0x00,0x40,0x40,  0x40,0x40,0x40,0x7f,	/*   0 to   7 */

@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/hdmi/aw/hdmi_edid.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

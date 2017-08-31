@@ -1,4 +1,15 @@
 /*
+ * drivers/firewire/nosy.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Chip register definitions for PCILynx chipset.  Based on pcilynx.h
  * from the Linux 1394 drivers, but modified a bit so the names here
  * match the specification exactly (even though they have weird names,

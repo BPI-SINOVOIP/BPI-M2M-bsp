@@ -1,3 +1,14 @@
+/*
+ * drivers/net/wireless/rtl818x/rtl8180/rtl8180.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #ifndef RTL8180_H
 #define RTL8180_H
 

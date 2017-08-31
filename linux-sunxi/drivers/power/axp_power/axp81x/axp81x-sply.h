@@ -1,3 +1,14 @@
+/*
+ * drivers/power/axp_power/axp81x/axp81x-sply.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #ifndef	_LINUX_AXP81X_SPLY_H_
 #define	_LINUX_AXP81X_SPLY_H_
 #include <linux/kernel.h>
@@ -188,6 +199,9 @@ struct axp_charger {
 	/*ic temperature*/
 	int ic_temp;
 	int bat_temp;
+
+	int bat_warning_level1;
+	int bat_warning_level2;
 
 	/* chg current limit work*/
 	struct delayed_work usbwork;

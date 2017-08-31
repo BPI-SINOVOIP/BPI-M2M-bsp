@@ -1,4 +1,15 @@
 /*
+ * arch/cris/include/arch-v10/arch/timex.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Use prescale timer at 25000 Hz instead of the baudrate timer at 
  * 19200 to get rid of the 64ppm to fast timer (and we get better 
  * resolution within a jiffie as well. 

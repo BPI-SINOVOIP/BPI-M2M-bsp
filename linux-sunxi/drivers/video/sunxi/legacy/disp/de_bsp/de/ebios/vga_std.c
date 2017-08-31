@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/legacy/disp/de_bsp/de/ebios/vga_std.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

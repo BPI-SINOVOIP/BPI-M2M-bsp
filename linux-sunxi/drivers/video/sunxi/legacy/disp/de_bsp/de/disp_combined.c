@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/legacy/disp/de_bsp/de/disp_combined.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

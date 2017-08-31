@@ -1,3 +1,14 @@
+/*
+ * arch/arm/mach-at91/include/mach/gsia18s.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* Buttons */
 #define GPIO_TRIG_NET_IN		AT91_PIN_PB21
 #define GPIO_CARD_UNMOUNT_0		AT91_PIN_PB13

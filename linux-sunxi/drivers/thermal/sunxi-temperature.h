@@ -1,4 +1,5 @@
 /*
+ * drivers/thermal/sunxi-temperature.h
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

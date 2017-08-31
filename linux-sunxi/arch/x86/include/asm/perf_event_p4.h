@@ -1,4 +1,15 @@
 /*
+ * arch/x86/include/asm/perf_event_p4.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Netburst Performance Events (P4, old Xeon)
  */
 

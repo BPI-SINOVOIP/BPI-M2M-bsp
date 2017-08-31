@@ -50,6 +50,23 @@
 #define SDPCM_DEFGLOM_SIZE SDPCM_MAXGLOM_SIZE
 #endif
 
+#ifdef PKT_STATICS
+typedef struct pkt_statics {
+	uint16	event_count;
+	uint32	event_size;
+	uint16	ctrl_count;
+	uint32	ctrl_size;
+	uint32	data_count;
+	uint32	data_size;
+	uint32	glom_cnt[SDPCM_MAXGLOM_SIZE];
+	uint16	glom_max;
+	uint16	glom_count;
+	uint32	glom_size;
+	uint16	test_count;
+	uint32	test_size;
+} pkt_statics_t;
+#endif
+
 typedef int SDIOH_API_RC;
 
 /* SDio Host structure */
@@ -121,5 +138,15 @@ extern SDIOH_API_RC sdioh_gpio_init(sdioh_info_t *sd);
 extern bool sdioh_gpioin(sdioh_info_t *sd, uint32 gpio);
 extern SDIOH_API_RC sdioh_gpioouten(sdioh_info_t *sd, uint32 gpio);
 extern SDIOH_API_RC sdioh_gpioout(sdioh_info_t *sd, uint32 gpio, bool enab);
+
+extern uint sdioh_set_mode(sdioh_info_t *sd, uint mode);
+#if defined(SWTXGLOM)
+/* read or write any buffer using cmd53 */
+extern SDIOH_API_RC sdioh_request_swtxglom_buffer(sdioh_info_t *si, uint pio_dma, uint fix_inc,
+	uint rw, uint fnc_num, uint32 addr, uint regwidth, uint32 buflen, uint8 *buffer,
+	void *pkt);
+extern void sdioh_glom_post(sdioh_info_t *sd, uint8 *frame, void *pkt, uint len);
+extern void sdioh_glom_clear(sdioh_info_t *sd);
+#endif
 
 #endif /* _sdio_api_h_ */

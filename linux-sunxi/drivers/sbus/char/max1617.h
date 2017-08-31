@@ -1,3 +1,14 @@
+/*
+ * drivers/sbus/char/max1617.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* $Id: max1617.h,v 1.1 2001/04/02 09:59:08 davem Exp $ */
 #ifndef _MAX1617_H
 #define _MAX1617_H

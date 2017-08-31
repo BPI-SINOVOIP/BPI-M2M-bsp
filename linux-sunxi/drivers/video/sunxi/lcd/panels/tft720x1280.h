@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/lcd/panels/tft720x1280.h
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

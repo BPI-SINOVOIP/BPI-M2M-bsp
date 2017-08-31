@@ -1,4 +1,15 @@
 /*
+ * drivers/i2c/busses/i2c-pxa-pci.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * The CE4100's I2C device is more or less the same one as found on PXA.
  * It does not support slave mode, the register slightly moved. This PCI
  * device provides three bars, every contains a single I2C controller.

@@ -1,3 +1,14 @@
+/*
+ * drivers/scsi/aha1542.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #ifndef _AHA1542_H
 
 /* $Id: aha1542.h,v 1.1 1992/07/24 06:27:38 root Exp root $

@@ -322,6 +322,10 @@ int axp81x_init(struct axp_charger *charger)
 	axp81x_chg_current_limit(axp81x_config.pmu_runtime_chgcur);
 
 	/* set lowe power warning/shutdown level */
+	charger->bat_warning_level1 =
+		axp81x_config.pmu_battery_warning_level1;
+	charger->bat_warning_level2 =
+		axp81x_config.pmu_battery_warning_level2;
 	axp_write(charger->master, AXP81X_WARNING_LEVEL,((axp81x_config.pmu_battery_warning_level1-5) << 4)+axp81x_config.pmu_battery_warning_level2);
 	ocv_cap[0]  = axp81x_config.pmu_bat_para1;
 	ocv_cap[1]  = 0xC1;

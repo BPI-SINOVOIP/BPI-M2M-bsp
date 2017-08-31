@@ -1,3 +1,14 @@
+/*
+ * arch/cris/include/asm/sigcontext.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* $Id: sigcontext.h,v 1.1 2000/07/10 16:32:31 bjornw Exp $ */
 
 #ifndef _ASM_CRIS_SIGCONTEXT_H

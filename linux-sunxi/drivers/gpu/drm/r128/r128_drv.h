@@ -1,3 +1,14 @@
+/*
+ * drivers/gpu/drm/r128/r128_drv.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* r128_drv.h -- Private header for r128 driver -*- linux-c -*-
  * Created: Mon Dec 13 09:51:11 1999 by faith@precisioninsight.com
  */

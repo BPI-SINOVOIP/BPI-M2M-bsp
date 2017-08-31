@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/legacy/lcd/dev_lcd.h
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

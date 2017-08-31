@@ -1,3 +1,14 @@
+/*
+ * drivers/power/axp_power/axp22-mfd.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #include "axp-rw.h"
 
 static uint8_t axp_reg_addr = 0;
@@ -35,7 +46,7 @@ static int axp22_disable_irqs(struct axp_dev *chip, uint64_t irqs)
 {
 	uint8_t v[9];
 	int ret;
-	unsigned char devaddr = RSB_RTSADDR_AXP809;
+	unsigned char devaddr = RSB_RTSADDR_AXP22X;
 
 	chip->irqs_enabled &= ~irqs;
 
@@ -57,7 +68,7 @@ static int axp22_enable_irqs(struct axp_dev *chip, uint64_t irqs)
 {
 	uint8_t v[9];
 	int ret;
-	unsigned char devaddr = RSB_RTSADDR_AXP809;
+	unsigned char devaddr = RSB_RTSADDR_AXP22X;
 
 	chip->irqs_enabled |=  irqs;
 
@@ -79,7 +90,7 @@ static int axp22_read_irqs(struct axp_dev *chip, uint64_t *irqs)
 {
 	uint8_t v[5] = {0, 0, 0, 0, 0};
 	int ret;
-	unsigned char devaddr = RSB_RTSADDR_AXP809;
+	unsigned char devaddr = RSB_RTSADDR_AXP22X;
 	ret =  __axp_reads(&devaddr, chip->client, AXP22_INTSTS1, 5, v, false);
 	if (ret < 0)
 		return ret;
@@ -90,14 +101,15 @@ static int axp22_read_irqs(struct axp_dev *chip, uint64_t *irqs)
 
 static int  axp22_init_chip(struct axp_dev *chip)
 {
-	uint8_t chip_id;
+	uint8_t chip_id = 0;
 	uint8_t v[19] = {0xd8,AXP22_INTEN2, 0xff,AXP22_INTEN3,0x03,
 			  AXP22_INTEN4, 0x01,AXP22_INTEN5, 0x00,
 			  AXP22_INTSTS1,0xff,AXP22_INTSTS2, 0xff,
 			  AXP22_INTSTS3,0xff,AXP22_INTSTS4, 0xff,
 			  AXP22_INTSTS5,0xff};
-	unsigned char devaddr = RSB_RTSADDR_AXP809;
+	unsigned char devaddr = RSB_RTSADDR_AXP22X;
 	int err;
+
 
 	INIT_WORK(&chip->irq_work, axp22_mfd_irq_work);
 
@@ -107,7 +119,7 @@ static int  axp22_init_chip(struct axp_dev *chip)
 		printk("[AXP22-MFD] try to read chip id failed!\n");
 		return err;
 	}
-
+	printk(KERN_DEBUG "[%s] read axp22 ic type=0x%x\n", __func__, chip_id);
 	if(((chip_id & 0xc0) == 0x00) && (((chip_id & 0x0f) == 0x06) ||\
 	((chip_id & 0x0f) == 0x07) || ((chip_id & 0xff) == 0x42)))
 		chip->type = AXP22;
@@ -127,7 +139,7 @@ static int  axp22_init_chip(struct axp_dev *chip)
 
 	return 0;
 }
-
+#ifndef CONFIG_AW_AXP259
 static ssize_t axp22_offvol_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -366,7 +378,7 @@ static ssize_t axp22_ovtemclsen_store(struct device *dev,
 	axp_write(dev,AXP22_HOTOVER_CTL,val);
 	return count;
 }
-
+#endif
 static ssize_t axp22_reg_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -426,6 +438,7 @@ static ssize_t axp22_regs_store(struct device *dev,
 }
 
 static struct device_attribute axp22_mfd_attrs[] = {
+#ifndef CONFIG_AW_AXP259
 	AXP_MFD_ATTR(axp22_offvol),
 	AXP_MFD_ATTR(axp22_noedelay),
 	AXP_MFD_ATTR(axp22_pekopen),
@@ -434,6 +447,7 @@ static struct device_attribute axp22_mfd_attrs[] = {
 	AXP_MFD_ATTR(axp22_pekdelay),
 	AXP_MFD_ATTR(axp22_pekclose),
 	AXP_MFD_ATTR(axp22_ovtemclsen),
+#endif
 	AXP_MFD_ATTR(axp22_reg),
 	AXP_MFD_ATTR(axp22_regs),
 };

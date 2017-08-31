@@ -1,3 +1,14 @@
+/*
+ * drivers/staging/xgifb/vb_def.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* $XFree86: xc/programs/Xserver/hw/xfree86/drivers/xgi/initdef.h
  * ,v 1.4 2000/12/02 01:16:17 dawes Exp $*/
 #ifndef _VB_DEF_

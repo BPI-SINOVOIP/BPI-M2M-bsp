@@ -1,3 +1,14 @@
+/*
+ * drivers/isdn/hardware/eicon/um_xdi.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* $Id: um_xdi.h,v 1.1.2.2 2002/10/02 14:38:38 armin Exp $ */
 
 #ifndef __DIVA_USER_MODE_XDI_H__

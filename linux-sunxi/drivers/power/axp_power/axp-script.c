@@ -1,9 +1,21 @@
+/*
+ * drivers/power/axp_power/axp-script.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #include <mach/sys_config.h>
 #include <linux/module.h>
 #include "axp-cfg.h"
 
 struct axp_config_info axp15_config;
 struct axp_config_info axp22_config;
+struct axp_config_info axp259_config;
 
 static int axp_script_parser_fetch(char *main, char *sub, u32 *val, u32 size)
 {

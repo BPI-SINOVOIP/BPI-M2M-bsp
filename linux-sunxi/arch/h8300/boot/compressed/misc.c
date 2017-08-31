@@ -1,6 +1,17 @@
 /*
  * arch/h8300/boot/compressed/misc.c
  *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
+ * arch/h8300/boot/compressed/misc.c
+ *
  * This is a collection of several routines from gzip-1.0.3
  * adapted for Linux.
  *

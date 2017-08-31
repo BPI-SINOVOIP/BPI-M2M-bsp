@@ -23,6 +23,9 @@
 typedef const struct si_pub	si_t;
 #include <wlioctl.h>
 #include <wl_android.h>
+#ifdef WL_ESCAN
+#include <wl_escan.h>
+#endif
 
 
 /* message levels */
@@ -131,7 +134,7 @@ extern int dhd_wait_pend8021x(struct net_device *dev);
 #define IW_EVENT_IDX(cmd)	((cmd) - IWEVFIRST)
 #endif /* WIRELESS_EXT < 19 */
 
-
+#ifndef WL_ESCAN
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0))
 #define DAEMONIZE(a)	do { \
 		allow_signal(SIGKILL);	\
@@ -185,6 +188,7 @@ iscan_info_t *g_iscan = NULL;
 static void wl_iw_timerfunc(ulong data);
 static void wl_iw_set_event_mask(struct net_device *dev);
 static int wl_iw_iscan(iscan_info_t *iscan, wlc_ssid_t *ssid, uint16 action);
+#endif /* WL_ESCAN */
 
 /* priv_link becomes netdev->priv and is the link between netdev and wlif struct */
 typedef struct priv_link {
@@ -281,6 +285,7 @@ dev_wlc_intvar_set(
 	return (dev_wlc_ioctl(dev, WLC_SET_VAR, buf, len));
 }
 
+#ifndef WL_ESCAN
 static int
 dev_iw_iovar_setbuf(
 	struct net_device *dev,
@@ -316,6 +321,7 @@ dev_iw_iovar_getbuf(
 
 	return (dev_wlc_ioctl(dev, WLC_GET_VAR, bufptr, buflen));
 }
+#endif
 
 #if WIRELESS_EXT > 17
 static int
@@ -459,9 +465,6 @@ wl_iw_set_pm(
 	error = dev_wlc_ioctl(dev, WLC_SET_PM, &pm, sizeof(pm));
 	return error;
 }
-
-#if WIRELESS_EXT > 17
-#endif /* WIRELESS_EXT > 17 */
 #endif /* WIRELESS_EXT > 12 */
 
 int
@@ -603,7 +606,7 @@ wl_iw_set_freq(
 	WL_ERROR(("%s: chan=%d\n", __FUNCTION__, chan));
 	chan = htod32(chan);
 	if ((error = dev_wlc_ioctl(dev, WLC_SET_CHANNEL, &chan, sizeof(chan)))) {
-		WL_ERROR(("%s: WLC_DISASSOC failed (%d).\n", __FUNCTION__, error));
+		WL_ERROR(("%s: WLC_SET_CHANNEL failed (%d).\n", __FUNCTION__, error));
 		return error;
 	}
 
@@ -905,6 +908,7 @@ wl_iw_get_range(
 	return 0;
 }
 
+#ifndef WL_ESCAN
 static int
 rssi_to_qual(int rssi)
 {
@@ -921,6 +925,7 @@ rssi_to_qual(int rssi)
 	else
 		return 5;
 }
+#endif /* WL_ESCAN */
 
 static int
 wl_iw_set_spy(
@@ -1077,6 +1082,7 @@ wl_iw_mlme(
 }
 #endif /* WIRELESS_EXT > 17 */
 
+#ifndef WL_ESCAN
 static int
 wl_iw_get_aplist(
 	struct net_device *dev,
@@ -1224,8 +1230,10 @@ wl_iw_iscan_get_aplist(
 
 	return 0;
 }
+#endif
 
 #if WIRELESS_EXT > 13
+#ifndef WL_ESCAN
 static int
 wl_iw_set_scan(
 	struct net_device *dev,
@@ -1307,6 +1315,7 @@ wl_iw_iscan_set_scan(
 
 	return 0;
 }
+#endif /* WL_ESCAN */
 
 #if WIRELESS_EXT > 17
 static bool
@@ -1391,7 +1400,10 @@ wpa_snprintf_hex(char *buf, size_t buf_size, const u8 *data, size_t len)
 }
 #endif /* BCMWAPI_WPI */
 
-static int
+#ifndef WL_ESCAN
+static
+#endif
+int
 wl_iw_handle_scanresults_ies(char **event_p, char *end,
 	struct iw_request_info *info, wl_bss_info_t *bi)
 {
@@ -1488,12 +1500,14 @@ wl_iw_handle_scanresults_ies(char **event_p, char *end,
 			break;
 		}
 #endif /* BCMWAPI_WPI */
-	*event_p = event;
+		*event_p = event;
 	}
 
 #endif /* WIRELESS_EXT > 17 */
 	return 0;
 }
+
+#ifndef WL_ESCAN
 static int
 wl_iw_get_scan(
 	struct net_device *dev,
@@ -1548,7 +1562,7 @@ wl_iw_get_scan(
 		// terence 20150419: limit the max. rssi to -2 or the bss will be filtered out in android OS
 		rssi = MIN(dtoh16(bi->RSSI), RSSI_MAXVAL);
 		channel = (bi->ctl_ch == 0) ? CHSPEC_CHANNEL(bi->chanspec) : bi->ctl_ch;
-		WL_SCAN(("%s: BSSID="MACSTR", channel=%d, RSSI=%d, merge broadcast SSID=\"%s\"\n",
+		WL_SCAN(("%s: BSSID="MACSTR", channel=%d, RSSI=%d, SSID=\"%s\"\n",
 		__FUNCTION__, MAC2STR(bi->BSSID.octet), channel, rssi, bi->SSID));
 
 		/* First entry must be the BSSID */
@@ -1682,7 +1696,7 @@ wl_iw_iscan_get_scan(
 			// terence 20150419: limit the max. rssi to -2 or the bss will be filtered out in android OS
 			rssi = MIN(dtoh16(bi->RSSI), RSSI_MAXVAL);
 			channel = (bi->ctl_ch == 0) ? CHSPEC_CHANNEL(bi->chanspec) : bi->ctl_ch;
-			WL_SCAN(("%s: BSSID="MACSTR", channel=%d, RSSI=%d, merge broadcast SSID=\"%s\"\n",
+			WL_SCAN(("%s: BSSID="MACSTR", channel=%d, RSSI=%d, SSID=\"%s\"\n",
 			__FUNCTION__, MAC2STR(bi->BSSID.octet), channel, rssi, bi->SSID));
 
 			/* First entry must be the BSSID */
@@ -1756,10 +1770,11 @@ wl_iw_iscan_get_scan(
 
 	dwrq->length = event - extra;
 	dwrq->flags = 0;	/* todo */
+	WL_SCAN(("%s: apcnt=%d\n", __FUNCTION__, apcnt));
 
 	return 0;
 }
-
+#endif /* WL_ESCAN */
 #endif /* WIRELESS_EXT > 13 */
 
 
@@ -2530,9 +2545,12 @@ wl_iw_set_encodeext(
 		bcopy(keystring, pmk.key, len);
 		pmk.flags = htod16(WSEC_PASSPHRASE);
 
+		WL_WSEC(("%s: set key %s\n", __FUNCTION__, keystring));
 		error = dev_wlc_ioctl(dev, WLC_SET_WSEC_PMK, &pmk, sizeof(pmk));
-		if (error)
+		if (error) {
+			WL_ERROR(("%s: WLC_SET_WSEC_PMK error %d\n", __FUNCTION__, error));
 			return error;
+		}
 	}
 
 	else {
@@ -2603,7 +2621,6 @@ wl_iw_set_encodeext(
 }
 
 
-#if WIRELESS_EXT > 17
 struct {
 	pmkid_list_t pmkids;
 	pmkid_t foo[MAXPMKID-1];
@@ -2690,7 +2707,6 @@ wl_iw_set_pmksa(
 	dev_wlc_bufvar_set(dev, "pmkid_info", (char *)&pmkid_list, sizeof(pmkid_list));
 	return 0;
 }
-#endif /* WIRELESS_EXT > 17 */
 
 static int
 wl_iw_get_encodeext(
@@ -2757,8 +2773,11 @@ wl_iw_set_wpaauth(
 			iw->gwsec = paramval;
 		}
 
-		if ((error = dev_wlc_intvar_get(dev, "wsec", &val)))
+		if ((error = dev_wlc_intvar_get(dev, "wsec", &val))) {
+			WL_ERROR(("%s: wsec error %d\n", __FUNCTION__, error));
 			return error;
+		}
+		WL_WSEC(("%s: get wsec=0x%x\n", __FUNCTION__, val));
 
 		cipher_combined = iw->gwsec | iw->pwsec;
 		val &= ~(WEP_ENABLED | TKIP_ENABLED | AES_ENABLED);
@@ -2788,21 +2807,29 @@ wl_iw_set_wpaauth(
 			}
 		}
 
-		if ((error = dev_wlc_intvar_set(dev, "wsec", val)))
+		WL_WSEC(("%s: set wsec=0x%x\n", __FUNCTION__, val));
+		if ((error = dev_wlc_intvar_set(dev, "wsec", val))) {
+			WL_ERROR(("%s: wsec error %d\n", __FUNCTION__, error));
 			return error;
+		}
 
 		/* Ensure in-dongle supplicant is turned on when FBT wants to do the 4-way
 		 * handshake.
 		 */
 		if (dev_wlc_intvar_get(dev, "fbt_cap", &fbt_cap) == 0) {
+			WL_WSEC(("%s: get fbt_cap=0x%x\n", __FUNCTION__, fbt_cap));
 			if (fbt_cap == WLC_FBT_CAP_DRV_4WAY_AND_REASSOC) {
 				if ((paramid == IW_AUTH_CIPHER_PAIRWISE) && (val & AES_ENABLED)) {
-					if ((error = dev_wlc_intvar_set(dev, "sup_wpa", 1)))
+					if ((error = dev_wlc_intvar_set(dev, "sup_wpa", 1))) {
+						WL_ERROR(("%s: sup_wpa 1 error %d\n", __FUNCTION__, error));
 						return error;
+					}
 				}
 				else if (val == 0) {
-					if ((error = dev_wlc_intvar_set(dev, "sup_wpa", 0)))
+					if ((error = dev_wlc_intvar_set(dev, "sup_wpa", 0))) {
+						WL_ERROR(("%s: sup_wpa 0 error %d\n", __FUNCTION__, error));
 						return error;
+					}
 				}
 			}
 		}
@@ -2810,8 +2837,11 @@ wl_iw_set_wpaauth(
 	}
 
 	case IW_AUTH_KEY_MGMT:
-		if ((error = dev_wlc_intvar_get(dev, "wpa_auth", &val)))
+		if ((error = dev_wlc_intvar_get(dev, "wpa_auth", &val))) {
+			WL_ERROR(("%s: wpa_auth error %d\n", __FUNCTION__, error));
 			return error;
+		}
+		WL_WSEC(("%s: get wpa_auth to %d\n", __FUNCTION__, val));
 
 		if (val & (WPA_AUTH_PSK | WPA_AUTH_UNSPECIFIED)) {
 			if (paramval & (IW_AUTH_KEY_MGMT_FT_PSK | IW_AUTH_KEY_MGMT_PSK))
@@ -3072,10 +3102,19 @@ static const iw_handler wl_iw_handler[] =
 #else
 	(iw_handler) NULL,			/* -- hole -- */
 #endif
+#ifdef WL_ESCAN
+	(iw_handler) NULL,			/* SIOCGIWAPLIST */
+#else
 	(iw_handler) wl_iw_iscan_get_aplist,	/* SIOCGIWAPLIST */
+#endif
 #if WIRELESS_EXT > 13
+#ifdef WL_ESCAN
+	(iw_handler) wl_escan_set_scan,	/* SIOCSIWSCAN */
+	(iw_handler) wl_escan_get_scan,	/* SIOCGIWSCAN */
+#else
 	(iw_handler) wl_iw_iscan_set_scan,	/* SIOCSIWSCAN */
 	(iw_handler) wl_iw_iscan_get_scan,	/* SIOCGIWSCAN */
+#endif
 #else	/* WIRELESS_EXT > 13 */
 	(iw_handler) NULL,			/* SIOCSIWSCAN */
 	(iw_handler) NULL,			/* SIOCGIWSCAN */
@@ -3120,8 +3159,6 @@ enum {
 	WL_IW_SET_LEDDC = SIOCIWFIRSTPRIV,
 	WL_IW_SET_VLANMODE,
 	WL_IW_SET_PM,
-#if WIRELESS_EXT > 17
-#endif /* WIRELESS_EXT > 17 */
 	WL_IW_SET_LAST
 };
 
@@ -3129,8 +3166,6 @@ static iw_handler wl_iw_priv_handler[] = {
 	wl_iw_set_leddc,
 	wl_iw_set_vlanmode,
 	wl_iw_set_pm,
-#if WIRELESS_EXT > 17
-#endif /* WIRELESS_EXT > 17 */
 	NULL
 };
 
@@ -3153,8 +3188,6 @@ static struct iw_priv_args wl_iw_priv_args[] = {
 		0,
 		"set_pm"
 	},
-#if WIRELESS_EXT > 17
-#endif /* WIRELESS_EXT > 17 */
 	{ 0, 0, 0, { 0 } }
 };
 
@@ -3220,9 +3253,11 @@ wl_iw_ioctl(
 
 #if WIRELESS_EXT > 13
 	case SIOCGIWSCAN:
+#ifndef WL_ESCAN
 	if (g_iscan)
 		max_tokens = wrq->u.data.length;
 	else
+#endif
 		max_tokens = IW_SCAN_MAX_DATA;
 		break;
 #endif /* WIRELESS_EXT > 13 */
@@ -3418,12 +3453,12 @@ wl_iw_event(struct net_device *dev, wl_event_msg_t *e, void* data)
 		cmd = SIOCGIWAP;
 		wrqu.data.length = strlen(extra);
 		if (!(flags & WLC_EVENT_MSG_LINK)) {
-			printk("%s: Link Down with BSSID="MACSTR"\n", __FUNCTION__,
+			printf("%s: Link Down with BSSID="MACSTR"\n", __FUNCTION__,
 				MAC2STR((u8 *)wrqu.addr.sa_data));
 			bzero(wrqu.addr.sa_data, ETHER_ADDR_LEN);
 			bzero(&extra, ETHER_ADDR_LEN);
 		} else {
-			printk("%s: Link UP with BSSID="MACSTR"\n", __FUNCTION__,
+			printf("%s: Link UP with BSSID="MACSTR"\n", __FUNCTION__,
 				MAC2STR((u8 *)wrqu.addr.sa_data));
 		}
 		break;
@@ -3504,6 +3539,13 @@ wl_iw_event(struct net_device *dev, wl_event_msg_t *e, void* data)
 	}
 #endif /* WIRELESS_EXT > 17 */
 
+#ifdef WL_ESCAN
+	case WLC_E_ESCAN_RESULT:
+		WL_TRACE(("event WLC_E_ESCAN_RESULT\n"));
+		wl_escan_event(dev, e, data);
+		break;
+#else
+
 	case WLC_E_SCAN_COMPLETE:
 #if WIRELESS_EXT > 14
 		cmd = SIOCGIWSCAN;
@@ -3515,6 +3557,7 @@ wl_iw_event(struct net_device *dev, wl_event_msg_t *e, void* data)
 			(g_iscan->iscan_state != ISCAN_STATE_IDLE))
 			up(&g_iscan->sysioc_sem);
 		break;
+#endif
 
 	default:
 		/* Cannot translate event */
@@ -3522,11 +3565,13 @@ wl_iw_event(struct net_device *dev, wl_event_msg_t *e, void* data)
 	}
 
 	if (cmd) {
+#ifndef WL_ESCAN
 		if (cmd == SIOCGIWSCAN) {
 			if ((!g_iscan) || (g_iscan->sysioc_pid < 0)) {
 				wireless_send_event(dev, cmd, &wrqu, NULL);
 			};
 		} else
+#endif
 			wireless_send_event(dev, cmd, &wrqu, extra);
 	}
 
@@ -3565,6 +3610,7 @@ int wl_iw_get_wireless_stats(struct net_device *dev, struct iw_statistics *wstat
 		goto done;
 
 	rssi = dtoh32(scb_val.val);
+	rssi = MIN(rssi, RSSI_MAXVAL);
 	WL_TRACE(("wl_iw_get_wireless_stats rssi=%d ****** \n", rssi));
 	if (rssi <= WL_IW_RSSI_NO_SIGNAL)
 		wstats->qual.qual = 0;
@@ -3629,6 +3675,7 @@ done:
 	return res;
 }
 
+#ifndef WL_ESCAN
 static void
 wl_iw_timerfunc(ulong data)
 {
@@ -3783,7 +3830,7 @@ _iscan_sysioc_thread(void *data)
 	uint32 status;
 	iscan_info_t *iscan = (iscan_info_t *)data;
 
-	printk("%s: thread Enter\n", __FUNCTION__);
+	printf("%s: thread Enter\n", __FUNCTION__);
 	DAEMONIZE("iscan_sysioc");
 
 	status = WL_SCAN_RESULTS_PARTIAL;
@@ -3839,16 +3886,18 @@ _iscan_sysioc_thread(void *data)
 				break;
 		 }
 	}
-	printk("%s: was terminated\n", __FUNCTION__);
+	printf("%s: was terminated\n", __FUNCTION__);
 	complete_and_exit(&iscan->sysioc_exited, 0);
 }
+#endif /* WL_ESCAN */
 
 int
 wl_iw_attach(struct net_device *dev, void * dhdp)
 {
+#ifndef WL_ESCAN
 	iscan_info_t *iscan = NULL;
 
-	printk("%s: Enter\n", __FUNCTION__);
+	printf("%s: Enter\n", __FUNCTION__);
 
 	if (!dev)
 		return 0;
@@ -3866,7 +3915,6 @@ wl_iw_attach(struct net_device *dev, void * dhdp)
 	iscan->dev = dev;
 	iscan->iscan_state = ISCAN_STATE_IDLE;
 
-
 	/* Set up the timer */
 	iscan->timer_ms    = 2000;
 	init_timer(&iscan->timer);
@@ -3883,11 +3931,13 @@ wl_iw_attach(struct net_device *dev, void * dhdp)
 #endif
 	if (iscan->sysioc_pid < 0)
 		return -ENOMEM;
+#endif /* WL_ESCAN */
 	return 0;
 }
 
 void wl_iw_detach(void)
 {
+#ifndef WL_ESCAN
 	iscan_buf_t  *buf;
 	iscan_info_t *iscan = g_iscan;
 	if (!iscan)
@@ -3904,6 +3954,7 @@ void wl_iw_detach(void)
 	}
 	kfree(iscan);
 	g_iscan = NULL;
+#endif
 }
 
 #endif /* USE_IW */

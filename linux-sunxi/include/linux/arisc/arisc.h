@@ -36,10 +36,13 @@
 
 /* RSB devices' address */
 #define RSB_DEVICE_SADDR1   	(0x3A3) /* (0x01d1)AXP22x(AW1669) */
+#define RSB_DEVICE_SADDR2       (0x745) /*(0x03a2)AXP259(AX1658)*/
 #define RSB_DEVICE_SADDR3  		(0x745) /* (0x03a2)AXP15x(AW1657) */
 #define RSB_DEVICE_SADDR7  		(0xE89) /* (0x0744)Audio codec, AC100 */
 
 /* RSB run time address */
+#define RSB_RTSADDR_AXP259  (0x3a)
+#define RSB_RTSADDR_AXP22X  (0x2d)
 #define RSB_RTSADDR_AXP809  (0x2d)
 #define RSB_RTSADDR_AXP806  (0x3a)
 #define TWI_RTSADDR_AXP152  (0x30)

@@ -1,3 +1,14 @@
+/*
+ * drivers/gpu/drm/nouveau/nvc0_copy.fuc.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 u32 nvc0_pcopy_data[] = {
 /* 0x0000: ctx_object */
 	0x00000000,

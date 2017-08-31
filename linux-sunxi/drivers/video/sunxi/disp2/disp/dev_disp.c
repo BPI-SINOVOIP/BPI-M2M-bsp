@@ -274,7 +274,7 @@ int disp_get_parameter_for_cmdlind(char *cmdline, char *name, char *value)
 	}
 	for (;;) {
 		if (*p == ' ') {
-			if (!strncmp(++p, name, sizeof(name))) {
+			if (!strncmp(++p, name, strlen(name))) {
 				while (*p != '=' && *p)
 					p++;
 				p++;

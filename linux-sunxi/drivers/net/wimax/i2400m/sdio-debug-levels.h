@@ -1,4 +1,15 @@
 /*
+ * drivers/net/wimax/i2400m/sdio-debug-levels.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * debug levels control file for the i2400m module's
  */
 #ifndef __debug_levels__h__

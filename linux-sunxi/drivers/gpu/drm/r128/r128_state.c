@@ -1,3 +1,14 @@
+/*
+ * drivers/gpu/drm/r128/r128_state.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* r128_state.c -- State support for r128 -*- linux-c -*-
  * Created: Thu Jan 27 02:53:43 2000 by gareth@valinux.com
  */

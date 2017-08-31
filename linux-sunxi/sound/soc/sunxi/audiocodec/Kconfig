@@ -7,6 +7,13 @@ config SND_SUNXI_SOC_AUDIOCODEC
 	help
 	  Say Y or M if you want to add support for audiocodec
 
+config SND_SUNXI_SOC_SUN8IW5_MACHINE
+	tristate "Audiocodec Machine for sun8iw5 chips"
+	depends on ARCH_SUN8IW5
+	default n
+	help
+	Say Y or M if you want to add sun8iw5 audiocodec support
+
 config SND_SUNXI_SOC_SUN8IW9_MACHINE
 	tristate "Audiocodec Machine for sun8iw9 chips"
 	depends on ARCH_SUN8IW9
@@ -15,7 +22,7 @@ config SND_SUNXI_SOC_SUN8IW9_MACHINE
 	  Say Y or M if you want to add sun8iw9 audiocodec support
 config SND_SUNXI_SOC_PUBLUC_MACHINE
 	tristate "Audiocodec Machine for codec chips"
-	depends on  ARCH_SUN8IW1 || ARCH_SUN8IW3 || ARCH_SUN8IW5 || ARCH_SUN8IW7 || ARCH_SUN8IW8
+	depends on  ARCH_SUN8IW1 || ARCH_SUN8IW3 || ARCH_SUN8IW7 || ARCH_SUN8IW8
 	default n
 	help
 	  Say Y or M if you want to add audiocodec machine support
@@ -60,3 +67,9 @@ config SND_SUNXI_SWITCH
        default n
 	help
          Say Y or M if you want to add sun8iwX headset support
+
+config SUNXI_AUDIO_DEBUG
+       depends on ARCH_SUN8IW5
+	bool "Support SUNXI AUDIO DEBUG"
+	help
+	 this is debug function.

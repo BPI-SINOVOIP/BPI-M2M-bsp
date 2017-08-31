@@ -1,4 +1,5 @@
 /*
+ * drivers/pinctrl/pinctrl-sun8iw6.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

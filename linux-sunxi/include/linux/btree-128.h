@@ -1,3 +1,14 @@
+/*
+ * include/linux/btree-128.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 extern struct btree_geo btree_geo128;
 
 struct btree_head128 { struct btree_head h; };

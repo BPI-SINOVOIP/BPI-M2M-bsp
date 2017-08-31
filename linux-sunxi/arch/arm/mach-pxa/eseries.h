@@ -1,3 +1,14 @@
+/*
+ * arch/arm/mach-pxa/eseries.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 void __init eseries_fixup(struct tag *tags, char **cmdline, struct meminfo *mi);
 
 extern struct pxa2xx_udc_mach_info e7xx_udc_mach_info;

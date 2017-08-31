@@ -35,7 +35,7 @@
 
 #include <linux/i2c.h>
 #include <linux/input.h>
-
+#include <linux/interrupt.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/errno.h>
@@ -47,6 +47,8 @@
 #include <linux/hrtimer.h>
 #include <linux/init.h>
 #include <linux/ioport.h>
+#include <linux/init-input.h>
+#include <linux/gpio.h>
 #include <asm/irq.h>
 #include <asm/io.h>
 #include <linux/device.h>
@@ -69,7 +71,7 @@
 #include "gslX680_m71.h"
 #include "gslX680_m7300.h"
 #include "gslX680_jinghong.h"
-#include "AW_GSL3675B_102460_A83_SOS.h"
+#include "gsl1688_r58h720.h"
 
 struct gslX680_fw_array {
 	const char* name;
@@ -87,7 +89,7 @@ struct gslX680_fw_array {
 	{"gsl_m71"  ,  ARRAY_SIZE(GSLX680_FW_M71),GSLX680_FW_M71},
 	{"gsl_m7300"  ,  ARRAY_SIZE(GSLX680_FW_M7300),GSLX680_FW_M7300},
 	{"gsl_jinghong"  ,  ARRAY_SIZE(GSLX680_FW_JINGHONG),GSLX680_FW_JINGHONG},
-	{"AW_GSL3675B_102460_A83_SOS"  ,  ARRAY_SIZE(AW_GSL3675B_102460_A83_SOS),AW_GSL3675B_102460_A83_SOS},
+	{"gsl1688_r58h720"  ,  ARRAY_SIZE(GSL1688_FW_R58h720),GSL1688_FW_R58h720},
 };
 
 unsigned int *gslX680_config_data[16] = {
@@ -102,7 +104,7 @@ unsigned int *gslX680_config_data[16] = {
     gsl_config_data_id_m71,
     gsl_config_data_id_m7300,
     gsl_config_data_id_jinghong,
-    gsl_config_data_id_AW_GSL3675B_102460_A83_SOS,
+	gsl_config_data_id_R58h720,
 };
 
 #define FOR_TSLIB_TEST

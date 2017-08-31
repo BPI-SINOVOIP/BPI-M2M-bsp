@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/disp/de/disp_smart_color.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

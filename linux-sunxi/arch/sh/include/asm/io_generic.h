@@ -1,4 +1,15 @@
 /*
+ * arch/sh/include/asm/io_generic.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Trivial I/O routine definitions, intentionally meant to be included
  * multiple times. Ugly I/O routine concatenation helpers taken from
  * alpha. Must be included _before_ io.h to avoid preprocessor-induced

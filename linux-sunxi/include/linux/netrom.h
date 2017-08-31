@@ -1,4 +1,15 @@
 /*
+ * include/linux/netrom.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * These are the public elements of the Linux kernel NET/ROM implementation.
  * For kernel AX.25 see the file ax25.h. This file requires ax25.h for the
  * definition of the ax25_address structure.

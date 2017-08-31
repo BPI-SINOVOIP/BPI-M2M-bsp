@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/lcd/panels/gm7121_cvbs.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

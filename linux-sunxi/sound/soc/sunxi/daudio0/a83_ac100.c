@@ -254,6 +254,7 @@ static const struct snd_soc_dapm_widget a80_ac100_dapm_widgets[] = {
 	SND_SOC_DAPM_MIC("External MainMic", NULL),
 	SND_SOC_DAPM_MIC("HeadphoneMic", NULL),
 	SND_SOC_DAPM_MIC("DigitalMic", NULL),
+	SND_SOC_DAPM_MIC("MIC2-MIC3", NULL),
 };
 
 static const struct snd_soc_dapm_route audio_map[] = {
@@ -263,6 +264,8 @@ static const struct snd_soc_dapm_route audio_map[] = {
 
 	{"MIC2", NULL, "HMic Bias"},
 	{"HMic Bias", NULL, "HeadphoneMic"},
+
+	{"MIC3", NULL, "MIC2-MIC3"},
 
 	/*d-mic*/
 	{"MainMic Bias", NULL, "DigitalMic"},

@@ -320,7 +320,7 @@ static int __init userscene_lock_init(void)
 {
 
 #ifdef CONFIG_ARCH_SUN8IW6P1
-	printk(KERN_INFO "lock super standby for a83!\n");
+	printk(KERN_INFO "lock super standby for r58!\n");
 	scene_lock_store(NULL, NULL, "super_standby", 0);
 #endif
 	return 0;

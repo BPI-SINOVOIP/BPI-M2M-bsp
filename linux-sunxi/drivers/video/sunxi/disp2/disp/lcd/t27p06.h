@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/disp2/disp/lcd/t27p06.h
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

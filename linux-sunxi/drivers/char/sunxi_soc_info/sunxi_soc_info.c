@@ -1,4 +1,5 @@
 /*
+ * drivers/char/sunxi_soc_info/sunxi_soc_info.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

@@ -1,3 +1,14 @@
+/*
+ * drivers/staging/rtl8192u/ieee80211/rtl819x_HTProc.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 
 //As this function is mainly ported from Windows driver, so leave the name little changed. If any confusion caused, tell me. Created by WB. 2008.05.08
 #include "ieee80211.h"

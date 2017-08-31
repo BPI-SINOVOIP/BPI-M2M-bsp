@@ -41,6 +41,7 @@ int get_scheduler_policy(struct task_struct *p);
 
 #include <wlioctl.h>
 #include <wlfc_proto.h>
+#include <hnd_pktq.h>
 
 #if defined(BCMWDF)
 #include <wdf.h>
@@ -57,7 +58,6 @@ int get_scheduler_policy(struct task_struct *p);
 #define NULL_PKT_STR	"null_pkt"
 #endif /* KEEP_ALIVE */
 /* Forward decls */
-struct pktq;
 struct dhd_bus;
 struct dhd_prot;
 struct dhd_info;
@@ -822,6 +822,7 @@ extern int wl_iw_send_priv_event(struct net_device *dev, char *flag);
 
 /* Watchdog timer interval */
 extern uint dhd_watchdog_ms;
+extern bool dhd_os_wd_timer_enabled(void *bus);
 
 #if defined(DHD_DEBUG)
 /* Console output poll interval */
@@ -835,16 +836,6 @@ extern uint iw_msg_level;
 #endif
 #ifdef WL_CFG80211
 extern uint wl_dbg_level;
-#endif
-
-#ifdef CUSTOMER_HW
-struct wifi_platform_data {
-	int (*set_power)(bool val);
-	int (*set_carddetect)(bool val);
-	void *(*mem_prealloc)(int section, unsigned long size);
-	int (*get_mac_addr)(unsigned char *buf);
-	void *(*get_country_code)(char *ccode);
-};
 #endif
 
 extern uint dhd_slpauto;

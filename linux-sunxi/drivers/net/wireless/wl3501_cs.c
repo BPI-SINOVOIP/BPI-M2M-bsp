@@ -1,4 +1,15 @@
 /*
+ * drivers/net/wireless/wl3501_cs.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * WL3501 Wireless LAN PCMCIA Card Driver for Linux
  * Written originally for Linux 2.0.30 by Fox Chen, mhchen@golf.ccl.itri.org.tw
  * Ported to 2.2, 2.4 & 2.5 by Arnaldo Carvalho de Melo <acme@conectiva.com.br>

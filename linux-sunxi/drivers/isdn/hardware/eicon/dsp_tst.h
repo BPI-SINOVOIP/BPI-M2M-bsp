@@ -1,3 +1,14 @@
+/*
+ * drivers/isdn/hardware/eicon/dsp_tst.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* $Id: dsp_tst.h,v 1.1.2.2 2001/02/08 12:25:43 armin Exp $ */
 
 #ifndef __DIVA_PRI_HOST_TEST_DSPS_H__

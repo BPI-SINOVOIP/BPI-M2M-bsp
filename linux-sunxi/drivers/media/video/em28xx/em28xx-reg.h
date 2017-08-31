@@ -1,3 +1,14 @@
+/*
+ * drivers/media/video/em28xx/em28xx-reg.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #define EM_GPIO_0  (1 << 0)
 #define EM_GPIO_1  (1 << 1)
 #define EM_GPIO_2  (1 << 2)

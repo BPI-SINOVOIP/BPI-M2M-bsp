@@ -508,13 +508,16 @@ dhdpcie_dongle_attach(dhd_bus_t *bus)
 			bus->dongle_ram_base = CR4_4360_RAM_BASE;
 			break;
 		case BCM4345_CHIP_ID:
-			bus->dongle_ram_base = CR4_4345_RAM_BASE;
+			bus->dongle_ram_base = (bus->sih->chiprev < 6)  /* changed at 4345C0 */
+				? CR4_4345_LT_C0_RAM_BASE : CR4_4345_GE_C0_RAM_BASE;
 			break;
 		case BCM43602_CHIP_ID:
 			bus->dongle_ram_base = CR4_43602_RAM_BASE;
 			break;
 		case BCM4349_CHIP_GRPID:
-			bus->dongle_ram_base = CR4_4349_RAM_BASE;
+			/* RAM base changed from 4349c0(revid=9) onwards */
+			bus->dongle_ram_base = ((bus->sih->chiprev < 9) ?
+			CR4_4349_RAM_BASE : CR4_4349_RAM_BASE_FROM_REV_9);
 			break;
 		default:
 			bus->dongle_ram_base = 0;
@@ -612,7 +615,7 @@ dhdpcie_bus_remove_prep(dhd_bus_t *bus)
 
 	bus->dhd->busstate = DHD_BUS_DOWN;
 	dhdpcie_bus_intr_disable(bus);
-	// terence 20150406: fix for null pointer handle
+	// terence 20150406: fix for null pointer handle when doing remove driver
 	if (bus->sih)
 		pcie_watchdog_reset(bus->osh, bus->sih, (sbpcieregs_t *)(bus->regs));
 
@@ -856,10 +859,11 @@ dhdpcie_download_firmware(struct dhd_bus *bus, osl_t *osh)
 	dhd_conf_preinit(bus->dhd);
 	dhd_conf_read_config(bus->dhd, bus->dhd->conf_path);
 	dhd_conf_set_fw_name_by_chip(bus->dhd, bus->fw_path);
+	dhd_conf_set_nv_name_by_chip(bus->dhd, bus->nv_path);
 
-	printk("Final fw_path=%s\n", bus->fw_path);
-	printk("Final nv_path=%s\n", bus->nv_path);
-	printk("Final conf_path=%s\n", bus->dhd->conf_path);
+	printf("Final fw_path=%s\n", bus->fw_path);
+	printf("Final nv_path=%s\n", bus->nv_path);
+	printf("Final conf_path=%s\n", bus->dhd->conf_path);
 
 	ret = _dhdpcie_download_firmware(bus);
 
@@ -883,7 +887,7 @@ dhdpcie_download_code_file(struct dhd_bus *bus, char *pfw_path)
 	 */
 	image = dhd_os_open_image(pfw_path);
 	if (image == NULL) {
-		printk("%s: Open firmware file failed %s\n", __FUNCTION__, pfw_path);
+		printf("%s: Open firmware file failed %s\n", __FUNCTION__, pfw_path);
 		goto err;
 	}
 
@@ -954,7 +958,7 @@ dhdpcie_download_nvram(struct dhd_bus *bus)
 	if (nvram_file_exists) {
 		image = dhd_os_open_image(pnv_path);
 		if (image == NULL) {
-			printk("%s: Open nvram file failed %s\n", __FUNCTION__, pnv_path);
+			printf("%s: Open nvram file failed %s\n", __FUNCTION__, pnv_path);
 			goto err;
 		}
 	}
@@ -2565,10 +2569,6 @@ dhd_bus_devreset(dhd_pub_t *dhdp, uint8 flag)
 			DHD_ERROR(("%s: == Power OFF ==\n", __FUNCTION__));
 			bus->dhd->up = FALSE;
 			if (bus->dhd->busstate != DHD_BUS_DOWN) {
-				if (bus->intr) {
-					dhdpcie_bus_intr_disable(bus);
-					dhdpcie_free_irq(bus);
-				}
 #ifdef BCMPCIE_OOB_HOST_WAKE
 				/* Clean up any pending host wake IRQ */
 				dhd_bus_oob_intr_set(bus->dhd, FALSE);
@@ -2576,6 +2576,10 @@ dhd_bus_devreset(dhd_pub_t *dhdp, uint8 flag)
 #endif /* BCMPCIE_OOB_HOST_WAKE */
 				dhd_os_wd_timer(dhdp, 0);
 				dhd_bus_stop(bus, TRUE);
+				if (bus->intr) {
+					dhdpcie_bus_intr_disable(bus);
+					dhdpcie_free_irq(bus);
+				}
 				dhd_prot_clear(dhdp);
 				dhd_clear(dhdp);
 				dhd_bus_release_dongle(bus);

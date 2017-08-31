@@ -10,7 +10,11 @@ PLATFORM=arisc_sun8iw3p1
 endif
 
 ifdef CONFIG_ARCH_SUN8IW5P1
+ifdef CONFIG_AW_AXP259
+PLATFORM=arisc_sun8iw5p1_axp259
+else
 PLATFORM=arisc_sun8iw5p1
+endif
 endif
 
 ifdef CONFIG_ARCH_SUN8IW6P1

@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/legacy/lcd/panels/lp079x01.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

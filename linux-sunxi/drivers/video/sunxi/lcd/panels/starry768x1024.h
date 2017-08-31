@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/lcd/panels/starry768x1024.h
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

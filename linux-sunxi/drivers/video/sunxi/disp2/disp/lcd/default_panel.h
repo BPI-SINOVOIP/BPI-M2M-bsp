@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/disp2/disp/lcd/default_panel.h
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

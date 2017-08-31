@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/disp2/disp/de/lowlevel_sun8iw8/de_smbl_tab.h
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

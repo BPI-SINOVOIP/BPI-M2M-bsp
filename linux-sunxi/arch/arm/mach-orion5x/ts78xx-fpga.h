@@ -1,3 +1,14 @@
+/*
+ * arch/arm/mach-orion5x/ts78xx-fpga.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #define TS7800_FPGA_MAGIC 0x00b480
 #define FPGAID(_magic, _rev) ((_magic << 8) + _rev)
 

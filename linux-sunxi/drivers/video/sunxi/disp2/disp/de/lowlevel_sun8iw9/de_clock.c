@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/disp2/disp/de/lowlevel_sun8iw9/de_clock.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

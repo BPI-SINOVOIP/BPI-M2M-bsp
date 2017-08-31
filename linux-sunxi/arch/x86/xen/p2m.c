@@ -1,4 +1,15 @@
 /*
+ * arch/x86/xen/p2m.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Xen leaves the responsibility for maintaining p2m mappings to the
  * guests themselves, but it must also access and update the p2m array
  * during suspend/resume when all the pages are reallocated.

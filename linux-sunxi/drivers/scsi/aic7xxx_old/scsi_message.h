@@ -1,3 +1,14 @@
+/*
+ * drivers/scsi/aic7xxx_old/scsi_message.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* Messages (1 byte) */		     /* I/T (M)andatory or (O)ptional */
 #define MSG_CMDCOMPLETE		0x00 /* M/M */
 #define MSG_EXTENDED		0x01 /* O/O */

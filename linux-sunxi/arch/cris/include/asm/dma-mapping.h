@@ -1,3 +1,14 @@
+/*
+ * arch/cris/include/asm/dma-mapping.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* DMA mapping. Nothing tricky here, just virt_to_phys */
 
 #ifndef _ASM_CRIS_DMA_MAPPING_H

@@ -24,7 +24,7 @@ inline u32 ss_readl(u32 offset)
 	return readl(ss_membase() + offset);
 }
 
-inline void ss_writel(u32 offset, u32 val)
+static inline void ss_writel(u32 offset, u32 val)
 {
 	writel(val, ss_membase() + offset);
 }

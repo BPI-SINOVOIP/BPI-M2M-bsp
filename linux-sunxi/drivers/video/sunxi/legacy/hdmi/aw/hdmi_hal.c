@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/legacy/hdmi/aw/hdmi_hal.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

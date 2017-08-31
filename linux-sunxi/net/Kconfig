@@ -352,5 +352,190 @@ source "net/caif/Kconfig"
 source "net/ceph/Kconfig"
 source "net/nfc/Kconfig"
 
+config COMPAT_WIRELESS
+       tristate "Compat Wireless"
+       default n
+       ---help---
+         To compile this code as a module, choose M here.
+
+if COMPAT_WIRELESS
+
+config CFG80211
+       tristate "Compat CFG80211"
+       default n
+       ---help---
+         To compile this code as a module, choose M here.
+
+config MAC80211
+       tristate "Compat MAC80211"
+       default n
+       ---help---
+         To compile this code as a module, choose M here.
+
+config COMPAT_MAC80211_RC_DEFAULT
+       string "MAC80211_RC_DEFAULT"
+       default "minstrel_ht"
+       ---help---
+       		mac80211 rc
+
+config COMPAT_RFKILL
+       tristate "Compat RFKILL"
+       depends on COMPAT_WIRELESS
+       default y
+       ---help---
+       	Compat rfkill
+
+config NL80211_TESTMODE
+       bool "Compat NL80211 testmode"
+       depends on COMPAT_WIRELESS
+       default y
+       ---help---
+            Compat  test
+ 
+config CFG80211_DEFAULT_PS
+       bool "CFG80211_DEFAULT_PS"
+       depends on COMPAT_WIRELESS
+       default y
+       ---help---
+            Cfg80211 ps
+
+config CFG80211_REG_DEBUG
+       bool "CFG80211_REG_DEBUG"
+       depends on COMPAT_WIRELESS
+       default y
+       ---help---
+       	Cfg80211
+
+config MAC80211_RC_PID
+       bool "MAC80211_RC_PID"
+       depends on COMPAT_WIRELESS
+       default y
+       ---help---
+       Mac80211 rc pid
+
+config MAC80211_RC_MINSTREL
+       bool "MAC80211_RC_MINSTREL"
+       depends on COMPAT_WIRELESS
+       default y
+       ---help---
+          Mac80211 rc minstrel
+
+config MAC80211_RC_MINSTREL_HT
+       bool "Minstrel 802.11n support" if EXPERT
+       depends on MAC80211_RC_MINSTREL
+       default y
+       ---help---
+         This option enables the 'minstrel_ht' TX rate control algorithm
+
+config MAC80211_DEBUGFS
+       bool "MAC80211_DEBUGFS"
+       depends on MAC80211_RC_MINSTREL
+       default y
+       ---help---
+         This option enables the debugfs of 'minstrel'(TX rate control algorithm)
+         
+config MAC80211_MESH
+       bool "MAC80211_MESH"
+       depends on COMPAT_WIRELESS
+       default y
+       ---help---
+       	Mesh
+
+config XRADIO
+       tristate "XRADIO WLAN support"
+       select MAC80211
+       select CFG80211
+       help
+
+         This is an experimental driver for the XRADIO chip-set.
+         Enabling this option enables the generic driver without
+         any platform support.
+         Please select the appropriate platform below.
+
+if XRADIO
+
+config XRADIO_SDIO
+      bool "SDIO bus wlan module"
+      depends on XRADIO
+      default y
+      help
+        Say N here if module don't use sdio bus.
+        If unsure, say Y.
+
+config XRADIO_NON_POWER_OF_TWO_BLOCKSIZES
+      bool "Platform supports non-power-of-two SDIO transfer"
+      depends on XRADIO
+      default y
+      help
+        Say N here only if you are running the driver on a platform
+        which does not have support for non-power-of-two SDIO transfer.
+        If unsure, say Y.
+
+config XRADIO_USE_GPIO_IRQ
+      bool "Use GPIO interrupt"
+      depends on XRADIO
+      default y
+      help
+        Say Y here if you want to include GPIO IRQ support instead of SDIO IRQ.
+        If unsure, say N.
+
+config XRADIO_5GHZ_SUPPORT
+      bool "5GHz band support"
+      depends on XRADIO
+      help
+        Say Y if your device supports 5GHz band. If unsure, say N.
+
+config XRADIO_WAPI_SUPPORT
+      bool "WAPI support"
+      depends on XRADIO
+      help
+        Say Y if your compat-wireless support WAPI.
+        If unsure, say N.
+
+config XRADIO_USE_EXTENSIONS
+      bool "Extensions for WFD and PS mode"
+      depends on XRADIO
+      default y
+      help
+        Say Y if you want to include XR extensions
+        If unsure, say Y.
+
+menu "Driver debug features"
+      depends on XRADIO
+
+config XRADIO_DEBUG
+      bool "Enable XRADIO debug messages (DEVELOPMENT)"
+      help
+        Say Y if want driver debug information.
+        If unsure, say N.
+
+config XRADIO_DUMP_ON_ERROR
+      bool "Dump kernel in case of critical error (DEVELOPMENT)"
+      depends on XRADIO_DEBUG
+      default y
+      help
+        Say Y if want to Dump kernel in case of critical error.
+        If unsure, say N.
+
+config XRADIO_DEBUGFS
+      bool "Expose driver internals to DebugFS (DEVELOPMENT)"
+      depends on XRADIO_DEBUG
+      default y
+      help
+        Say Y if want more methods to debug.
+        If unsure, say N.
+
+config XRADIO_ITP
+      bool "Enable ITP DebugFS"
+      depends on XRADIO_DEBUG
+      help
+        Say Y if you want to include ITP code.
+        If unsure, say N.
+
+endmenu
+
+endif
+
+endif
 
 endif   # if NET

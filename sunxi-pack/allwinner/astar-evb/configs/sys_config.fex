@@ -170,7 +170,7 @@ standby_mode		= 1
 
 dram_clk        = 552
 dram_type       = 3
-dram_zq         = 0x3bbb
+dram_zq         = 0x3bfb
 dram_odt_en     = 1
 dram_para1      = 0x10F20200
 dram_para2      = 0x00
@@ -191,7 +191,7 @@ dram_tpr9       = 0x0
 dram_tpr10      = 0x0
 dram_tpr11      = 0x0
 dram_tpr12      = 168
-dram_tpr13      = 0x10900
+dram_tpr13      = 0x00800
 
 ;---------------------------------------------------------------------------------------------------------
 ; if 1 == standby_mode, then support super standby;
@@ -1082,8 +1082,8 @@ frame_width         = 1
 tx_data_mode		= 1
 rx_data_mode		= 1
 i2s0_mclk            =
-i2s0_bclk            = port:PB04<2><1><default><default>
-i2s0_lrclk           = port:PB05<2><1><default><default>
+i2s0_bclk            = port:PB05<2><1><default><default>
+i2s0_lrclk           = port:PB04<2><1><default><default>
 i2s0_dout0           = port:PB06<2><1><default><default>
 i2s0_dout1           =
 i2s0_dout2           =
@@ -1159,20 +1159,33 @@ pa_double_vol		= 0x3e
 headphone_direct_used	= 1
 headset_mic_vol		= 3
 main_mic_vol		= 1
-mic1_used				= 1
-mic2_used				= 0
-linein_to_spk_used	= 0
-linein_to_hp_used	= 0
-linein_to_aif2_used     = 0
 audio_pa_ctrl           = port:PD11<1><default><default><0>
-audio_linein_ctrl	= port:PE14<0><default><default><0>
+audio_linein_detect	= port:PE14<0><default><default><0>
 aif2_used		= 0
-aif3_used		= 0
+aif3_used		= 1
 headphone_mute_used	= 0
-DAC_VOL_CTRL_SPK        = 0xa0a0
-DAC_VOL_CTRL_HEADPHONE	= 0xa0a0
+pa_gpio_reverse 	= 0
 agc_used		= 0
 drc_used		= 0
+aif1_lrlk_div 		= 0x40
+
+[codec_aif2]
+aif2_lrlk_div 		= 0x20
+aif2master = 1
+aif2fmt = 0
+aif2_bclk            = port:PB05<3><1><default><default>
+aif2_lrclk           = port:PB04<3><1><default><default>
+aif2_dout            = port:PB06<3><1><default><default>
+aif2_din             = port:PB07<3><1><default><default>
+
+[codec_aif3]
+aif3fmt = 4
+aif3_bclk            = port:PG11<3><1><default><default>
+aif3_lrclk           = port:PG10<3><1><default><default>
+aif3_dout            = port:PG12<3><1><default><default>
+aif3_din             = port:PG13<3><1><default><default>
+
+
 ;-------------------------------------------------------------------------------------
 ;pmu_used                    ---0:not used,1:used
 ;pmu_twi_addr                ---slave address

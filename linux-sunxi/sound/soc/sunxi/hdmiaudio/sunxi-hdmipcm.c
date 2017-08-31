@@ -524,12 +524,12 @@ static struct snd_soc_platform_driver sunxi_soc_platform_hdmiaudio = {
 		.pcm_free	= sunxi_pcm_free_dma_buffers,
 };
 
-static int __init sunxi_hdmiaudio_pcm_probe(struct platform_device *pdev)
+static int sunxi_hdmiaudio_pcm_probe(struct platform_device *pdev)
 {
 	return snd_soc_register_platform(&pdev->dev, &sunxi_soc_platform_hdmiaudio);
 }
 
-static int __exit sunxi_hdmiaudio_pcm_remove(struct platform_device *pdev)
+static int __devexit sunxi_hdmiaudio_pcm_remove(struct platform_device *pdev)
 {
 	snd_soc_unregister_platform(&pdev->dev);
 	return 0;

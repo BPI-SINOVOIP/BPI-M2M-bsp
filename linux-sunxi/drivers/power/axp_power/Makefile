@@ -7,13 +7,21 @@ obj-$(CONFIG_AW_AXP) += axp-regu-script.o
 obj-$(CONFIG_AW_AXP) += axp-interface.o
 
 #Make this built-in, so that it will be loaded before I2C driver
+#AXP259
+obj-$(CONFIG_AW_AXP259) += axp259/axp259-board.o
+obj-$(CONFIG_AW_AXP259) += axp259/axp259-sply.o
+#obj-$(CONFIG_AW_AXP259) += virtual22.o
+#obj-$(CONFIG_AW_AXP259) += virtual22_dev.o
+#obj-$(CONFIG_AW_AXP259) += axp-debugfs.o
 #AXP22x
 obj-$(CONFIG_AW_AXP22) += axp22-board.o
 obj-$(CONFIG_AW_AXP22) += axp22-regu.o
+ifeq ($(CONFIG_AW_AXP259), )
 obj-$(CONFIG_AW_AXP22) += axp22-sply.o
 obj-$(CONFIG_AW_AXP22) += virtual22.o
 obj-$(CONFIG_AW_AXP22) += virtual22_dev.o
 obj-$(CONFIG_AW_AXP22) += axp-debugfs.o
+endif
 #AXP15x
 obj-$(CONFIG_AW_AXP15) += axp15-board.o
 obj-$(CONFIG_AW_AXP15) += axp15-regu.o

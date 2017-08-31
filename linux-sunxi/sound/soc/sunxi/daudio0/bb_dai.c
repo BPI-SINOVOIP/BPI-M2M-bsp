@@ -85,7 +85,7 @@ static struct snd_soc_dai_driver bb_dai = {
 		.formats = SNDRV_PCM_FMTBIT_S16_LE,},
 	.ops 		= &bb_dai_ops,
 };
-static int __init bb_dev_probe(struct platform_device *pdev)
+static int bb_dev_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	ret = snd_soc_register_dai(&pdev->dev, &bb_dai);
@@ -96,7 +96,7 @@ static int __init bb_dev_probe(struct platform_device *pdev)
 	return 0;
 }
 
-static int __exit bb_dev_remove(struct platform_device *pdev)
+static int __devexit bb_dev_remove(struct platform_device *pdev)
 {
 	snd_soc_unregister_dai(&pdev->dev);
 	platform_set_drvdata(pdev, NULL);

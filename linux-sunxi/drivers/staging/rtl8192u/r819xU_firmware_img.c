@@ -1,3 +1,14 @@
+/*
+ * drivers/staging/rtl8192u/r819xU_firmware_img.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /*Created on  2008/ 7/16,  5:31*/
 #include <linux/types.h>
 

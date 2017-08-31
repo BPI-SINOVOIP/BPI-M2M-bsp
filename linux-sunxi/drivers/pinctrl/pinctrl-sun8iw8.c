@@ -455,14 +455,14 @@ static struct sunxi_desc_pin sun8i_w8_pins[]={
 	SUNXI_PIN(SUNXI_PINCTRL_PIN_PE21,
 		SUNXI_FUNCTION(0x0, "gpio_in"),
 		SUNXI_FUNCTION(0x1, "gpio_out"),
-		SUNXI_FUNCTION(0x2, "csi0"),		/* SCK */
+		SUNXI_FUNCTION(0x2, "csi1"),		/* SCK */
 		SUNXI_FUNCTION(0x3, "twi1"),		/* SCK */
 		SUNXI_FUNCTION(0x4, "uart1"),		/* TX */
 		SUNXI_FUNCTION(0x7, "io_disable")),
 	SUNXI_PIN(SUNXI_PINCTRL_PIN_PE22,
 		SUNXI_FUNCTION(0x0, "gpio_in"),
 		SUNXI_FUNCTION(0x1, "gpio_out"),
-		SUNXI_FUNCTION(0x2, "csi0"),		/* SDA */
+		SUNXI_FUNCTION(0x2, "csi1"),		/* SDA */
 		SUNXI_FUNCTION(0x3, "twi1"),		/* SDA */
 		SUNXI_FUNCTION(0x4, "uart1"),		/* RX */
 		SUNXI_FUNCTION(0x7, "io_disable")),

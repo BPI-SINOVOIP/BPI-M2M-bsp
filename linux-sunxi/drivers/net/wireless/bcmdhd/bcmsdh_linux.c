@@ -324,7 +324,7 @@ int bcmsdh_oob_intr_register(bcmsdh_info_t *bcmsdh, bcmsdh_cb_fn_t oob_irq_handl
 #else
 	printf("%s: SW_OOB enabled\n", __FUNCTION__);
 #endif
-	SDLX_MSG(("%s OOB irq=%d flags=%X\n", __FUNCTION__,
+	SDLX_MSG(("%s OOB irq=%d flags=0x%X\n", __FUNCTION__,
 		(int)bcmsdh_osinfo->oob_irq_num, (int)bcmsdh_osinfo->oob_irq_flags));
 	bcmsdh_osinfo->oob_irq_handler = oob_irq_handler;
 	bcmsdh_osinfo->oob_irq_handler_context = oob_irq_handler_context;
@@ -346,11 +346,7 @@ int bcmsdh_oob_intr_register(bcmsdh_info_t *bcmsdh, bcmsdh_cb_fn_t oob_irq_handl
 
 #if defined(DISABLE_WOWLAN)
 	SDLX_MSG(("%s: disable_irq_wake\n", __FUNCTION__));
-	err = disable_irq_wake(bcmsdh_osinfo->oob_irq_num);
-	if (err)
-		SDLX_MSG(("%s: disable_irq_wake failed with %d\n", __FUNCTION__, err));
-	else
-		bcmsdh_osinfo->oob_irq_wake_enabled = FALSE;
+	bcmsdh_osinfo->oob_irq_wake_enabled = FALSE;
 #else
 	SDLX_MSG(("%s: enable_irq_wake\n", __FUNCTION__));
 	err = enable_irq_wake(bcmsdh_osinfo->oob_irq_num);

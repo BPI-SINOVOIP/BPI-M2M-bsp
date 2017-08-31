@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/disp2/hdmi/aw/hdmi_interface.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

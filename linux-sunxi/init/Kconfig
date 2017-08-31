@@ -390,9 +390,6 @@ source "kernel/irq/Kconfig"
 
 menu "RCU Subsystem"
 
-choice
-	prompt "RCU Implementation"
-	default TREE_RCU
 
 config TREE_RCU
 	bool "Tree-based hierarchical RCU"
@@ -429,8 +426,6 @@ config TINY_PREEMPT_RCU
 	  This option selects the RCU implementation that is designed
 	  for real-time UP systems.  This option greatly reduces the
 	  memory footprint of RCU.
-
-endchoice
 
 config PREEMPT_RCU
 	def_bool ( TREE_PREEMPT_RCU || TINY_PREEMPT_RCU )

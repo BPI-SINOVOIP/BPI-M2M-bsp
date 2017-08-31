@@ -35,6 +35,7 @@
 #include <linux/interrupt.h>
 #include <linux/platform_device.h>
 #include <linux/serial_core.h>
+#include <linux/proc_fs.h>
 
 #include <linux/gpio.h>
 #include <mach/gpio.h>
@@ -214,7 +215,7 @@ static void bluesleep_stop(void)
 }
 
 extern struct platform_device *sw_uart_get_pdev(int uart_id);
-static int __init bluesleep_probe(struct platform_device *pdev)
+static int bluesleep_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	int ret;

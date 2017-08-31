@@ -138,12 +138,12 @@ static struct snd_soc_codec_driver soc_codec_dev_snddaudio = {
 	.remove =   snddaudio_soc_remove,
 };
 
-static int __init snddaudio_codec_probe(struct platform_device *pdev)
+static int snddaudio_codec_probe(struct platform_device *pdev)
 {
 	return snd_soc_register_codec(&pdev->dev, &soc_codec_dev_snddaudio, &snddaudio_dai, 1);	
 }
 
-static int __exit snddaudio_codec_remove(struct platform_device *pdev)
+static int snddaudio_codec_remove(struct platform_device *pdev)
 {
 	snd_soc_unregister_codec(&pdev->dev);
 	return 0;

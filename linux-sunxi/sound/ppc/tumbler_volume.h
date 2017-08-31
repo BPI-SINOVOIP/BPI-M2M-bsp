@@ -1,3 +1,14 @@
+/*
+ * sound/ppc/tumbler_volume.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* volume tables, taken from TAS3001c data manual */
 /* volume gain values */
 /* 0 = -70 dB, 175 = 18.0 dB in 0.5 dB step */

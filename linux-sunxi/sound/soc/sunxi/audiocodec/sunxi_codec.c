@@ -40,25 +40,37 @@
 
 #define SUNXI_PCM_RATES (SNDRV_PCM_RATE_8000_192000 | SNDRV_PCM_RATE_KNOT)
 
-
 #if defined CONFIG_ARCH_SUN8IW5 || defined CONFIG_ARCH_SUN8IW9
 static bool RECORD_TEST_EN;
-static u32 sample_resolution =16;
+static u32 sample_resolution = 16;
+struct clk *module_clk;
+struct clk *pll_clk;
+
 static struct sunxi_dma_params sunxi_pcm_pcm_stereo_out = {
-	.name		= "audio_play",
-	.dma_addr	= CODEC_BASSADDRESS + SUNXI_DA_TXFIFO,//send data address
+	.name = "audio_play",
+	.dma_addr = CODEC_BASSADDRESS + SUNXI_DA_TXFIFO,
 };
 
 static struct sunxi_dma_params sunxi_pcm_pcm_stereo_in = {
-	.name   	= "audio_capture",
-	.dma_addr	= CODEC_BASSADDRESS + SUNXI_DA_RXFIFO,//accept data address
+	.name = "audio_capture",
+	.dma_addr = CODEC_BASSADDRESS + SUNXI_DA_RXFIFO,
 };
 
+#ifdef CONFIG_ARCH_SUN8IW5
+static int sunxi_i2s_set_rate(int freq)
+{
+	if (clk_set_rate(pll_clk, freq))
+		pr_err("set pll_clk rate fail\n");
+	if (clk_set_rate(module_clk, freq))
+		pr_err("set module_clk rate fail\n");
+	return 0;
+}
+#endif
 static void sunxi_snd_txctrl(struct snd_pcm_substream *substream, int on)
 {
-	/*clear TX counter*/
+	/*clear TX counter */
 	codec_wr_control(SUNXI_DA_TXCNT, 0xffffffff, TX_CNT, 0);
-	/*flush TX FIFO*/
+	/*flush TX FIFO */
 	codec_wr_control(SUNXI_DA_FCTL, 0x1, FTX, 1);
 	if (on) {
 		/* enable DMA DRQ mode for play */
@@ -71,9 +83,9 @@ static void sunxi_snd_txctrl(struct snd_pcm_substream *substream, int on)
 
 static void sunxi_snd_rxctrl(struct snd_pcm_substream *substream, int on)
 {
-	/*clear RX counter*/
+	/*clear RX counter */
 	codec_wr_control(SUNXI_DA_RXCNT, 0xffffffff, RX_CNT, 0);
-	/*flush RX FIFO*/
+	/*flush RX FIFO */
 	codec_wr_control(SUNXI_DA_FCTL, 0x1, FRX, 1);
 	if (on) {
 		/* enable DMA DRQ mode for record */
@@ -85,24 +97,24 @@ static void sunxi_snd_rxctrl(struct snd_pcm_substream *substream, int on)
 }
 
 static int sunxi_i2s_trigger(struct snd_pcm_substream *substream,
-                              int cmd, struct snd_soc_dai *dai)
+			     int cmd, struct snd_soc_dai *dai)
 {
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		switch (cmd) {
-			case SNDRV_PCM_TRIGGER_START:
-			case SNDRV_PCM_TRIGGER_RESUME:
-			case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-				/*enable i2s tx*/
-				sunxi_snd_txctrl(substream, 1);
-				return 0;
-			case SNDRV_PCM_TRIGGER_SUSPEND:
-			case SNDRV_PCM_TRIGGER_STOP:
-			case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-				sunxi_snd_txctrl(substream, 0);
-				return 0;
-			default:
-				return -EINVAL;
-			}
+		case SNDRV_PCM_TRIGGER_START:
+		case SNDRV_PCM_TRIGGER_RESUME:
+		case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+			/*enable i2s tx */
+			sunxi_snd_txctrl(substream, 1);
+			return 0;
+		case SNDRV_PCM_TRIGGER_SUSPEND:
+		case SNDRV_PCM_TRIGGER_STOP:
+		case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+			sunxi_snd_txctrl(substream, 0);
+			return 0;
+		default:
+			return -EINVAL;
+		}
 	} else {
 		switch (cmd) {
 		case SNDRV_PCM_TRIGGER_START:
@@ -124,338 +136,358 @@ static int sunxi_i2s_trigger(struct snd_pcm_substream *substream,
 }
 
 static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
-	struct snd_pcm_hw_params *params,
-	struct snd_soc_dai *dai)
+			       struct snd_pcm_hw_params *params,
+			       struct snd_soc_dai *dai)
 {
-	int rs_value  = 0;
+	int rs_value = 0;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct sunxi_dma_params *dma_data;
 
-	switch (params_format(params))
-	{
-		case SNDRV_PCM_FORMAT_S16_LE:
-			sample_resolution = 16;
-			break;
-		case SNDRV_PCM_FORMAT_S20_3LE:
-			sample_resolution = 24;
-			break;
-		case SNDRV_PCM_FORMAT_S24_LE:
-			sample_resolution = 24;
-			break;
-		case SNDRV_PCM_FORMAT_S32_LE:
-			sample_resolution = 24;
-			break;
-		default:
-			return -EINVAL;
+	switch (params_format(params)) {
+	case SNDRV_PCM_FORMAT_S16_LE:
+		sample_resolution = 16;
+		break;
+	case SNDRV_PCM_FORMAT_S20_3LE:
+		sample_resolution = 24;
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
+		sample_resolution = 24;
+		break;
+	case SNDRV_PCM_FORMAT_S32_LE:
+		sample_resolution = 24;
+		break;
+	default:
+		return -EINVAL;
 	}
 
-		/* sample rate */
-	switch(sample_resolution)
-	{
-		case 16: rs_value = 0;
-			break;
-		case 20: rs_value = 1;
-			break;
-		case 24: rs_value = 2;
-			break;
-		default:
-			return -EINVAL;
-		//case 32: rs_value = 3;
-		//	break;
+	/* sample rate */
+	switch (sample_resolution) {
+	case 16:
+		rs_value = 0;
+		break;
+	case 20:
+		rs_value = 1;
+		break;
+	case 24:
+		rs_value = 2;
+		break;
+	default:
+		return -EINVAL;
 	}
 	codec_wr_control(SUNXI_DA_FAT0, 0x3, SR, rs_value);
 #ifdef CONFIG_ARCH_SUN8IW5
-	/*calculate word select bit*/
-	switch (sample_resolution)
-	{
-		case 16: rs_value = 0x1;
-			break;
-		case 8: rs_value = 0x0;
-			break;
-		case 20: rs_value = 0x2;
-			break;
-		case 24: rs_value = 0x3;
-			break;
-		default:
-			break;
+	/*calculate word select bit */
+	switch (sample_resolution) {
+	case 16:
+		rs_value = 0x1;
+		break;
+	case 8:
+		rs_value = 0x0;
+		break;
+	case 20:
+		rs_value = 0x2;
+		break;
+	case 24:
+		rs_value = 0x3;
+		break;
+	default:
+		break;
 	}
-	codec_wr_control(SUNXI_AIF1CLK_CTRL, 0x3, AIF1_WORD_SIZ, rs_value);
+	codec_wr_control(SUNXI_AIF1_CLK_CTRL, 0x3, AIF1_WORD_SIZ, rs_value);
 #endif
 
-	if(sample_resolution == 24)
+	if (sample_resolution == 24)
 		codec_wr_control(SUNXI_DA_FCTL, 0xf, RXOM, 0x1);
 	else
 		codec_wr_control(SUNXI_DA_FCTL, 0xf, RXOM, 0x5);
 
 	/* play or record */
-	if(substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		dma_data = &sunxi_pcm_pcm_stereo_out;
 	else
 		dma_data = &sunxi_pcm_pcm_stereo_in;
-
 
 	snd_soc_dai_set_dma_data(rtd->cpu_dai, substream, dma_data);
 
 	return 0;
 }
-extern int sunxi_i2s_set_rate(int );
+extern int sunxi_i2s_set_rate(int);
 
 static int sunxi_i2s_set_sysclk(struct snd_soc_dai *cpu_dai,
-				  int clk_id, unsigned int freq, int dir)
+				int clk_id, unsigned int freq, int dir)
 {
-	/*config i2s clk*/
+	/*config i2s clk */
 #ifdef CONFIG_ARCH_SUN8IW5
 	sunxi_i2s_set_rate(freq);
 
-	/*config aif1 clk from pll*/
+	/*config aif1 clk from pll */
 	codec_wr_control(SUNXI_SYSCLK_CTL, 0x3, AIF1CLK_SRC, 0x3);
 
-	/*config sys clk from aif1clk*/
+	/*config sys clk from aif1clk */
 	codec_wr_control(SUNXI_SYSCLK_CTL, 0x1, SYSCLK_SRC, 0x0);
 #endif
 	return 0;
 }
 
-static int sunxi_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id, int samplerate )
+static int sunxi_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id,
+				int samplerate)
 {
 	u32 mclk_div = 0;
 	u32 bclk_div = 0;
 	int wss_value = 0;
-	//int rs_value  = 0;
 	u32 over_sample_rate = 0;
 	u32 word_select_size = 32;
-//	u32 sample_resolution =16;
 #ifdef CONFIG_ARCH_SUN8IW5
 	u32 bclk_lrck_div = 64;
-	//int aif1_word_size = 16;
 #endif
-	/*mclk div calculate*/
-	switch(samplerate)
-	{
-		case 8000:
+	/*mclk div calculate */
+	switch (samplerate) {
+	case 8000:
 		{
 			over_sample_rate = 128;
 			mclk_div = 24;
 			break;
 		}
-		case 16000:
+	case 16000:
 		{
 			/*
-			* bclk = 2*wss*fs = 1.024M.
-			* if mclk=24.576M,bclk_div = 24,NO SUPPORT;
-			* if mclk = 12.288M,bclk_div =12,SUPPORT;
-			*/
+			 * bclk = 2*wss*fs = 1.024M.
+			 * if mclk=24.576M,bclk_div = 24,NO SUPPORT;
+			 * if mclk = 12.288M,bclk_div =12,SUPPORT;
+			 */
 			over_sample_rate = 768;
-			/*mclk = 12.288M*/
+			/*mclk = 12.288M */
 			mclk_div = 2;
 #if defined CONFIG_SND_SOC_TAS5707
-		if (RECORD_TEST_EN == true) {
-			over_sample_rate = 256;
-			/*mclk = 4.096M.bclk_div = 4;bclk = 2*wss*fs = 1.024M.*/
-			mclk_div = 6;
-		}
+			if (RECORD_TEST_EN == true) {
+				over_sample_rate = 256;
+				/*mclk = 4.096M.bclk_div = 4;bclk = 2*wss*fs = 1.024M. */
+				mclk_div = 6;
+			}
 #endif
 			break;
 		}
-		case 32000:
+	case 32000:
 		{
 			over_sample_rate = 128;
 			mclk_div = 6;
 			break;
 		}
-		case 64000:
+	case 64000:
 		{
 			over_sample_rate = 384;
 			mclk_div = 1;
 			break;
 		}
-		case 11025:
-		case 12000:
+	case 11025:
+	case 12000:
 		{
 			over_sample_rate = 128;
 			mclk_div = 16;
 			break;
 		}
-		case 22050:
-		case 24000:
+	case 22050:
+	case 24000:
 		{
 			over_sample_rate = 128;
 			mclk_div = 8;
 			break;
-		 }
-		 case 44100:
-		 case 48000:
-		 {
-			/*bclk = 2*wss*fs = 3.072M,bclk_div = 8;*/
+		}
+	case 44100:
+	case 48000:
+		{
+			/*bclk = 2*wss*fs = 3.072M,bclk_div = 8; */
 			over_sample_rate = 256;
 			mclk_div = 2;
 			break;
-		 }
-		 case 88200:
-		 case 96000:
+		}
+	case 88200:
+	case 96000:
 		{
-			 over_sample_rate = 128;
-			 mclk_div = 2;
-			 break;
-		 }
-		 case 176400:
-		 case 192000:
-		 {
-			 over_sample_rate = 128;
-			 mclk_div = 1;
-			 break;
+			over_sample_rate = 128;
+			mclk_div = 2;
+			break;
+		}
+	case 176400:
+	case 192000:
+		{
+			over_sample_rate = 128;
+			mclk_div = 1;
+			break;
 		}
 
-	 }
+	}
 
-	 /*bclk div caculate*/
-	 bclk_div = over_sample_rate/(2*word_select_size);
-	 /*calculate MCLK Divide Ratio*/
-	switch(mclk_div)
-	{
-		case 1: mclk_div = 0;
-				 break;
-		case 2: mclk_div = 1;
-				 break;
-		case 4: mclk_div = 2;
-				 break;
-		case 6: mclk_div = 3;
-				 break;
-		case 8: mclk_div = 4;
-				 break;
-		case 12: mclk_div = 5;
-				 break;
-		case 16: mclk_div = 6;
-				 break;
-		case 24: mclk_div = 7;
-				 break;
-		case 32: mclk_div = 8;
-				 break;
-		case 48: mclk_div = 9;
-				 break;
-		case 64: mclk_div = 0xA;
-				 break;
+	/*bclk div caculate */
+	bclk_div = over_sample_rate / (2 * word_select_size);
+	/*calculate MCLK Divide Ratio */
+	switch (mclk_div) {
+	case 1:
+		mclk_div = 0;
+		break;
+	case 2:
+		mclk_div = 1;
+		break;
+	case 4:
+		mclk_div = 2;
+		break;
+	case 6:
+		mclk_div = 3;
+		break;
+	case 8:
+		mclk_div = 4;
+		break;
+	case 12:
+		mclk_div = 5;
+		break;
+	case 16:
+		mclk_div = 6;
+		break;
+	case 24:
+		mclk_div = 7;
+		break;
+	case 32:
+		mclk_div = 8;
+		break;
+	case 48:
+		mclk_div = 9;
+		break;
+	case 64:
+		mclk_div = 0xA;
+		break;
 	}
 	mclk_div &= 0xf;
 
-	/*calculate BCLK Divide Ratio*/
-	switch(bclk_div)
-	 {
-		case 2: bclk_div = 0;
-				 break;
-		case 4: bclk_div = 1;
-				 break;
-		case 6: bclk_div = 2;
-				 break;
-		case 8: bclk_div = 3;
-				 break;
-		case 12: bclk_div = 4;
-				 break;
-		case 16: bclk_div = 5;
-				 break;
-		case 32: bclk_div = 6;
-				 break;
-		case 64: bclk_div = 7;
-				break;
+	/*calculate BCLK Divide Ratio */
+	switch (bclk_div) {
+	case 2:
+		bclk_div = 0;
+		break;
+	case 4:
+		bclk_div = 1;
+		break;
+	case 6:
+		bclk_div = 2;
+		break;
+	case 8:
+		bclk_div = 3;
+		break;
+	case 12:
+		bclk_div = 4;
+		break;
+	case 16:
+		bclk_div = 5;
+		break;
+	case 32:
+		bclk_div = 6;
+		break;
+	case 64:
+		bclk_div = 7;
+		break;
 	}
-	 bclk_div &= 0x7;
+	bclk_div &= 0x7;
 
-	 /*confige mclk and bclk dividor register*/
+	/*confige mclk and bclk dividor register */
 	codec_wr_control(SUNXI_DA_CLKD, 0x7, BCLKDIV, bclk_div);
 	codec_wr_control(SUNXI_DA_CLKD, 0xf, MCLKDIV, mclk_div);
 	codec_wr_control(SUNXI_DA_CLKD, 0x1, 7, 1);
 
 	/* word select size */
-	switch(word_select_size)
-	{
-		case 16: wss_value = 0;
-			break;
-		case 20: wss_value = 1;
-			break;
-		case 24: wss_value = 2;
-			break;
-		case 32: wss_value = 3;
-			break;
+	switch (word_select_size) {
+	case 16:
+		wss_value = 0;
+		break;
+	case 20:
+		wss_value = 1;
+		break;
+	case 24:
+		wss_value = 2;
+		break;
+	case 32:
+		wss_value = 3;
+		break;
 	}
 	codec_wr_control(SUNXI_DA_FAT0, 0x3, WSS, wss_value);
 
 #ifdef CONFIG_ARCH_SUN8IW5
 /*********aif1 part************ */
-	/*calculate bclk_lrck_div Ratio*/
-	switch(bclk_lrck_div)
-	{
-		case 16: bclk_lrck_div = 0;
-			break;
-		case 32: bclk_lrck_div = 1;
-			break;
-		case 64: bclk_lrck_div = 2;
-			break;
-		case 128: bclk_lrck_div = 3;
-			break;
-		case 256: bclk_lrck_div = 4;
-			break;
-		default:
-			break;
+	/*calculate bclk_lrck_div Ratio */
+	switch (bclk_lrck_div) {
+	case 16:
+		bclk_lrck_div = 0;
+		break;
+	case 32:
+		bclk_lrck_div = 1;
+		break;
+	case 64:
+		bclk_lrck_div = 2;
+		break;
+	case 128:
+		bclk_lrck_div = 3;
+		break;
+	case 256:
+		bclk_lrck_div = 4;
+		break;
+	default:
+		break;
 	}
-	codec_wr_control(SUNXI_AIF1CLK_CTRL, 0x7, AIF1_LRCK_DIV, bclk_lrck_div);
+	codec_wr_control(SUNXI_AIF1_CLK_CTRL, 0x7, AIF1_LRCK_DIV,
+			 bclk_lrck_div);
 
 #endif
 	return 0;
 }
 
-static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai,
-			       unsigned int fmt)
+static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 {
-	/*i2s part*/
-	/*SDO ON*/
-//	codec_wr_control(SUNXI_DA_CTL, 0x1, SDO_EN, 1);
-	/*master mode*/
+	/*i2s part */
+	/*SDO ON */
+	/*master mode */
 	codec_wr_control(SUNXI_DA_CTL, 0x1, MS, 0);
-	/*i2s mode*/
+	/*i2s mode */
 	codec_wr_control(SUNXI_DA_CTL, 0x1, PCM, 0);
 
 	/* DAI signal inversions */
 	codec_wr_control(SUNXI_DA_FAT0, 0x1, LRCP, 0);
 	codec_wr_control(SUNXI_DA_FAT0, 0x1, BCP, 0);
 
-	/*data format*/
-	codec_wr_control(SUNXI_DA_FAT0, 0x3, FMT, 0);/*standard i2s fmt*/
-	/*RX FIFO trigger level*/
+	/*data format */
+	codec_wr_control(SUNXI_DA_FAT0, 0x3, FMT, 0);	/*standard i2s fmt */
+	/*RX FIFO trigger level */
 	codec_wr_control(SUNXI_DA_FCTL, 0x7f, TXTL, 0x40);
-	/*TX FIFO empty trigger level*/
+	/*TX FIFO empty trigger level */
 	codec_wr_control(SUNXI_DA_FCTL, 0x1f, RXTL, 0x1f);
 
-	//codec_wr_control(SUNXI_DA_FCTL, 0xf, RXOM, 0x5);
 #ifdef CONFIG_ARCH_SUN8IW5
 /**aif1 part**/
-	/*aif1 slave*/
-	codec_wr_control(SUNXI_AIF1CLK_CTRL, 0x1, AIF1_MSTR_MOD, 1);
-	/*aif1 i2s mode*/
-	codec_wr_control(SUNXI_AIF1CLK_CTRL, 0x3, AIF1_DATA_FMT, 0);
+	/*aif1 slave */
+	codec_wr_control(SUNXI_AIF1_CLK_CTRL, 0x1, AIF1_MSTR_MOD, 1);
+	/*aif1 i2s mode */
+	codec_wr_control(SUNXI_AIF1_CLK_CTRL, 0x3, AIF1_DATA_FMT, 0);
 
 	/* DAI signal inversions */
-	codec_wr_control(SUNXI_AIF1CLK_CTRL, 0x1, AIF1_BCLK_INV, 0);
-	codec_wr_control(SUNXI_AIF1CLK_CTRL, 0x1, AIF1_LRCK_INV, 0);
+	codec_wr_control(SUNXI_AIF1_CLK_CTRL, 0x1, AIF1_BCLK_INV, 0);
+	codec_wr_control(SUNXI_AIF1_CLK_CTRL, 0x1, AIF1_LRCK_INV, 0);
 #endif
 	return 0;
 }
 
 static int sunxi_i2s_preapre(struct snd_pcm_substream *substream,
-	struct snd_soc_dai *dai)
+			     struct snd_soc_dai *dai)
 {
 	u32 reg_val = 0;
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		reg_val = SUNXI_TXCHSEL_CHNUM(substream->runtime->channels);
 		/*confige i2s ap tx channel */
 		codec_wr_control(SUNXI_DA_TXCHSEL, 0x7, TX_CHSEL, reg_val);
-		if(substream->runtime->channels == 1) {
+		if (substream->runtime->channels == 1) {
 			reg_val = 0x00;
 		} else {
 			reg_val = 0x10;
 		}
-		/*confige i2s ap tx channel mapping*/
+		/*confige i2s ap tx channel mapping */
 		codec_wr_control(SUNXI_DA_TXCHMAP, 0x7, TX_CH0_MAP, reg_val);
-		/*SDO ON*/
+		/*SDO ON */
 		codec_wr_control(SUNXI_DA_CTL, 0x1, SDO_EN, 1);
 		/* I2S0 TX ENABLE */
 		codec_wr_control(SUNXI_DA_CTL, 0x1, TXEN, 1);
@@ -463,12 +495,12 @@ static int sunxi_i2s_preapre(struct snd_pcm_substream *substream,
 		reg_val = SUNXI_RXCHSEL_CHNUM(substream->runtime->channels);
 		/*confige i2s ap rx channel */
 		codec_wr_control(SUNXI_DA_RXCHSEL, 0x7, RX_CHSEL, reg_val);
-		if(substream->runtime->channels == 1) {
+		if (substream->runtime->channels == 1) {
 			reg_val = 0x00;
 		} else {
 			reg_val = 0x10;
 		}
-		/*confige i2s ap rx channel mapping*/
+		/*confige i2s ap rx channel mapping */
 		codec_wr_control(SUNXI_DA_RXCHMAP, 0x7, RX_CH0_MAP, reg_val);
 		/* I2S0 RX ENABLE */
 		codec_wr_control(SUNXI_DA_CTL, 0x1, RXEN, 1);
@@ -477,45 +509,144 @@ static int sunxi_i2s_preapre(struct snd_pcm_substream *substream,
 	return 0;
 }
 
+#if defined CONFIG_ARCH_SUN8IW5 || defined CONFIG_ARCH_SUN8IW9
+static int sunxi_i2s_suspend(struct snd_soc_dai *cpu_dai)
+{
+	pr_debug("[internal-i2s] suspend entered. %s\n", __func__);
+	if (module_clk != NULL)
+		clk_disable_unprepare(module_clk);
+
+	if (pll_clk != NULL)
+		clk_disable_unprepare(pll_clk);
+
+	/*global disable */
+	codec_wr_control(SUNXI_DA_CTL, 0x1, GEN, 0x0);
+	pr_debug("[internal-i2s] suspend out. %s\n", __func__);
+	return 0;
+}
+
+static int sunxi_i2s_resume(struct snd_soc_dai *cpu_dai)
+{
+	pr_debug("[internal-i2s] resume entered. %s\n", __func__);
+
+	if (pll_clk != NULL) {
+		if (clk_prepare_enable(pll_clk)) {
+			pr_err("open sunxi_i2s->pllclk failed! line = %d\n",
+			       __LINE__);
+		}
+	}
+
+	if (module_clk != NULL) {
+		if (clk_prepare_enable(module_clk)) {
+			pr_err("open sunxi_i2s->moduleclk failed! line = %d\n",
+			       __LINE__);
+		}
+	}
+
+	/*global enable */
+	codec_wr_control(SUNXI_DA_CTL, 0x1, GEN, 0x1);
+	pr_debug("[internal-i2s] resume out. %s\n", __func__);
+	return 0;
+}
+#endif
+
 static struct snd_soc_dai_ops sunxi_i2s_dai_ops = {
-	.trigger 	= sunxi_i2s_trigger,
-	.hw_params 	= sunxi_i2s_hw_params,
-	.set_fmt 	= sunxi_i2s_set_fmt,
+	.trigger = sunxi_i2s_trigger,
+	.hw_params = sunxi_i2s_hw_params,
+	.set_fmt = sunxi_i2s_set_fmt,
 	.set_clkdiv = sunxi_i2s_set_clkdiv,
-	.set_sysclk = sunxi_i2s_set_sysclk, 
+	.set_sysclk = sunxi_i2s_set_sysclk,
 	.prepare = sunxi_i2s_preapre,
 };
 #endif
 
-static struct snd_soc_dai_driver sunxi_pcm_dai = {
-	.playback 	= {
-		.channels_min = 1,
-		.channels_max = 2,
-		.rates = SUNXI_PCM_RATES,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
-	},
-	.capture 	= {
-		.channels_min = 1,
-		.channels_max = 2,
-		.rates = SUNXI_PCM_RATES,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
-	},
-
-	#if defined CONFIG_ARCH_SUN8IW5 || defined CONFIG_ARCH_SUN8IW9
-	.ops 		= &sunxi_i2s_dai_ops,
-	#endif
+static struct snd_soc_dai_driver sunxi_pcm_dai[] = {
+	{
+	 .name = "sunxi-codec",
+	 .id = 1,
+#if defined CONFIG_ARCH_SUN8IW5 || defined CONFIG_ARCH_SUN8IW9
+	 .suspend = sunxi_i2s_suspend,
+	 .resume = sunxi_i2s_resume,
+#endif
+	 .playback = {
+		      .channels_min = 1,
+		      .channels_max = 2,
+		      .rates = SUNXI_PCM_RATES,
+		      .formats =
+		      SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |
+		      SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
+		      },
+	 .capture = {
+		     .channels_min = 1,
+		     .channels_max = 2,
+		     .rates = SUNXI_PCM_RATES,
+		     .formats =
+		     SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE |
+		     SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S32_LE,
+		     },
+#if defined CONFIG_ARCH_SUN8IW5 || defined CONFIG_ARCH_SUN8IW9
+	 .ops = &sunxi_i2s_dai_ops,
+#endif
+	 },
+#if defined CONFIG_ARCH_SUN8IW5
+	{
+	 .name = "sunxi-codec-aif2-dai",
+	 .id = 2,
+	 .playback = {
+		      .channels_min = 1,
+		      .channels_max = 2,
+		      .rates = SNDRV_PCM_RATE_8000_48000,
+		      .formats = SNDRV_PCM_FMTBIT_S16_LE,},
+	 .capture = {
+		     .channels_min = 1,
+		     .channels_max = 2,
+		     .rates = SNDRV_PCM_RATE_8000_48000,
+		     .formats = SNDRV_PCM_FMTBIT_S16_LE,},
+	 }
+#endif
 };
 
 static int __devinit sunxi_pcm_dev_probe(struct platform_device *pdev)
 {
 	int err = -1;
+#if defined CONFIG_ARCH_SUN8IW5 || defined CONFIG_ARCH_SUN8IW9
+	RECORD_TEST_EN = false;
+	/* pll_clk */
+	pll_clk = clk_get(NULL, "pll2");
+	if ((!pll_clk) || (IS_ERR(pll_clk))) {
+		pr_err("[ audio ] err:try to get pll_clk failed!\n");
+	}
+	if (clk_prepare_enable(pll_clk)) {
+		pr_err("[ audio ] err:enable pll_clk failed; \n");
+	}
+	/* module_clk */
+	module_clk = clk_get(NULL, "adda");
+	if ((!module_clk) || (IS_ERR(module_clk))) {
+		pr_err("[ audio ] err:try to get module_clk failed!\n");
+	}
+	if (clk_set_parent(module_clk, pll_clk)) {
+		pr_err
+		    ("[ audio ] err:try to set parent of module_clk to pll_clk failed!\n");
+	}
+	if (clk_set_rate(module_clk, 24576000)) {
+		pr_err
+		    ("[ audio ] err:set module_clk clock freq 24576000 failed!\n");
+	}
+	if (clk_prepare_enable(module_clk)) {
+		pr_err("[ audio ] err:open module_clk failed; \n");
+	}
+#endif
 
-	RECORD_TEST_EN	= false;
-	err = snd_soc_register_dai(&pdev->dev, &sunxi_pcm_dai);	
+	err =
+	    snd_soc_register_dais(&pdev->dev, sunxi_pcm_dai,
+				  ARRAY_SIZE(sunxi_pcm_dai));
 	if (err) {
 		dev_err(&pdev->dev, "Failed to register DAI\n");
 		return err;
 	}
+#if defined CONFIG_ARCH_SUN8IW5 || defined CONFIG_ARCH_SUN8IW9
+	codec_wr_control(SUNXI_DA_CTL, 0x1, GEN, 0x1);
+#endif
 
 	return 0;
 }
@@ -539,29 +670,33 @@ static struct platform_driver sunxi_pcm_driver = {
 	.probe = sunxi_pcm_dev_probe,
 	.remove = __exit_p(sunxi_pcm_dev_remove),
 	.driver = {
-		.name = "sunxi-codec",
-		.owner = THIS_MODULE,
-	},
+		   .name = "sunxi-codec",
+		   .owner = THIS_MODULE,
+		   },
 };
 
 static int __init sunxi_pcm_init(void)
 {
 	int err = 0;
 
-	if((err = platform_device_register(&sunxi_pcm_device)) < 0)
+	err = platform_device_register(&sunxi_pcm_device);
+	if (err < 0)
 		return err;
 
-	if ((err = platform_driver_register(&sunxi_pcm_driver)) < 0)
-		return err;	
+	err = platform_driver_register(&sunxi_pcm_driver);
+	if (err < 0)
+		return err;
 
 	return 0;
 }
+
 module_init(sunxi_pcm_init);
 
 static void __exit sunxi_pcm_exit(void)
 {
 	platform_driver_unregister(&sunxi_pcm_driver);
 }
+
 module_exit(sunxi_pcm_exit);
 
 /* Module information */
@@ -569,4 +704,6 @@ MODULE_AUTHOR("REUUIMLLA");
 MODULE_DESCRIPTION("sunxi PCM SoC Interface");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:sunxi-pcm");
+#if defined CONFIG_ARCH_SUN8IW5 || defined CONFIG_ARCH_SUN8IW9
 module_param_named(RECORD_TEST_EN, RECORD_TEST_EN, bool, S_IRUGO | S_IWUSR);
+#endif

@@ -642,12 +642,9 @@ static struct i2c_driver mma7660_driver = {
 	},
 	.probe	= mma7660_probe,
 	.remove	= mma7660_remove,
-#ifdef CONFIG_HAS_EARLYSUSPEND
-#else
 #ifdef CONFIG_PM
 	.suspend = mma7660_suspend,
 	.resume = mma7660_resume,
-#endif
 #endif
 	.id_table = mma7660_id,
 	.detect = gsensor_detect,

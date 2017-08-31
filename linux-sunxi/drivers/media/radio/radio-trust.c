@@ -1,3 +1,14 @@
+/*
+ * drivers/media/radio/radio-trust.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* radio-trust.c - Trust FM Radio card driver for Linux 2.2
  * by Eric Lammerts <eric@scintilla.utwente.nl>
  *

@@ -1,3 +1,14 @@
+/*
+ * drivers/power/axp_power/axp81x/axp81x-mfd.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #include "../axp-rw.h"
 
 static uint8_t axp_reg_addr = 0;
@@ -95,7 +106,7 @@ static int axp81x_read_irqs(struct axp_dev *chip, uint64_t *irqs)
 
 static int  axp81x_init_chip(struct axp_dev *chip)
 {
-	uint8_t chip_id;
+	uint8_t chip_id = 0;
 	uint8_t v[23] = {0xd8,AXP81X_INTEN2, 0xfc,AXP81X_INTEN3,0x00,
 			  AXP81X_INTEN4, 0x01,AXP81X_INTEN5, 0x18,
 			  AXP81X_INTEN6, 0x00,AXP81X_INTSTS1,0xff,

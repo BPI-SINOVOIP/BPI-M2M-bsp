@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/disp2/disp/lcd/wtq05027d01.h
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

@@ -1,4 +1,15 @@
 /*
+ * drivers/staging/sep/sep_trace_events.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * If TRACE_SYSTEM is defined, that will be the directory created
  * in the ftrace directory under /sys/kernel/debug/tracing/events/<system>
  *

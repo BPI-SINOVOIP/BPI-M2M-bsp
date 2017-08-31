@@ -1,4 +1,15 @@
 /*
+ * drivers/char/apm-emulation.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * bios-less APM driver for ARM Linux
  *  Jamey Hicks <jamey@crl.dec.com>
  *  adapted from the APM BIOS driver for Linux by Stephen Rothwell (sfr@linuxcare.com)

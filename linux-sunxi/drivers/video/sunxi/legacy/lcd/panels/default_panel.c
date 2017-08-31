@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/legacy/lcd/panels/default_panel.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

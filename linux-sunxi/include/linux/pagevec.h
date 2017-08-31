@@ -1,6 +1,17 @@
 /*
  * include/linux/pagevec.h
  *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
+ * include/linux/pagevec.h
+ *
  * In many places it is efficient to batch an operation up against multiple
  * pages.  A pagevec is a multipage container which is used for that.
  */

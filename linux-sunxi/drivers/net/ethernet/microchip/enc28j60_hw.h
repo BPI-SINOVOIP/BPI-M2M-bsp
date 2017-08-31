@@ -1,4 +1,15 @@
 /*
+ * drivers/net/ethernet/microchip/enc28j60_hw.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * enc28j60_hw.h: EDTP FrameThrower style enc28j60 registers
  *
  * $Id: enc28j60_hw.h,v 1.9 2007/12/14 11:59:16 claudio Exp $

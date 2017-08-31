@@ -1,3 +1,14 @@
+/*
+ * arch/cris/include/asm/posix_types.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* $Id: posix_types.h,v 1.1 2000/07/10 16:32:31 bjornw Exp $ */
 
 /* We cheat a bit and use our C-coded bitops functions from asm/bitops.h */

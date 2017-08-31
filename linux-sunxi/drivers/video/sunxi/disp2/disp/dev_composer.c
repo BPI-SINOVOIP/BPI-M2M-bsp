@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/disp2/disp/dev_composer.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *
@@ -205,7 +206,7 @@ int dispc_gralloc_queue(disp_layer_config *commit_layer, unsigned int disp,unsig
     return 0;
 }
 
-inline bool hwc_pridisp_sync(void)
+static inline bool hwc_pridisp_sync(void)
 {
     return composer_priv.cur_write_cnt[composer_priv.primary_disp] == composer_priv.cur_disp_cnt[composer_priv.primary_disp];
 }

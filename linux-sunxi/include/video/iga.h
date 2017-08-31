@@ -1,3 +1,14 @@
+/*
+ * include/video/iga.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* $Id: iga.h,v 1.2 1999/09/11 22:56:31 zaitcev Exp $
  * iga1682.h: Sparc/PCI iga1682 driver constants etc.
  *

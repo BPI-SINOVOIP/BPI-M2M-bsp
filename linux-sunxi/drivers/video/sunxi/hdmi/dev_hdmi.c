@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/hdmi/dev_hdmi.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *
@@ -110,7 +111,7 @@ static ssize_t hdmi_rgb_only_store(struct device *dev,
 
 static DEVICE_ATTR(rgb_only, S_IRUGO|S_IWUSR|S_IWGRP,hdmi_rgb_only_show, hdmi_rgb_only_store);
 
-static int __init hdmi_probe(struct platform_device *pdev)
+static int hdmi_probe(struct platform_device *pdev)
 {
 	__inf("hdmi_probe call\n");
 	memset(&ghdmi, 0, sizeof(hdmi_info_t));

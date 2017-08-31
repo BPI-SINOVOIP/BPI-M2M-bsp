@@ -44,6 +44,9 @@
 #include "sd_ops.h"
 #include "sdio_ops.h"
 
+void sunxi_dump_reg(struct mmc_host *mmc);
+#define SUNXI_TIMEOUT_INT_MS  (60*1000)
+
 static struct workqueue_struct *workqueue;
 
 /*
@@ -266,6 +269,91 @@ static int __mmc_start_req(struct mmc_host *host, struct mmc_request *mrq)
 	return 0;
 }
 
+
+#if defined(CONFIG_ARCH_SUN8IW5P1) || defined(CONFIG_ARCH_SUN8IW6P1) \
+		|| defined(CONFIG_ARCH_SUN8IW8P1) \
+		|| defined(CONFIG_ARCH_SUN8IW7P1) \
+		|| defined(CONFIG_ARCH_SUN8IW9P1)
+
+static void mmc_wait_for_req_done(struct mmc_host *host,
+				  struct mmc_request *mrq)
+{
+	struct mmc_command *cmd;
+	char sunxi_phase[9][2] = {{1, 1}, {0, 0}, \
+		{1, 0}, {0, 1}, {1, 2}, {0, 2} };
+	int retry_ph_set = 0;
+	int ret = 0;
+
+	while (1) {
+		/*If core wait cmd over 1min,we will dump host register. and then wait again*/
+		cmd = mrq->cmd;
+		do {
+			ret = wait_for_completion_timeout(&mrq->completion, msecs_to_jiffies(SUNXI_TIMEOUT_INT_MS));
+			if (ret == 0) {
+				pr_err("*%s:req timout (CMD%u): err %d, retry*\n",
+					mmc_hostname(host),
+					cmd->opcode, cmd->error);
+				sunxi_dump_reg(host);
+			} else if (ret > 0) {
+				break;
+			} else {
+				pr_err("*%s:unknow req err (CMD%u): err %d, ret %x retry*\n",
+					mmc_hostname(host),
+					cmd->opcode , cmd->error , ret);
+			}
+		} while (1);
+
+		if (!cmd->error || !cmd->retries ||
+		    mmc_card_removed(host->card)) {
+				if (cmd->error && retry_ph_set) {
+				pr_info("%s: req failed (CMD%u): %d, retry failed\n",
+					 mmc_hostname(host), \
+					 cmd->opcode, \
+					 cmd->error);
+				}
+				if (!cmd->error && retry_ph_set) {
+				pr_info("%s: req failed (CMD%u): %d, retry ok\n",
+					 mmc_hostname(host),\
+					  cmd->opcode, \
+					  cmd->error);
+				}
+
+			if ((host->ops->sunxi_set_phase) \
+				&& (mrq->data) \
+				&& retry_ph_set) {
+				if (cmd->error)
+					host->ops->sunxi_set_phase(host, mrq, \
+					sunxi_phase[0][0], \
+					sunxi_phase[0][1], false);
+				else
+					host->ops->sunxi_set_phase(host, mrq, \
+					sunxi_phase[(retry_ph_set-1)/3][0], \
+					sunxi_phase[(retry_ph_set-1)/3][1], \
+					false);
+			}
+			break;
+		}
+
+		pr_info("%s: req failed (CMD%u): %d, retrying...\n",
+			 mmc_hostname(host), cmd->opcode, cmd->error);
+		cmd->retries--;
+		cmd->error = 0;
+		if ((host->ops->sunxi_set_phase) && (mrq->data)) {
+			if (mrq->data)
+				mrq->data->error = 0;
+			if (mrq->stop)
+				mrq->stop->error = 0;
+			if (mrq->sbc)
+				mrq->sbc->error = 0;
+			host->ops->sunxi_set_phase(host, mrq, \
+			sunxi_phase[retry_ph_set/3][0], \
+			sunxi_phase[retry_ph_set/3][1], true);
+			retry_ph_set++;
+		}
+		host->ops->request(host, mrq);
+	}
+}
+#else
 static void mmc_wait_for_req_done(struct mmc_host *host,
 				  struct mmc_request *mrq)
 {
@@ -286,6 +374,8 @@ static void mmc_wait_for_req_done(struct mmc_host *host,
 		host->ops->request(host, mrq);
 	}
 }
+
+#endif
 
 /**
  *	mmc_pre_req - Prepare for a new request
@@ -1207,10 +1297,10 @@ static void mmc_power_up(struct mmc_host *host)
 void mmc_power_off(struct mmc_host *host)
 {
 #if defined CONFIG_ARCH_SUN8IW5P1 || defined CONFIG_ARCH_SUN8IW6P1 || defined CONFIG_ARCH_SUN9IW1P1
-	
+
 #else
 	int err = 0;
-#endif 
+#endif
 	mmc_host_clk_hold(host);
 
 	host->ios.clock = 0;

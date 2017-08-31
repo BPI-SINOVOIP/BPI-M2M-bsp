@@ -1,3 +1,14 @@
+/*
+ * drivers/media/dvb/frontends/drxk_map.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #define  AUD_COMM_EXEC__A                                                  0x1000000
 #define    AUD_COMM_EXEC_STOP                                              0x0
 #define  FEC_COMM_EXEC__A                                                  0x1C00000

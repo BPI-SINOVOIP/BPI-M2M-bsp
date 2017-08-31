@@ -43,6 +43,7 @@ static struct pinctrl *i2s0_pinctrl;
 static int regsave[8];
 static int i2s0_used 			= 0;
 static int i2s0_select 			= 0;
+static int i2s0_master;
 static int over_sample_rate 	= 0;
 static int sample_resolution 	= 0;
 static int word_select_size 	= 0;
@@ -422,10 +423,10 @@ static int sunxi_i2s0_trigger(struct snd_pcm_substream *substream,
 static int sunxi_i2s0_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id,
                                  unsigned int freq, int i2s0_pcm_select)
 {
-	if (clk_set_rate(i2s0_pllclk, freq)) {
-		pr_err("try to set the i2s0_pllclk failed!\n");
+	if (4 == i2s0_master) {
+		if (clk_set_rate(i2s0_pllclk, freq))
+			pr_err("try to set the i2s0_pllclk failed!\n");
 	}
-
 	i2s0_select = i2s0_pcm_select;
 
 	return 0;
@@ -1091,6 +1092,10 @@ static int __init sunxi_i2s0_init(void)
     }
 	i2s0_select = val.val;
 
+	type = script_get_item("i2s0", "i2s0_master", &val);
+	if (SCIRPT_ITEM_VALUE_TYPE_INT != type)
+		pr_err("[I2S0] i2s0_master type err!\n");
+	i2s0_master = val.val;
  	if (i2s0_used) {
 		if((err = platform_device_register(&sunxi_i2s0_device)) < 0)
 			return err;

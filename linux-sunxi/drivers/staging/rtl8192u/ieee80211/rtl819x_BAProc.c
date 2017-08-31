@@ -1,3 +1,14 @@
+/*
+ * drivers/staging/rtl8192u/ieee80211/rtl819x_BAProc.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /********************************************************************************************************************************
  * This file is created to process BA Action Frame. According to 802.11 spec, there are 3 BA action types at all. And as BA is
  * related to TS, this part need some struture defined in QOS side code. Also TX RX is going to be resturctured, so how to send

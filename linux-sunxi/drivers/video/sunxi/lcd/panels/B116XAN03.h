@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/lcd/panels/B116XAN03.h
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

@@ -16,7 +16,13 @@
 #define _SUN8IW5_CODEC_H
 #include <mach/platform.h>
 /*Codec Register*/
-#define baseaddr                               SUNXI_AUDIO_VBASE
+#define AIF1_CLK 1
+#define AIF2_CLK 2
+#define MCLK 1
+#define PLLCLK 2
+
+
+#define baseaddr                  SUNXI_AUDIO_VBASE
 #define CODEC_BASSADDRESS         (0x01c22c00)
 #define SUNXI_DA_CTL                			(0x00)
 #define SUNXI_DA_FAT0                  			(0x04)
@@ -40,7 +46,7 @@
 #define SUNXI_MOD_RST_CTL                      (0x214)
 #define SUNXI_SYS_SR_CTRL                      (0x218)
 #define SUNXI_SYS_SRC_CLK                      (0x21c)
-#define SUNXI_AIF1CLK_CTRL                     (0x240)
+#define SUNXI_AIF1_CLK_CTRL                     (0x240)
 #define SUNXI_AIF1_ADCDAT_CTRL         (0x244)
 #define SUNXI_AIF1_DACDAT_CTRL         (0x248)
 #define SUNXI_AIF1_MXR_SRC                     (0x24c)
@@ -423,7 +429,11 @@
 #define AIF1_AD0R_MXR_SRC_ADCR         (9)
 #define AIF1_AD0R_MXR_SRC_AIF2DACL             (8)
 #define AIF1_AD0R_MXR_SRC              (8)
+#define AIF1_AD1L_MXR_SRC_AIF2DACL		(7)
+#define AIF1_AD1L_MXR_SRC_ADCL			(6)
 #define AIF1_AD1L_MXR_SRC              (6)
+#define AIF1_AD1R_MXR_SRC_AIF2DACR		(3)
+#define AIF1_AD1R_MXR_SRC_ADCR			(2)
 #define AIF1_AD1R_MXR_SRC              (2)
 #define AIF1_AD1R_MXR_SRC_C            (0)
 
@@ -674,7 +684,7 @@
 
 #define DACR_MXR_SRC_AIF1DA0R                  (11)
 #define DACR_MXR_SRC_AIF1DA1R                  (10)
-#define DACR_MXR_SRC_AIF2ADCR                  (9)
+#define DACR_MXR_SRC_AIF2DACR                  (9)
 #define DACR_MXR_SRC_ADCR                      (8)
 #define DACR_MXR_SRC                   (8)
 

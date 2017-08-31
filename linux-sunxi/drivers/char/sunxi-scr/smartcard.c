@@ -1,4 +1,5 @@
 /*
+ * drivers/char/sunxi-scr/smartcard.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

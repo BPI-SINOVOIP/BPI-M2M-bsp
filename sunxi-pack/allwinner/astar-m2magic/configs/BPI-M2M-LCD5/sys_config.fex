@@ -330,6 +330,7 @@ spi_dev_num = 1
 ;----------------------------------------------------------------------------------
 ;[spi_board0] spi device configuration
 ;modalias      = spi device name
+;sflash_size    = spi flash size, optional, if spi_board0 is nor flash , carefully
 ;max_speed_hz  = max transfer speed
 ;bus_num       = bus ID
 ;chip_select   = chip select, 0,1
@@ -429,12 +430,27 @@ ths_trip1_count     = 3
 ths_trip1_0         = 75
 ths_trip1_1         = 90
 ths_trip1_2         = 110
+ths_trip1_3         = 110
+ths_trip1_4         = 110
+ths_trip1_5         = 110
+ths_trip1_6         = 110
+ths_trip1_7         = 110
 ths_trip1_0_min     = 0
 ths_trip1_0_max     = 1
 ths_trip1_1_min     = 1
 ths_trip1_1_max     = 3
 ths_trip1_2_min     = 0
 ths_trip1_2_max     = 0
+ths_trip1_3_min     = 0
+ths_trip1_3_max     = 0
+ths_trip1_4_min     = 0
+ths_trip1_4_max     = 0
+ths_trip1_5_min     = 0
+ths_trip1_5_max     = 0
+ths_trip1_6_min     = 0
+ths_trip1_6_max     = 0
+ths_trip2_count     = 0
+ths_trip2_0         = 0
 ;----------------------------------------------------------------------------------
 ;cooler_table  cooler_count <=32
 ;----------------------------------------------------------------------------------
@@ -695,7 +711,7 @@ vip_dev0_iovdd_vol       = 2800000
 vip_dev0_avdd            = "axp22_ldoio0"
 vip_dev0_avdd_vol        = 2800000
 vip_dev0_dvdd            = "axp22_eldo2"
-vip_dev0_dvdd_vol        = 1500000
+vip_dev0_dvdd_vol        = 1800000
 vip_dev0_afvdd           = "axp22_dldo3"
 vip_dev0_afvdd_vol       = 2800000
 vip_dev0_power_en        =
@@ -1188,17 +1204,16 @@ frame_width 		= 1
 tx_data_mode 		= 0
 rx_data_mode 		= 0
 i2s1_mclk            =
-i2s1_bclk            = 
-i2s1_lrclk           = 
-i2s1_dout            = 
-i2s1_din             = 
+i2s1_bclk            = port:PG11<2><1><default><default>
+i2s1_lrclk           = port:PG10<2><1><default><default>
+i2s1_dout            = port:PG12<2><1><default><default>
+i2s1_din             = port:PG13<2><1><default><default>
 
 ;--------------------------------------------------------------------------------
 ;pa_single_vol,pa_double_vol,earpiece_vol: 64 level,1db/step.0x3f is the large volume.
 ;cap_vol:use for system record,0x0--0db,0x1--24db,0x2--27db,0x3--30db,0x4--33db,0x5--36db,0x6--39db,0x7--42db
 ;headset_mic_vol: headset mic(mic2) vol,use for phone headset mic call
 ;main_mic_vol: main mic(mic1) vol,use for phone main mic call
-;audio_lowlevel_detect: 1: while linein plug in is low level; 0: while linein plug in is high level;
 ;--------------------------------------------------------------------------------
 [audio0]
 audio_used          	= 1
@@ -1206,25 +1221,39 @@ audio_hp_ldo       		= "none"
 headphone_vol			= 0x3b
 earpiece_vol 			= 0x3e
 cap_vol					= 0x5
-pa_single_vol			= 0x3e
+pa_single_vol			= 0x3a
 pa_double_used			= 1
 pa_double_vol			= 0x3e
 headphone_direct_used	= 1
 headset_mic_vol 		= 3
 main_mic_vol        	= 1
-linein_to_spk_used     	= 0
-linein_to_aif2_used    	= 0
 audio_lowlevel_detect	= 1
-sysaudio_to_aif2_used	= 0
-audio_linein_ctrl      	= port:PE17<0><default><default><0>
-audio_pa_ctrl          	= port:PH09<1><default><default><0>
+;audio_linein_detect    	= port:PB07<0><default><default><0>
+audio_pa_ctrl          	= port:PD11<1><default><default><0>
 aif2_used              	= 0
 aif3_used              	= 0
 headphone_mute_used 	= 0
-DAC_VOL_CTRL_SPK        = 0xa0a0
-DAC_VOL_CTRL_HEADPHONE 	= 0xa0a0
-agc_used				= 0
+pa_gpio_reverse 	= 0
+agc_used				= 1
 drc_used				= 0
+aif1_lrlk_div  = 0x40
+
+[codec_aif2]
+aif2_lrlk_div = 0x20
+aif2master = 1
+aif2fmt = 0
+aif2_bclk            = port:PB05<3><1><default><default>
+aif2_lrclk           = port:PB04<3><1><default><default>
+aif2_dout            = port:PB06<3><1><default><default>
+aif2_din             = port:PB07<3><1><default><default>
+
+[codec_aif3]
+aif3fmt = 4
+aif3_bclk            = port:PG11<3><1><default><default>
+aif3_lrclk           = port:PG10<3><1><default><default>
+aif3_dout            = port:PG12<3><1><default><default>
+aif3_din             = port:PG13<3><1><default><default>
+
 ;-------------------------------------------------------------------------------------
 ;pmu_used                    ---0:not used,1:used
 ;pmu_twi_addr                ---slave address
@@ -1331,13 +1360,13 @@ pmu_twi_addr               = 0x34
 pmu_twi_id                 = 1
 pmu_irq_id                 = 0
 pmu_battery_rdc            = 100
-pmu_battery_cap            = 0
+pmu_battery_cap            = 1994
 pmu_batdeten               = 1
 pmu_chg_ic_temp            = 0
-pmu_runtime_chgcur         = 900
-pmu_earlysuspend_chgcur    = 1200
-pmu_suspend_chgcur         = 1500
-pmu_shutdown_chgcur        = 1500
+pmu_runtime_chgcur         = 700
+pmu_earlysuspend_chgcur    = 1000
+pmu_suspend_chgcur         = 1000
+pmu_shutdown_chgcur        = 1000
 pmu_init_chgvol            = 4200
 pmu_init_chgend_rate       = 15
 pmu_init_chg_enabled       = 1
@@ -1352,33 +1381,33 @@ pmu_bat_para1              = 0
 pmu_bat_para2              = 0
 pmu_bat_para3              = 0
 pmu_bat_para4              = 0
-pmu_bat_para5              = 0
-pmu_bat_para6              = 0
-pmu_bat_para7              = 0
-pmu_bat_para8              = 0
-pmu_bat_para9              = 5
-pmu_bat_para10             = 8
-pmu_bat_para11             = 9
-pmu_bat_para12             = 10
-pmu_bat_para13             = 13
-pmu_bat_para14             = 16
-pmu_bat_para15             = 20
-pmu_bat_para16             = 33
-pmu_bat_para17             = 41
-pmu_bat_para18             = 46
-pmu_bat_para19             = 50
-pmu_bat_para20             = 53
-pmu_bat_para21             = 57
-pmu_bat_para22             = 61
-pmu_bat_para23             = 67
-pmu_bat_para24             = 73
-pmu_bat_para25             = 78
-pmu_bat_para26             = 84
-pmu_bat_para27             = 88
-pmu_bat_para28             = 92
-pmu_bat_para29             = 93
-pmu_bat_para30             = 94
-pmu_bat_para31             = 95
+pmu_bat_para5              = 10
+pmu_bat_para6              = 16
+pmu_bat_para7              = 25
+pmu_bat_para8              = 28
+pmu_bat_para9              = 32
+pmu_bat_para10             = 36
+pmu_bat_para11             = 39
+pmu_bat_para12             = 41
+pmu_bat_para13             = 44
+pmu_bat_para14             = 49
+pmu_bat_para15             = 53
+pmu_bat_para16             = 57
+pmu_bat_para17             = 59
+pmu_bat_para18             = 62
+pmu_bat_para19             = 64
+pmu_bat_para20             = 67
+pmu_bat_para21             = 69
+pmu_bat_para22             = 71
+pmu_bat_para23             = 76
+pmu_bat_para24             = 80
+pmu_bat_para25             = 84
+pmu_bat_para26             = 89
+pmu_bat_para27             = 92
+pmu_bat_para28             = 95
+pmu_bat_para29             = 96
+pmu_bat_para30             = 98
+pmu_bat_para31             = 99
 pmu_bat_para32             = 100
 
 pmu_usbvol_limit           = 0
@@ -1389,8 +1418,8 @@ pmu_usbvol_pc              = 4400
 pmu_usbcur_pc              = 500
 pmu_pwroff_vol             = 3300
 pmu_pwron_vol              = 2600
-pmu_pekoff_time            = 4000
-pmu_pekoff_func            = 0
+pmu_pekoff_time            = 6000
+pmu_pekoff_func            = 1
 pmu_pekoff_en              = 1
 pmu_peklong_time           = 1500
 pmu_pekon_time             = 1000
@@ -1408,7 +1437,7 @@ pmu_hot_shutdowm           = 1
 pmu_inshort                = 0
 power_start                = 0
 
-pmu_temp_enable            = 1
+pmu_temp_enable            = 0
 pmu_charge_ltf             = 2261
 pmu_charge_htf             = 388
 pmu_discharge_ltf          = 3200
@@ -1541,12 +1570,8 @@ s_powchk_used      = 0x80000000
 s_power_reg        = 0x00008061
 s_system_power     = 50
 
-[mali_para]
-mali_used = 1
-mali_clkdiv = 1
-mali_extreme_freq = 408
-mali_extreme_vol = 1100
-
+[gpu_mali400_0]
+freq = 384
 
 ;----------------------------------------------------------------------------------
 ; dram dvfs voltage-frequency table configuration

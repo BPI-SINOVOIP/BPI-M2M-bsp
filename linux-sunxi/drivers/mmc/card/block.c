@@ -46,6 +46,9 @@
 
 #include <asm/uaccess.h>
 
+#define SUNXI_RETRY_TIMES   (18)
+
+
 #ifdef eMMC_Magician_SDK_Changes
 #include <linux/delay.h>
 #endif
@@ -2175,6 +2178,10 @@ static void mmc_blk_rw_rq_prep(struct mmc_queue_req *mqrq,
 		}
 		brq->data.sg_len = i;
 	}
+
+    /*We will try 6 phase setting,each will try 3 times,so all try 3*6=18*/
+		if (mmc_card_mmc(card))
+			brq->cmd.retries = SUNXI_RETRY_TIMES;
 
 	mqrq->mmc_active.mrq = &brq->mrq;
 	mqrq->mmc_active.err_check = mmc_blk_err_check;

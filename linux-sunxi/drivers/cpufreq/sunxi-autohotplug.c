@@ -1,4 +1,5 @@
 /*
+ * drivers/cpufreq/sunxi-autohotplug.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

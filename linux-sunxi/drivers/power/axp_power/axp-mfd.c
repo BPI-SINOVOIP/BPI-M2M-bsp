@@ -59,7 +59,9 @@ EXPORT_SYMBOL_GPL(axp_dev_lookup);
 
 static void axp_power_off(void)
 {
-#if defined (CONFIG_AW_AXP22)
+#if defined(CONFIG_AW_AXP259)
+	axp259_power_off(power_start);
+#elif defined(CONFIG_AW_AXP22)
 	uint8_t val;
 	struct axp_dev *axp;
 	axp = axp_dev_lookup(AXP22);
@@ -95,16 +97,16 @@ static void axp_power_off(void)
 		axp_read(axp->dev, AXP22_STATUS, &val);
 		if(val & 0xF0){
 			axp_read(axp->dev, AXP22_MODE_CHGSTATUS, &val);
-	    		if(val & 0x20){
-	    			printk("[axp] set flag!\n");
+			if (val & 0x20) {
+				printk(KERN_DEBUG "[axp] set flag!\n");
 				axp_read(axp->dev, AXP22_BUFFERC, &val);
 				if (0x0d != val)
 					axp_write(axp->dev, AXP22_BUFFERC, 0x0f);
-	    			mdelay(20);
-		    		printk("[axp] reboot!\n");
+				mdelay(20);
+				printk(KERN_DEBUG "[axp] reboot!\n");
 				machine_restart(NULL);
-		    		printk("[axp] warning!!! arch can't ,reboot, maybe some error happend!\n");
-	    		}
+				printk(KERN_DEBUG "[axp] warning!!! arch can't ,reboot, maybe some error happend!\n");
+			}
 		}
 	}
 	axp_read(axp->dev, AXP22_BUFFERC, &val);
@@ -243,7 +245,7 @@ void axp_unregister_mfd(struct axp_dev *dev)
 EXPORT_SYMBOL_GPL(axp_unregister_mfd);
 
 static int __init axp_mfd_init(void)
-{	
+{
 	int ret = 0;
 
 	/* PM hookup */
@@ -277,4 +279,3 @@ module_exit(axp_mfd_exit);
 MODULE_DESCRIPTION("PMIC MFD Driver for AXP");
 MODULE_AUTHOR("LiMing X-POWERS");
 MODULE_LICENSE("GPL");
- 

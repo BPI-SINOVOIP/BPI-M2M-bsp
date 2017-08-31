@@ -1,16 +1,33 @@
+/*
+ * drivers/power/axp_power/axp-cfg.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #ifndef __LINUX_AXP_CFG_H_
 #define __LINUX_AXP_CFG_H_
 #include <mach/sys_config.h>
 
 #define AXP22_ADDR		0x68 >> 1
 #define BATRDC			100		//initial rdc
-	
+
 #define AXP22LDO1		3000
 
 #define AXP22_VOL_MAX		1		// capability buffer length
 #define AXP22_TIME_MAX		20
 #define AXP22_AVER_MAX		10
 #define AXP22_RDC_COUNT		10
+
+#define AXP259_VOL_MAX		1		/* capability buffer length */
+#define AXP259_TIME_MAX		20
+#define AXP259_AVER_MAX		10
+#define AXP259_RDC_COUNT	10
+
 
 #define ABS(x)			((x) >0 ? (x) : -(x) )
 
@@ -185,7 +202,9 @@ enum {
 #define AXP_LDOIO_ID_START      30
 #define AXP_DCDC_ID_START       40
 
-#ifdef CONFIG_AW_AXP81X
+#ifdef CONFIG_AW_AXP259
+extern void axp259_power_off(int power_start);
+#elif defined CONFIG_AW_AXP81X
 extern int axp_debug;
 #define DBG_PSY_MSG(level_mask, fmt, arg...)	if (unlikely(axp_debug & level_mask)) \
 	printk(KERN_DEBUG fmt , ## arg)
@@ -284,6 +303,7 @@ extern void axp152_power_off(void);
 #endif
 
 extern struct axp_config_info axp22_config;
+extern struct axp_config_info axp259_config;
 extern struct axp_config_info axp15_config;
 
 extern int axp_fetch_sysconfig_para(char * pmu_type, struct axp_config_info *axp_config);

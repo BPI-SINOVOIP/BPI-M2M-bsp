@@ -11,6 +11,11 @@ if POWER_SUPPLY
 
 source "drivers/power/axp_power/Kconfig"
 
+config SUNXI_KEY_POWER
+	bool "Sunxi key power"
+	help
+	  Say Y here to enable power control by the power-key.
+
 config POWER_SUPPLY_DEBUG
 	bool "Power supply debug"
 	help

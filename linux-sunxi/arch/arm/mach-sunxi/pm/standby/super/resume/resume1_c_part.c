@@ -1,4 +1,5 @@
 /*
+ * arch/arm/mach-sunxi/pm/standby/super/resume/resume1_c_part.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

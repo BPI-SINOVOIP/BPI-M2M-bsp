@@ -1,3 +1,14 @@
+/*
+ * drivers/isdn/hisax/hfc4s8s_l1.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /*************************************************************************/
 /* $Id: hfc4s8s_l1.c,v 1.10 2005/02/09 16:31:09 martinb1 Exp $           */
 /* HFC-4S/8S low layer interface for Cologne Chip HFC-4S/8S isdn chips   */

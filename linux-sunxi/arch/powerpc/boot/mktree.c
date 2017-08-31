@@ -1,4 +1,15 @@
 /*
+ * arch/powerpc/boot/mktree.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Makes a tree bootable image for IBM Evaluation boards.
  * Basically, just take a zImage, skip the ELF header, and stuff
  * a 32 byte header on the front.

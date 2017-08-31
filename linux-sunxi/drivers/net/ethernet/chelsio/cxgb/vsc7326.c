@@ -1,3 +1,14 @@
+/*
+ * drivers/net/ethernet/chelsio/cxgb/vsc7326.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* $Date: 2006/04/28 19:20:06 $ $RCSfile: vsc7326.c,v $ $Revision: 1.19 $ */
 
 /* Driver for Vitesse VSC7326 (Schaumburg) MAC */

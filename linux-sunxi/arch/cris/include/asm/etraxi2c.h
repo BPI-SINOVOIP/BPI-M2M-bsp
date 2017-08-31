@@ -1,3 +1,14 @@
+/*
+ * arch/cris/include/asm/etraxi2c.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* $Id: etraxi2c.h,v 1.1 2001/01/18 15:49:57 bjornw Exp $ */
 
 #ifndef _LINUX_ETRAXI2C_H

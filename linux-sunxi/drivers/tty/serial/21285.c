@@ -1,4 +1,15 @@
 /*
+ * drivers/tty/serial/21285.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Driver for the serial port on the 21285 StrongArm-110 core logic chip.
  *
  * Based on drivers/char/serial.c

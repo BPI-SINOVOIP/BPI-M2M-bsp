@@ -9,6 +9,9 @@ obj-$(CONFIG_SND_SUN8IW9_SNDCODEC) += sun8iw9_sndcodec.o
 obj-$(CONFIG_SND_SUN8IW9_SNDCODEC) += sunxi_bbcodec.o
 obj-$(CONFIG_SND_SUNXI_SOC_PUBLUC_MACHINE) += sunxi_sndcodec.o
 obj-$(CONFIG_SND_SUNXI_SOC_SUN8IW9_MACHINE) += sun8iw9_machine.o
+obj-$(CONFIG_SND_SUNXI_SOC_SUN8IW5_MACHINE) += sun8iw5_machine.o
 obj-$(CONFIG_SND_SUNXI_SWITCH) += switch_hdset.o
 
-
+ifeq ($(CONFIG_SUNXI_AUDIO_DEBUG),y)
+	EXTRA_CFLAGS += -DDEBUG
+endif

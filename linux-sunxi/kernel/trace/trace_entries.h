@@ -1,4 +1,15 @@
 /*
+ * kernel/trace/trace_entries.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * This file defines the trace event structures that go into the ring
  * buffer directly. They are created via macros so that changes for them
  * appear in the format file. Using macros will automate this process.

@@ -1,3 +1,14 @@
+/*
+ * drivers/staging/rtl8192u/ieee80211/rtl819x_HT.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #ifndef _RTL819XU_HTTYPE_H_
 #define _RTL819XU_HTTYPE_H_
 

@@ -533,6 +533,10 @@ config SUNXI_BROM_READ
 	---help---
 	 This option can allow program access brom space by the file node.
 	 
+config SUNXI_LRADC_BATTERY
+	tristate "Battery power detection"
+	help
+	  Say Y here if necessary.
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"

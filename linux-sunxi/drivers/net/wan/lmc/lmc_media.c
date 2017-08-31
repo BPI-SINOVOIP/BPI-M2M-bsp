@@ -1,3 +1,14 @@
+/*
+ * drivers/net/wan/lmc/lmc_media.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* $Id: lmc_media.c,v 1.13 2000/04/11 05:25:26 asj Exp $ */
 
 #include <linux/kernel.h>

@@ -400,6 +400,7 @@ static void h5_pkt_cull(struct h5_struct *h5)
 /* Handle H5 link-establishment packets. When we
    detect a "sync" packet, symptom that the BT module has reset,
    we do nothing :) (yet) */
+#if 0
 static void h5_handle_le_pkt(struct hci_uart *hu)
 {
 	struct h5_struct *h5 = hu->priv;
@@ -475,6 +476,7 @@ static void h5_handle_le_pkt(struct hci_uart *hu)
 	}
 
 }
+#endif
 
 static inline void h5_unslip_one_byte(struct h5_struct *h5, unsigned char byte)
 {
@@ -588,12 +590,11 @@ static void h5_complete_rx_pkt(struct hci_uart *hu)
 		pass_up = 0;
 
 	if (!pass_up) {		
-		struct hci_event_hdr hdr;
 		u8 desc = (h5->rx_skb->data[1] & 0x0f);
-
 		if (desc != H5_ACK_PKT && desc != H5_LE_PKT) {
 #if 0			
 			if (hciextn) {
+				struct hci_event_hdr hdr;
 				desc |= 0xc0;
 				skb_pull(h5->rx_skb, 4);
 				memcpy(skb_push(h5->rx_skb, 1), &desc, 1);

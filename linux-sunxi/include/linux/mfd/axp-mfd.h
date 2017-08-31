@@ -21,10 +21,11 @@
 #include <linux/mfd/axp-mfd-15.h>
 #include <linux/mfd/axp-mfd-20.h>
 #include <linux/mfd/axp-mfd-152.h>
+#include <linux/mfd/axp-mfd-259.h>
 
 #define AXP_MFD_ATTR(_name)				\
 {							\
-	.attr = { .name = #_name,.mode = 0644 },	\
+	.attr = { .name = #_name, .mode = 0644 },	\
 	.show =  _name##_show,				\
 	.store = _name##_store,				\
 }
@@ -40,7 +41,7 @@ struct axp_supply_init_data {
 	unsigned int chgcur;
 	unsigned int chgvol;
 	unsigned int chgend;
-	/*charger control*/
+	/*charger control */
 	bool chgen;
 	bool limit_on;
 	/*charger time */
@@ -51,14 +52,14 @@ struct axp_supply_init_data {
 	unsigned int sample_time;
 
 	/* platform callbacks for battery low and critical IRQs */
-	void (*battery_low)(void);
-	void (*battery_critical)(void);
+	void (*battery_low) (void);
+	void (*battery_critical) (void);
 };
 
 struct axp_funcdev_info {
-	int		id;
-	const char	*name;
-	void	*platform_data;
+	int id;
+	const char *name;
+	void *platform_data;
 };
 
 struct axp_platform_data {
@@ -74,42 +75,42 @@ struct axp_platform_data {
 
 struct axp_dev {
 	struct axp_platform_data *pdata;
-	struct axp_mfd_chip_ops	*ops;
-	struct device		*dev;
+	struct axp_mfd_chip_ops *ops;
+	struct device *dev;
 
 	int attrs_number;
 	struct device_attribute *attrs;
 
 	struct i2c_client *client;
 
-	int			type;
-	uint64_t		irqs_enabled;
+	int type;
+	uint64_t irqs_enabled;
 
-	spinlock_t		spinlock;
-	struct mutex		lock;
-	struct work_struct	irq_work;
+	spinlock_t spinlock;
+	struct mutex lock;
+	struct work_struct irq_work;
 
 	struct blocking_notifier_head notifier_list;
 	/* lists we belong to */
-	struct list_head list; /* list of all axps */
+	struct list_head list;	/* list of all axps */
 
 };
 
 struct axp_mfd_chip_ops {
-	int	(*init_chip)(struct axp_dev *);
-	int	(*enable_irqs)(struct axp_dev *, uint64_t irqs);
-	int	(*disable_irqs)(struct axp_dev *, uint64_t irqs);
-	int	(*read_irqs)(struct axp_dev *, uint64_t *irqs);
+	int (*init_chip) (struct axp_dev *);
+	int (*enable_irqs) (struct axp_dev *, uint64_t irqs);
+	int (*disable_irqs) (struct axp_dev *, uint64_t irqs);
+	int (*read_irqs) (struct axp_dev *, uint64_t *irqs);
 };
 
 extern int axp_register_notifier(struct device *dev,
-		struct notifier_block *nb, uint64_t irqs);
+				struct notifier_block *nb,
+				uint64_t irqs);
 extern int axp_unregister_notifier(struct device *dev,
-		struct notifier_block *nb, uint64_t irqs);
+				struct notifier_block *nb,
+				uint64_t irqs);
 
-
-typedef enum AW_CHARGE_TYPE
-{
+typedef enum AW_CHARGE_TYPE {
 	CHARGE_AC,
 	CHARGE_USB_20,
 	CHARGE_USB_30,
@@ -126,7 +127,8 @@ extern int axp_reads(struct device *dev, int reg, int len, uint8_t *val);
 extern int axp_update(struct device *dev, int reg, uint8_t val, uint8_t mask);
 extern int axp_set_bits(struct device *dev, int reg, uint8_t bit_mask);
 extern int axp_clr_bits(struct device *dev, int reg, uint8_t bit_mask);
-extern int axp_update_sync(struct device *dev, int reg, uint8_t val, uint8_t mask);
+extern int axp_update_sync(struct device *dev, int reg,
+				uint8_t val, uint8_t mask);
 extern int axp_set_bits_sync(struct device *dev, int reg, uint8_t bit_mask);
 extern int axp_clr_bits_sync(struct device *dev, int reg, uint8_t bit_mask);
 extern struct axp_dev *axp_dev_lookup(int type);

@@ -1,3 +1,14 @@
+/*
+ * include/video/aty128.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /*  $Id: aty128.h,v 1.1 1999/10/12 11:00:40 geert Exp $
  *  linux/drivers/video/aty128.h
  *  Register definitions for ATI Rage128 boards

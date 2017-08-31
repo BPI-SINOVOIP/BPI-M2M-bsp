@@ -1,3 +1,14 @@
+/*
+ * sound/pci/cs46xx/imgs/cwc4630.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 /* generated from cwc4630.osp DO NOT MODIFY */
 
 #ifndef __HEADER_cwc4630_H__

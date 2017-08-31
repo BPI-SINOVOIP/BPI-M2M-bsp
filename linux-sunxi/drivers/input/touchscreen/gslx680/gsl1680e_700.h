@@ -1,3 +1,14 @@
+/*
+ * drivers/input/touchscreen/gslx680/gsl1680e_700.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 
 static const struct fw_data GSL1680E_700_FW[] = {
 //1680E_V1.3.4.17_2013.10.08_G2	

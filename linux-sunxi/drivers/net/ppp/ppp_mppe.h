@@ -1,3 +1,14 @@
+/*
+ * drivers/net/ppp/ppp_mppe.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #define MPPE_PAD                4      /* MPPE growth per frame */
 #define MPPE_MAX_KEY_LEN       16      /* largest key length (128-bit) */
 

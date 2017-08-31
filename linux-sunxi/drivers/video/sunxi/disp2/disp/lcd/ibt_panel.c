@@ -1,4 +1,5 @@
 /*
+ * drivers/video/sunxi/disp2/disp/lcd/ibt_panel.c
  *
  * Copyright (c) 2016 Allwinnertech Co., Ltd.
  *

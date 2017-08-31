@@ -1,3 +1,14 @@
+/*
+ * include/target/target_core_configfs.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #define TARGET_CORE_CONFIGFS_VERSION TARGET_CORE_MOD_VERSION
 
 #define TARGET_CORE_CONFIG_ROOT	"/sys/kernel/config"

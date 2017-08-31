@@ -93,7 +93,7 @@ struct mma8452_data {
 	struct i2c_client *client;
 //	struct early_suspend early_suspend;
 };
-static struct mma8452_data *mma8452_data;
+/*static struct mma8452_data *mma8452_data;*/
 //#endif
 
 static short mma8452_rotation[9] = {1,0,0,0,1,0,0,0,1};
@@ -469,7 +469,7 @@ static void mma8452_late_resume(struct early_suspend *h) //(struct i2c_client *c
 	dprintk(DEBUG_SUSPEND, "mma8452 late resume end");
 	return ;
 }
-#else if 1
+#elif 1
 //#ifdef CONFIG_PM
 static int mma8452_resume(struct i2c_client *client)
 {
@@ -612,8 +612,9 @@ static int mma8452_probe(struct i2c_client *client,
 	mma8452_data->early_suspend.resume	= mma8452_late_resume;
 	register_early_suspend(&mma8452_data->early_suspend);
 #endif */
-  script_get_item("gsensor_para", "gsensor_rotation", &gsensor_rotation_val);	                  //Modify for rotation by Jason
-  //printk("gsensor_rotation = %d \n",gsensor_rotation_val);
+	script_get_item("gsensor_para", "gsensor_rotation",
+		(script_item_u *)&gsensor_rotation_val);
+	/*Modify for rotation by Jason*/
   switch(gsensor_rotation_val)
   {
   	case 0:
@@ -806,10 +807,12 @@ static int mma8452_probe(struct i2c_client *client,
 	}
 	dprintk(DEBUG_INIT, "mma8452 probe end\n");
 	return result;
-//#ifdef CONFIG_HAS_EARLYSUSPEND
+/*
+#ifdef CONFIG_HAS_EARLYSUSPEND
 err_alloc_data_failed:
-//#endif
+#endif
 	return result;
+*/
 }
 
 static int mma8452_remove(struct i2c_client *client)

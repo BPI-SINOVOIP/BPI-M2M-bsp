@@ -6,7 +6,11 @@ arisc_binary_start:
 #elif defined CONFIG_ARCH_SUN8IW3P1
 	.incbin "drivers/arisc/binary/arisc_sun8iw3p1.bin"
 #elif defined CONFIG_ARCH_SUN8IW5P1
+#if defined CONFIG_AW_AXP259
+	.incbin "drivers/arisc/binary/arisc_sun8iw5p1_axp259.bin"
+#else
 	.incbin "drivers/arisc/binary/arisc_sun8iw5p1.bin"
+#endif
 #elif defined CONFIG_ARCH_SUN8IW6P1
 	.incbin "drivers/arisc/binary/arisc_sun8iw6p1.bin"
 #elif defined CONFIG_ARCH_SUN8IW7P1

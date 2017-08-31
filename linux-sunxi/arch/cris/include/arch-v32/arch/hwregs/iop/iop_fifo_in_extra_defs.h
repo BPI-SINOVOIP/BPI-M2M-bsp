@@ -1,3 +1,14 @@
+/*
+ * arch/cris/include/arch-v32/arch/hwregs/iop/iop_fifo_in_extra_defs.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #ifndef __iop_fifo_in_extra_defs_h
 #define __iop_fifo_in_extra_defs_h
 

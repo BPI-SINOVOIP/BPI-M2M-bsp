@@ -1,3 +1,14 @@
+/*
+ * drivers/power/axp_power/axp-rw.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
 #include <linux/init.h>
 #include <linux/device.h>
 #include <linux/err.h>
@@ -17,9 +28,8 @@ int axp_register_notifier(struct device *dev, struct notifier_block *nb,
 {
 	struct axp_dev *chip = dev_get_drvdata(dev);
 
-	if(NULL != nb) {
+	if (NULL != nb)
 		blocking_notifier_chain_register(&chip->notifier_list, nb);
-	}
 	chip->ops->enable_irqs(chip, irqs);
 #ifdef CONFIG_SUNXI_ARISC
 	arisc_enable_nmi_irq();
@@ -38,9 +48,9 @@ int axp_unregister_notifier(struct device *dev, struct notifier_block *nb,
 #else
 #endif
 	chip->ops->disable_irqs(chip, irqs);
-	if(NULL != nb) {
-	    return blocking_notifier_chain_unregister(&chip->notifier_list, nb);
-	}
+	if (NULL != nb)
+		return blocking_notifier_chain_unregister(
+				&chip->notifier_list, nb);
 
 	return 0;
 }
@@ -57,13 +67,16 @@ int axp_write(struct device *dev, int reg, uint8_t val)
 	switch (chip->type) {
 	case AXP22:
 	case AXP81X:
-		devaddr = RSB_RTSADDR_AXP809;
+		devaddr = RSB_RTSADDR_AXP22X;
 		break;
 	case AXP15:
 		devaddr = RSB_RTSADDR_AXP806;
 		break;
 	case AXP152:
 		devaddr = TWI_RTSADDR_AXP152;
+		break;
+	case AXP259:
+		devaddr = RSB_RTSADDR_AXP259;
 		break;
 	default:
 		break;
@@ -88,13 +101,17 @@ int axp_writes(struct device *dev, int reg, int len, uint8_t *val)
 	switch (chip->type) {
 	case AXP22:
 	case AXP81X:
-		devaddr = RSB_RTSADDR_AXP809;
+		devaddr = RSB_RTSADDR_AXP22X;
 		break;
 	case AXP15:
 		devaddr = RSB_RTSADDR_AXP806;
 		break;
 	case AXP152:
 		devaddr = TWI_RTSADDR_AXP152;
+		break;
+	case AXP259:
+		devaddr = RSB_RTSADDR_AXP259;
+		break;
 	default:
 		break;
 	}
@@ -117,13 +134,16 @@ int axp_read(struct device *dev, int reg, uint8_t *val)
 	switch (chip->type) {
 	case AXP22:
 	case AXP81X:
-		devaddr = RSB_RTSADDR_AXP809;
+		devaddr = RSB_RTSADDR_AXP22X;
 		break;
 	case AXP15:
 		devaddr = RSB_RTSADDR_AXP806;
 		break;
 	case AXP152:
 		devaddr = TWI_RTSADDR_AXP152;
+		break;
+	case AXP259:
+		devaddr = RSB_RTSADDR_AXP259;
 		break;
 	default:
 		break;
@@ -143,13 +163,16 @@ int axp_reads(struct device *dev, int reg, int len, uint8_t *val)
 	switch (chip->type) {
 	case AXP22:
 	case AXP81X:
-		devaddr = RSB_RTSADDR_AXP809;
+		devaddr = RSB_RTSADDR_AXP22X;
 		break;
 	case AXP15:
 		devaddr = RSB_RTSADDR_AXP806;
 		break;
 	case AXP152:
 		devaddr = TWI_RTSADDR_AXP152;
+		break;
+	case AXP259:
+		devaddr = RSB_RTSADDR_AXP259;
 		break;
 	default:
 		break;
@@ -171,13 +194,16 @@ int axp_set_bits(struct device *dev, int reg, uint8_t bit_mask)
 	switch (chip->type) {
 	case AXP22:
 	case AXP81X:
-		devaddr = RSB_RTSADDR_AXP809;
+		devaddr = RSB_RTSADDR_AXP22X;
 		break;
 	case AXP15:
 		devaddr = RSB_RTSADDR_AXP806;
 		break;
 	case AXP152:
 		devaddr = TWI_RTSADDR_AXP152;
+		break;
+	case AXP259:
+		devaddr = RSB_RTSADDR_AXP259;
 		break;
 	default:
 		break;
@@ -210,13 +236,16 @@ int axp_clr_bits(struct device *dev, int reg, uint8_t bit_mask)
 	switch (chip->type) {
 	case AXP22:
 	case AXP81X:
-		devaddr = RSB_RTSADDR_AXP809;
+		devaddr = RSB_RTSADDR_AXP22X;
 		break;
 	case AXP15:
 		devaddr = RSB_RTSADDR_AXP806;
 		break;
 	case AXP152:
 		devaddr = TWI_RTSADDR_AXP152;
+		break;
+	case AXP259:
+		devaddr = RSB_RTSADDR_AXP259;
 		break;
 	default:
 		break;
@@ -248,13 +277,16 @@ int axp_update(struct device *dev, int reg, uint8_t val, uint8_t mask)
 	switch (chip->type) {
 	case AXP22:
 	case AXP81X:
-		devaddr = RSB_RTSADDR_AXP809;
+		devaddr = RSB_RTSADDR_AXP22X;
 		break;
 	case AXP15:
 		devaddr = RSB_RTSADDR_AXP806;
 		break;
 	case AXP152:
 		devaddr = TWI_RTSADDR_AXP152;
+		break;
+	case AXP259:
+		devaddr = RSB_RTSADDR_AXP259;
 		break;
 	default:
 		break;
@@ -289,13 +321,16 @@ int axp_set_bits_sync(struct device *dev, int reg, uint8_t bit_mask)
 
 	switch (chip->type) {
 	case AXP22:
-		devaddr = RSB_RTSADDR_AXP809;
+		devaddr = RSB_RTSADDR_AXP22X;
 		break;
 	case AXP15:
 		devaddr = RSB_RTSADDR_AXP806;
 		break;
 	case AXP152:
 		devaddr = TWI_RTSADDR_AXP152;
+		break;
+	case AXP259:
+		devaddr = RSB_RTSADDR_AXP259;
 		break;
 	default:
 		break;
@@ -328,13 +363,16 @@ int axp_clr_bits_sync(struct device *dev, int reg, uint8_t bit_mask)
 
 	switch (chip->type) {
 	case AXP22:
-		devaddr = RSB_RTSADDR_AXP809;
+		devaddr = RSB_RTSADDR_AXP22X;
 		break;
 	case AXP15:
 		devaddr = RSB_RTSADDR_AXP806;
 		break;
 	case AXP152:
 		devaddr = TWI_RTSADDR_AXP152;
+		break;
+	case AXP259:
+		devaddr = RSB_RTSADDR_AXP259;
 		break;
 	default:
 		break;
@@ -366,13 +404,16 @@ int axp_update_sync(struct device *dev, int reg, uint8_t val, uint8_t mask)
 	switch (chip->type) {
 	case AXP22:
 	case AXP81X:
-		devaddr = RSB_RTSADDR_AXP809;
+		devaddr = RSB_RTSADDR_AXP22X;
 		break;
 	case AXP15:
 		devaddr = RSB_RTSADDR_AXP806;
 		break;
 	case AXP152:
 		devaddr = TWI_RTSADDR_AXP152;
+		break;
+	case AXP259:
+		devaddr = RSB_RTSADDR_AXP259;
 		break;
 	default:
 		break;
@@ -392,4 +433,3 @@ out:
 	return ret;
 }
 EXPORT_SYMBOL_GPL(axp_update_sync);
-

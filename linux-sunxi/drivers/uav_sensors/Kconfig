@@ -1,0 +1,54 @@
+#
+# Hardware monitoring chip drivers configuration
+#
+
+menuconfig UAV_SENSORS
+	tristate "UAV SENSORS support"
+	default y
+	help
+	  uav sensors support
+
+if UAV_SENSORS
+
+config UAV_SENSORS_MPU6050
+	tristate "mpu6050"
+	depends on I2C
+	help
+		6-axis sensor include acc and gyro
+
+config UAV_SENSORS_FBM320
+	tristate "fbm320"
+	depends on I2C
+	help
+		barometer sensor
+
+config UAV_SENSORS_HMC5883
+	tristate "hmc5883"
+	depends on I2C
+	help
+		mag sensor
+
+config UAV_SENSORS_QMC5883
+	tristate "qmc5883"
+	depends on I2C
+	help
+		mag sensor
+
+config UAV_SENSORS_KS103
+	tristate "ks103"
+	depends on I2C
+	help
+		sonar sensor
+
+config UAV_SENSORS_GPS_POWER
+	tristate "gps_power"
+	help
+		gps_power interface,use echo 1 > /sys/gps_power/gps_power to control
+
+config UAV_SENSORS_LIS3MDL
+	tristate "lis3mdl"
+	depends on I2C
+	help
+		3-axis mag sensor
+
+endif #UAV_SENSORS

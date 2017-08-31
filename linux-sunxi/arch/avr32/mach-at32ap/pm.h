@@ -1,4 +1,15 @@
 /*
+ * arch/avr32/mach-at32ap/pm.h
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
  * Register definitions for the Power Manager (PM)
  */
 #ifndef __ARCH_AVR32_MACH_AT32AP_PM_H__

@@ -1,4 +1,15 @@
 /*
+ * arch/m68k/amiga/chipram.c
+ *
+ * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ */
+/*
 **  linux/amiga/chipram.c
 **
 **      Modified 03-May-94 by Geert Uytterhoeven <geert@linux-m68k.org>
