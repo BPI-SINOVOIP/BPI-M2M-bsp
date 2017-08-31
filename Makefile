@@ -21,16 +21,9 @@ ROOTFS=$(CURDIR)/rootfs/linux/default_linux_rootfs.tar.gz
 Q=
 J=$(shell expr `grep ^processor /proc/cpuinfo  | wc -l` \* 2)
 
+## build all bsp
 all: bsp
-
-## DK, if u-boot and kernel KBUILD_OUT issue fix, u-boot-clean and kernel-clean
-## are no more needed
-clean: u-boot-clean kernel-clean
-	rm -f chosen_board.mk
-
-## pack
-pack: sunxi-pack
-	$(Q)scripts/mk_pack.sh
+bsp: u-boot kernel
 
 # u-boot
 $(U_CONFIG_H): u-boot-sunxi
@@ -49,15 +42,10 @@ $(K_DOT_CONFIG): linux-sunxi
 kernel: $(K_DOT_CONFIG)
 	$(Q)$(MAKE) -C linux-sunxi ARCH=arm CROSS_COMPILE=${K_CROSS_COMPILE} -j$J INSTALL_MOD_PATH=output uImage
 	$(Q)$(MAKE) -C linux-sunxi ARCH=arm CROSS_COMPILE=${K_CROSS_COMPILE} -j$J INSTALL_MOD_PATH=output modules
-#	$(Q)$(MAKE) -C linux-sunxi/modules/gpu/mali400/kernel_mode/driver/src/devicedrv/mali CROSS_COMPILE=$(K_CROSS_COMPILE) ARCH=arm TARGET_PLATFORM="" KDIR=${LICHEE_KDIR} LICHEE_KDIR=${LICHEE_KDIR} USING_DT=1 BUILD=release USING_UMP=0
-#	$(Q)$(MAKE) -C linux-sunxi/modules/gpu CROSS_COMPILE=$(K_CROSS_COMPILE) ARCH=arm TARGET_PLATFORM="" KDIR=${LICHEE_KDIR}  LICHEE_KDIR=${LICHEE_KDIR} USING_DT=1 BUILD=release USING_UMP=1 install V=1
-#	$(Q)$(MAKE) -C linux-sunxi/modules/mali CROSS_COMPILE=$(K_CROSS_COMPILE) ARCH=arm TARGET_PLATFORM="" KDIR=${LICHEE_KDIR}  LICHEE_KDIR=${LICHEE_KDIR} USING_DT=1 BUILD=release USING_UMP=1 install V=1
 	$(Q)$(MAKE) -C linux-sunxi ARCH=arm CROSS_COMPILE=${K_CROSS_COMPILE} -j$J INSTALL_MOD_PATH=output modules_install
 #	$(Q)$(MAKE) -C linux-sunxi ARCH=arm CROSS_COMPILE=${K_CROSS_COMPILE} -j$J headers_install
 
 kernel-clean:
-#	$(Q)$(MAKE) -C linux-sunxi/modules/gpu CROSS_COMPILE=$(K_CROSS_COMPILE) ARCH=arm LICHEE_KDIR=${LICHEE_KDIR} clean
-#	$(Q)$(MAKE) -C linux-sunxi/modules/gpu/mali400/kernel_mode/driver/src/devicedrv/mali CROSS_COMPILE=$(K_CROSS_COMPILE) ARCH=arm TARGET_PLATFORM="" KDIR=${LICHEE_KDIR} LICHEE_KDIR=${LICHEE_KDIR} USING_DT=1 BUILD=release USING_UMP=0 clean
 	$(Q)$(MAKE) -C linux-sunxi ARCH=arm CROSS_COMPILE=${K_CROSS_COMPILE} -j$J distclean
 	rm -rf linux-sunxi/output/
 
@@ -65,8 +53,17 @@ kernel-config: $(K_DOT_CONFIG)
 	$(Q)$(MAKE) -C linux-sunxi ARCH=arm CROSS_COMPILE=${K_CROSS_COMPILE} -j$J menuconfig
 	cp linux-sunxi/.config linux-sunxi/arch/arm/configs/$(KERNEL_CONFIG)
 
-## bsp
-bsp: u-boot kernel
+## clean all build
+clean: u-boot-clean kernel-clean
+	rm -f chosen_board.mk
+
+## pack
+pack: sunxi-pack
+	$(Q)scripts/mk_pack.sh
+
+## install to bpi image
+install:
+	$(Q)scripts/mk_install_sd.sh
 
 ## linux
 linux: 
@@ -76,16 +73,17 @@ help:
 	@echo ""
 	@echo "Usage:"
 	@echo "  make bsp             - Default 'make'"
-	@echo "  make linux         - Build target for linux platform, as ubuntu, need permisstion confirm during the build process"
-	@echo "   Arguments:"
-	@echo "    ROOTFS=            - Source rootfs (ie. rootfs.tar.gz with absolute path)"
+	@echo "  make u-boot          - Builds u-boot"
+	@echo "  make kernel          - Builds linux kernel"
+	@echo "  make kernel-config   - Menuconfig"
 	@echo ""
 	@echo "  make pack            - pack the images and rootfs to a PhenixCard download image."
+	@echo "  make install         - download the build packages to SD card with bpi image flashed."
 	@echo "  make clean"
 	@echo ""
 	@echo "Optional targets:"
-	@echo "  make kernel           - Builds linux kernel"
-	@echo "  make kernel-config    - Menuconfig"
-	@echo "  make u-boot          - Builds u-boot"
 	@echo ""
+	@echo "  make linux           - Build target for linux platform, as ubuntu, need permisstion confirm during the build process"
+	@echo "   Arguments:"
+	@echo "    ROOTFS=            - Source rootfs (ie. rootfs.tar.gz with absolute path)"
 
