@@ -3,7 +3,7 @@
 # Build script for BPI-M2U-BSP 2016.09.10
 
 TARGET_PRODUCT="astar-m2magic"
-BOARD=BPI-M2M-LCD
+BOARD=BPI-M2M-LCD5
 board="bpi-m2m"
 kernel="3.4.39-BPI-M2M-Kernel"
 MODE=$1
@@ -12,7 +12,7 @@ MODE=$1
 cp_download_files()
 {
 T="$TOPDIR"
-SD="$T/SD"
+SD="$T/SD/${board}"
 U="${SD}/100MB"
 B="${SD}/BPI-BOOT"
 R="${SD}/BPI-ROOT"
@@ -34,8 +34,9 @@ R="${SD}/BPI-ROOT"
 	#
 	## copy files to BPI-BOOT
 	#
-	mkdir -p $B/bananapi/${board}
-	cp -a $T/sunxi-pack/allwinner/${TARGET_PRODUCT}/configs/default/linux $B/bananapi/${board}/
+	type=$(echo ${BOARD/BPI-M2M-/} | tr '[A-Z]' '[a-z]')
+	mkdir -p $B/bananapi/${board}/linux/${type}
+	cp -a $T/sunxi-pack/allwinner/${TARGET_PRODUCT}/configs/${BOARD}/linux/* $B/bananapi/${board}/linux/${type}/
 	cp -a $T/linux-sunxi/arch/arm/boot/uImage $B/bananapi/${board}/linux/uImage
 
 	#
@@ -107,9 +108,9 @@ case $mode in
 	2) make u-boot;;
 	3) make kernel;;
 	4) make kernel-config;;
-	5) make pack;;
-	6) cp_download_files;;
-	7) make clean;;
+	5) make pack &&
+	   cp_download_files;;
+	6) make clean;;
 esac
 echo
 
