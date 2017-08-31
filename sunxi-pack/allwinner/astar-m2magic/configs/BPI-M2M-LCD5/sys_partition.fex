@@ -71,12 +71,6 @@ size = 16384
     user_type    = 0x8000
 
 [partition]
-    name         = recovery
-    size         = 32768
-	downloadfile = "recovery.fex"
-    user_type    = 0x8000
-
-[partition]
     name         = misc
     size         = 2048
     user_type    = 0x8000
