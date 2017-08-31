@@ -112,7 +112,7 @@ sdc_d7          = port:PC15<3><1><2><default>
 ;twi_port	= twi controller ID
 ;----------------------------------------------------------------------------------
 [twi_para]
-twi_port        = 1
+twi_port        = 0
 twi_scl         = port:PH02<2><default><default><default>
 twi_sda         = port:PH03<2><default><default><default>
 
@@ -121,9 +121,9 @@ twi_sda         = port:PH03<2><default><default><default>
 ;uart_debug_port = uart port ID for boot debug
 ;----------------------------------------------------------------------------------
 [uart_para]
-uart_debug_port = 0
-uart_debug_tx   = port:PF02<3><1><default><default>
-uart_debug_rx   = port:PF04<3><1><default><default>
+uart_debug_port  = 0
+uart_debug_tx    = port:PF02<3><1><default><default>
+uart_debug_rx    = port:PF04<3><1><default><default>
 
 [force_uart_para]
 force_uart_port  = 0
@@ -135,7 +135,7 @@ force_uart_rx    = port:PF04<3><1><default><default>
 ;jtag_enable     = 0-disable jtag, 1-enable jtag
 ;----------------------------------------------------------------------------------
 [jtag_para]
-jtag_enable     = 1
+jtag_enable     = 0
 jtag_ms         = port:PF00<3><default><default><default>
 jtag_ck         = port:PF05<3><default><default><default>
 jtag_do         = port:PF03<3><default><default><default>
@@ -158,14 +158,14 @@ pll_vepat       = 0
 pll_hsicpat     = 0
 pll_depat       = 0
 pll_mipipat     = 0 
-pll_mipitun = 0x8a002008
-pll_mipibias= 0xf8100400
+pll_mipitun     = 0x8a002008
+pll_mipibias    = 0xf8100400
 ;---------------------------------------------------------------------------------------------------------
 ;[pm_para] power management
 ;standby_mode = 0-normal standby, 1-super standby
 ;---------------------------------------------------------------------------------------------------------
 [pm_para]
-standby_mode		= 1
+standby_mode	= 1
 
 ;*****************************************************************************
 ;sdram configuration
@@ -203,7 +203,7 @@ dram_tpr13      = 0x10900
 ; else, support normal standby.
 ;---------------------------------------------------------------------------------------------------------
 [pm_para]
-standby_mode		= 1
+standby_mode	= 1
 
 ;---------------------------------------------------------------------------------------------------------
 ; wakeup_src_para:
@@ -231,7 +231,7 @@ dram_selfresh_en= 1
 dram_freq	= 36
 wakeup_src_wl 	= port:PL07<4><default><default><0>
 wakeup_src_bt 	= port:PL09<4><default><default><0>
-bb_wake_ap	= port:PE16<4><default><default><0>
+bb_wake_ap	= 
 
 ;----------------------------------------------------------------------------------
 ;i2c configuration
@@ -249,7 +249,7 @@ twi_sda         = port:PH05<2><default><default><default>
 
 
 [twi2]
-twi_used        = 0
+twi_used        = 1
 twi_scl         = port:PE12<3><default><default><default>
 twi_sda         = port:PE13<3><default><default><default>
 
@@ -260,7 +260,7 @@ twi_sda         = port:PE13<3><default><default><default>
 ;uart_type       = 2:2 wire,4:4 wire,8:8 wire, full function
 ;----------------------------------------------------------------------------------
 [uart0]
-uart_used       = 1
+uart_used       = 0
 uart_port       = 0
 uart_type       = 2
 uart_tx         = port:PF02<3><1><default><default>
@@ -355,22 +355,22 @@ mode          = 3
 ;ctp_wakeup : port for wakeup tp
 ;----------------------------------------------------------------------------------
 [ctp_para]
-ctp_used            = 1
-ctp_name            = "gt9147_bpi"
-ctp_twi_id          = 0
-ctp_twi_addr        = 0x5d
-ctp_screen_max_x    = 720
-ctp_screen_max_y    = 1280
-ctp_revert_x_flag   = 0
-ctp_revert_y_flag   = 0
-ctp_exchange_x_y_flag = 0
-ctp_gesture_wakeup  = 0
+ctp_used            	= 1
+ctp_name            	= "gt9147_bpi"
+ctp_twi_id          	= 0
+ctp_twi_addr        	= 0x5d
+ctp_screen_max_x    	= 720
+ctp_screen_max_y    	= 1280
+ctp_revert_x_flag   	= 0
+ctp_revert_y_flag   	= 0
+ctp_exchange_x_y_flag 	= 0
+ctp_gesture_wakeup  	= 0
 
-ctp_int_port        = port:PB05<4><default><default><default>
-ctp_wakeup          = port:PB06<1><default><default><default>
-ctp_power_ldo       = "axp22_ldoio1"
-ctp_power_ldo_vol   = 3300
-ctp_power_io        =
+ctp_int_port        	= port:PB05<4><default><default><default>
+ctp_wakeup          	= port:PB06<1><default><default><default>
+ctp_power_ldo       	= "axp22_ldoio1"
+ctp_power_ldo_vol   	= 3300
+ctp_power_io        	=
 
 ;--------------------------------------------------------------------------------
 ; CTP automatic detection configuration
@@ -408,7 +408,7 @@ tkey_int            =
 ;motor_shake : port for making the moto shaking
 ;----------------------------------------------------------------------------------
 [motor_para]
-motor_used          = 1
+motor_used          = 0
 motor_shake         = port:power3<1><default><default><1>
 motor_ldo           = ""
 motor_ldo_voltage   = 3300
@@ -637,7 +637,7 @@ pwm_used            = 1
 pwm_positive        = port:PH00<2><0><default><default>
 
 [pwm1_para]
-pwm_used            = 0
+pwm_used            = 1
 pwm_positive        = port:PH01<2><0><default><default>
 
 ;--------------------------------------------------------------------------------
@@ -678,7 +678,7 @@ pwm_positive        = port:PH01<2><0><default><default>
 vip_used                 = 1
 vip_mode                 = 0
 vip_dev_qty              = 1
-vip_define_sensor_list     = 0
+vip_define_sensor_list   = 0
 vip_csi_pck              = port:PE00<2><default><default><default>
 vip_csi_mck              = port:PE01<2><default><default><default>
 vip_csi_hsync            = port:PE02<2><default><default><default>
@@ -692,13 +692,9 @@ vip_csi_d5               = port:PE09<2><default><default><default>
 vip_csi_d6               = port:PE10<2><default><default><default>
 vip_csi_d7               = port:PE11<2><default><default><default>
 
-vip_csi_sck              = port:PE12<2><default><default><default>
-vip_csi_sda              = port:PE13<2><default><default><default>
-
- 
 vip_dev0_mname           = "ov5640"
 vip_dev0_pos             = "rear"
-vip_dev0_lane            = 4
+vip_dev0_lane            = 0
 vip_dev0_twi_id          = 2
 vip_dev0_twi_addr        = 0x78
 vip_dev0_isp_used        = 0
@@ -766,12 +762,14 @@ gpio_pin_28     = port:PD26<1><default><default><0>
 ;leds
 ;--------------------------------------------------------------------------------
 [led_para]
-led_used                = 0
-led_num                 = 2
-led1                    = port:PE17<1><default><default><default>
-led1_trigger           = "none"
-led2                    = port:PE16<1><default><default><default>
-led2_trigger           = "none"
+led_used                = 1
+led_num                 = 3
+led1                    = port:PL03<1><default><default><default>
+led1_trigger           = "default-on"
+led2                    = port:PL02<1><default><default><default>
+led2_trigger           = "heartbeat"
+led3                    = port:PC07<1><default><default><default>
+led3_trigger           = "default-on"
 
 ;-------------------------------------------------------------------------------
 ;   mmc configuration
@@ -801,7 +799,7 @@ led2_trigger           = "none"
 ;-------------------------------------------------------------------------------
 [mmc0_para]
 sdc_used          = 1
-sdc_detmode       = 2
+sdc_detmode       = 3
 sdc_buswidth      = 4
 sdc_d1            = port:PF00<2><1><2><default>
 sdc_d0            = port:PF01<2><1><2><default>
@@ -904,9 +902,9 @@ vendor_id           = 0x1F3A
 mass_storage_id     = 0x1000
 adb_id              = 0x1001
 
-manufacturer_name   = "USB Developer"
-product_name        = "Android"
-serial_number       = "20080411"
+manufacturer_name   = "Sinovoip"
+product_name        = "BPI-M2M"
+serial_number       = "0001"
 
 [msc_feature]
 vendor_name         = "USB 2.0"
@@ -931,7 +929,7 @@ gsensor_int2        =
 ;Module name postposition 1 said detection, 0 means no detection. 
 ;--------------------------------------------------------------------------------
 [gsensor_list_para]
-gsensor_det_used          = 1
+gsensor_det_used          = 0
 bma250                    = 1
 stk831x                   = 0
 mma8452                   = 1
@@ -1073,7 +1071,7 @@ gy_int2             =
 ;Module name postposition 1 said detection, 0 means no detection. 
 ;--------------------------------------------------------------------------------
 [gy_list_para]
-gy_det_used          = 1
+gy_det_used          = 0
 l3gd20_gyr           = 1
 
 ;--------------------------------------------------------------------------------
@@ -1091,7 +1089,7 @@ ls_int              = port:PB07<4><1><default><default>
 ;Module name postposition 1 said detection, 0 means no detection. 
 ;--------------------------------------------------------------------------------
 [ls_list_para]
-ls_det_used          = 1
+ls_det_used          = 0
 ltr_501als           = 1
 jsa1212              = 1
 
@@ -1134,21 +1132,21 @@ compass_int         =
 [i2s0]
 i2s0_used            = 0
 i2s0_channel         = 2
-i2s0_master			= 4
-i2s0_select  		= 1
-audio_format		= 1
-signal_inversion	= 1
-over_sample_rate	= 512
-sample_resolution   = 16
-word_select_size    = 32
-pcm_sync_period     = 256
-msb_lsb_first       = 0
-sign_extend         = 0
-slot_index          = 0
-slot_width          = 16
-frame_width         = 1
-tx_data_mode 		= 1
-rx_data_mode 		= 1
+i2s0_master	     = 4
+i2s0_select  	     = 1
+audio_format	     = 1
+signal_inversion     = 1
+over_sample_rate     = 512
+sample_resolution    = 16
+word_select_size     = 32
+pcm_sync_period      = 256
+msb_lsb_first        = 0
+sign_extend          = 0
+slot_index           = 0
+slot_width           = 16
+frame_width          = 1
+tx_data_mode 	     = 1
+rx_data_mode 	     = 1
 i2s0_mclk            =
 i2s0_bclk            = port:PB04<2><1><default><default>
 i2s0_lrclk           = port:PB05<2><1><default><default>
@@ -1188,21 +1186,21 @@ i2s0_din             = port:PB07<2><1><default><default>
 [i2s1]
 i2s1_used            = 0
 i2s1_channel         = 2
-i2s1_master			= 4
-i2s1_select  		= 1
-audio_format		= 1
-signal_inversion	= 1
-over_sample_rate	= 512
-sample_resolution   = 16
-word_select_size 	= 32
-pcm_sync_period 	= 64
-msb_lsb_first 	    = 0
-sign_extend 		= 0
-slot_index 		    = 0
-slot_width 		    = 16
-frame_width 		= 1
-tx_data_mode 		= 0
-rx_data_mode 		= 0
+i2s1_master	     = 4
+i2s1_select  	     = 1
+audio_format	     = 1
+signal_inversion     = 1
+over_sample_rate     = 512
+sample_resolution    = 16
+word_select_size     = 32
+pcm_sync_period      = 64
+msb_lsb_first 	     = 0
+sign_extend 	     = 0
+slot_index 	     = 0
+slot_width 	     = 16
+frame_width 	     = 1
+tx_data_mode 	     = 0
+rx_data_mode 	     = 0
 i2s1_mclk            =
 i2s1_bclk            = port:PG11<2><1><default><default>
 i2s1_lrclk           = port:PG10<2><1><default><default>
@@ -1217,42 +1215,41 @@ i2s1_din             = port:PG13<2><1><default><default>
 ;--------------------------------------------------------------------------------
 [audio0]
 audio_used          	= 1
-audio_hp_ldo       		= "none"
-headphone_vol			= 0x3b
-earpiece_vol 			= 0x3e
-cap_vol					= 0x5
-pa_single_vol			= 0x3a
-pa_double_used			= 1
-pa_double_vol			= 0x3e
+audio_hp_ldo       	= "none"
+headphone_vol		= 0x3b
+earpiece_vol 		= 0x3e
+cap_vol			= 0x5
+pa_single_vol		= 0x3a
+pa_double_used		= 1
+pa_double_vol		= 0x3e
 headphone_direct_used	= 1
-headset_mic_vol 		= 3
+headset_mic_vol 	= 3
 main_mic_vol        	= 1
 audio_lowlevel_detect	= 1
-;audio_linein_detect    	= port:PB07<0><default><default><0>
-audio_pa_ctrl          	= port:PD11<1><default><default><0>
+audio_pa_ctrl          	= port:PH09<1><default><default><0>
 aif2_used              	= 0
 aif3_used              	= 0
 headphone_mute_used 	= 0
 pa_gpio_reverse 	= 0
-agc_used				= 1
-drc_used				= 0
+agc_used		= 1
+drc_used		= 0
 aif1_lrlk_div  = 0x40
 
 [codec_aif2]
 aif2_lrlk_div = 0x20
 aif2master = 1
 aif2fmt = 0
-aif2_bclk            = port:PB05<3><1><default><default>
-aif2_lrclk           = port:PB04<3><1><default><default>
-aif2_dout            = port:PB06<3><1><default><default>
-aif2_din             = port:PB07<3><1><default><default>
+aif2_bclk            = 
+aif2_lrclk           = 
+aif2_dout            = 
+aif2_din             = 
 
 [codec_aif3]
 aif3fmt = 4
-aif3_bclk            = port:PG11<3><1><default><default>
-aif3_lrclk           = port:PG10<3><1><default><default>
-aif3_dout            = port:PG12<3><1><default><default>
-aif3_din             = port:PG13<3><1><default><default>
+aif3_bclk            = 
+aif3_lrclk           = 
+aif3_dout            = 
+aif3_din             = 
 
 ;-------------------------------------------------------------------------------------
 ;pmu_used                    ---0:not used,1:used
@@ -1435,7 +1432,7 @@ pmu_reset                  = 0
 pmu_IRQ_wakeup             = 1
 pmu_hot_shutdowm           = 1
 pmu_inshort                = 0
-power_start                = 0
+power_start                = 1
 
 pmu_temp_enable            = 0
 pmu_charge_ltf             = 2261
@@ -1522,7 +1519,7 @@ LV8_volt = 1040
 ;device have pin PA1 PA2
 ;----------------------------------------------------------------------------------
 [Vdevice]
-Vdevice_used        = 1
+Vdevice_used        = 0
 Vdevice_0           = port:PA01<5><1><2><default>
 Vdevice_1           = port:PA02<5><1><2><default>
 
