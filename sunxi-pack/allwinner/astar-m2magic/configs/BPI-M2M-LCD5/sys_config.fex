@@ -765,11 +765,14 @@ gpio_pin_28     = port:PD26<1><default><default><0>
 led_used                = 1
 led_num                 = 3
 led1                    = port:PL03<1><default><default><default>
-led1_trigger           = "default-on"
+led1_trigger            = "default-on"
+led1_active_low		= 1
 led2                    = port:PL02<1><default><default><default>
-led2_trigger           = "heartbeat"
+led2_trigger            = "heartbeat"
+led2_active_low		= 1
 led3                    = port:PC07<1><default><default><default>
-led3_trigger           = "default-on"
+led3_trigger            = "default-on"
+led3_active_low		= 1
 
 ;-------------------------------------------------------------------------------
 ;   mmc configuration

@@ -31,50 +31,14 @@
 
 static void *led_list_head;
 static struct gpio_led *gpio_leds;
+static struct gpio_led_platform_data gpio_led_pdata;
+struct platform_device *pdev;
 
 typedef char LedNameType[5];
 static void *led_list_name;
 static LedNameType *led_name;
 
 static int led_num;
-
-/*
-   static struct gpio_led gpio_leds[] = {
-   {
-   .name   = "led1",
-   .active_low = 0,
-   .default_state = LEDS_GPIO_DEFSTATE_OFF,
-   },
-   {
-   .name   = "led2",
-   .active_low = 0,
-   .default_state = LEDS_GPIO_DEFSTATE_OFF,
-   },
-   {
-   .name   = "led3",
-   .active_low = 0,
-   .default_state = LEDS_GPIO_DEFSTATE_OFF,
-   },
-   };
-   */
-static struct gpio_led_platform_data gpio_led_info = {
-	.leds           = NULL,
-	.num_leds       = 0,
-};
-static void gpio_led_release(struct device *dev)
-{
-	/*struct vfe_dev *vfe_dev = (struct vfe_dev *)dev_get_drvdata(dev);*/
-	/*printk("gpio_led_release\n");*/
-};
-
-static struct platform_device leds_gpio = {
-	.name   = "sunxi-led",
-	.id     = -1,
-	.dev    = {
-		.platform_data  = &gpio_led_info,
-		.release = gpio_led_release,
-	},
-};
 
 struct gpio_led_data {
 	struct led_classdev cdev;
@@ -88,6 +52,10 @@ struct gpio_led_data {
 			unsigned long *delay_on, unsigned long *delay_off);
 };
 
+struct gpio_leds_priv {
+	int num_leds;
+	struct gpio_led_data leds[];
+};
 static void gpio_led_work(struct work_struct *work)
 {
 	struct gpio_led_data    *led_dat =
@@ -208,11 +176,6 @@ static void delete_gpio_led(struct gpio_led_data *led)
 	gpio_free(led->gpio);
 }
 
-struct gpio_leds_priv {
-	int num_leds;
-	struct gpio_led_data leds[];
-};
-
 static inline int sizeof_gpio_leds_priv(int num_leds)
 {
 	return sizeof(struct gpio_leds_priv) +
@@ -224,6 +187,8 @@ static int __devinit gpio_led_probe(struct platform_device *pdev)
 	struct gpio_led_platform_data *pdata = pdev->dev.platform_data;
 	struct gpio_leds_priv *priv;
 	int i, ret = 0;
+	
+	pr_info("%s probe \n", __func__);
 
 	if (pdata && pdata->num_leds) {
 		priv = kzalloc(sizeof_gpio_leds_priv(pdata->num_leds), GFP_KERNEL);
@@ -244,15 +209,10 @@ static int __devinit gpio_led_probe(struct platform_device *pdev)
 			}
 		}
 	}
-	/*
-	else {
-		priv = gpio_leds_create_of(pdev);
-		if (!priv)
-			return -ENODEV;
-	}
-	*/
 
 	platform_set_drvdata(pdev, priv);
+
+	pr_info("%s probe successful\n", __func__);
 
 	return 0;
 }
@@ -275,7 +235,7 @@ static struct platform_driver gpio_led_driver = {
 	.probe      = gpio_led_probe,
 	.remove     = __devexit_p(gpio_led_remove),
 	.driver     = {
-		.name   = "sunxi-led",
+		.name   = "led-sunxi",
 		.owner  = THIS_MODULE,
 	},
 };
@@ -285,14 +245,16 @@ static struct platform_driver gpio_led_driver = {
  *                    = 0; success;
  *                    < 0; err
  */
-static int led_sysconfig_para()
+static int led_sysconfig_para(void)
 {
-	int ret = -1;
+	int ret;
 	int i;
 	int led_used = 0;
 	script_item_u   val;
 	script_item_value_type_e  type;
 	char trigger_name[32];
+	char led_active_low[25];
+	
 	pr_info("=====%s=====.\n", __func__);
 
 	type = script_get_item("led_para", "led_used", &val);
@@ -329,18 +291,19 @@ static int led_sysconfig_para()
 	}
 	led_name = (LedNameType *)led_list_name;
 
-	gpio_led_info.leds = gpio_leds;
-	gpio_led_info.num_leds = led_num;
-
 	for (i = 0; i < led_num; i++) {
 		sprintf(led_name[i], "%s%d", "led", i+1);
 		sprintf(trigger_name, "%s%s", led_name[i], "_trigger");
+		sprintf(led_active_low, "%s_active_low", led_name[i]);
+		
 		type = script_get_item("led_para", led_name[i], &val);
 		if (SCIRPT_ITEM_VALUE_TYPE_PIO != type) {
 			printk(KERN_ERR"script_get_item %s err\n", led_name[i]);
 			goto script_get_item_err;
 		}
 		gpio_leds[i].gpio = val.gpio.gpio;
+		gpio_leds[i].default_state = val.gpio.data ? \
+										   LEDS_GPIO_DEFSTATE_ON : LEDS_GPIO_DEFSTATE_OFF;
 		printk(KERN_INFO"%s gpio number is %d\n", led_name[i], gpio_leds[i].gpio);
 
 		type = script_get_item("led_para", trigger_name, &val);
@@ -349,34 +312,69 @@ static int led_sysconfig_para()
 			goto script_get_item_err;
 		}
 		gpio_leds[i].default_trigger = val.str;
-		printk(KERN_INFO"%s gpio number is %s\n", trigger_name, gpio_leds[i].default_trigger);
+		printk(KERN_INFO"%s is %s\n", trigger_name, gpio_leds[i].default_trigger);
 
+		type = script_get_item("led_para", led_active_low, &val);
+		if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+			printk(KERN_ERR "script_get_item %s err\n", led_active_low);
+			goto script_get_item_err;
+		}
+		gpio_leds[i].active_low = val.val ? true : false;
+
+		printk(KERN_INFO"%s is %d\n", led_active_low, gpio_leds[i].active_low);
+			
 		gpio_leds[i].name = led_name[i];
-		gpio_leds[i].active_low = 0;
-		gpio_leds[i].default_state = LEDS_GPIO_DEFSTATE_OFF;
+	}
+
+	if(gpio_leds && led_num) {
+		gpio_led_pdata.num_leds = led_num;
+		gpio_led_pdata.leds = gpio_leds;
+		gpio_led_pdata.gpio_blink_set = NULL;
+
+		pdev = platform_device_alloc("led-sunxi", -1);
+		if(!pdev)
+			goto exit;
+
+		ret = platform_device_add_data(pdev, &gpio_led_pdata,
+						sizeof(gpio_led_pdata));
+		if(ret)
+			goto exit;
+
+		ret = platform_device_add(pdev);
+		if(ret)
+			goto exit;
 	}
 
 	return 0;
 
 script_get_item_err:
 	printk(KERN_ERR"=========script_get_item_err============\n");
+
+exit:
+	kfree(gpio_leds);
+	
 	return ret;
 }
 static int __init sunxi_led_init(void)
 {
-	int err = 0;
+	int ret;
+	
 	printk(KERN_INFO"[led]:%s begin!\n", __func__);
-	if (led_sysconfig_para() < 0) {
+
+	ret = led_sysconfig_para();
+	if (ret < 0) {
 		printk(KERN_ERR"%s: led_sysconfig_para error\n", __func__);
-		return 0;
+		return ret;
 	}
-	platform_device_register(&leds_gpio);
-	platform_driver_register(&gpio_led_driver);
+	
+	ret = platform_driver_register(&gpio_led_driver);
+
+	return ret;
+	
 }
 
 static void __exit sunxi_led_exit(void)
 {
-	platform_device_unregister(&leds_gpio);
 	platform_driver_unregister(&gpio_led_driver);
 	kfree(led_list_head);
 	kfree(led_list_name);

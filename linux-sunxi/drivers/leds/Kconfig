@@ -157,16 +157,6 @@ config LEDS_GPIO
 	  defined as platform devices and/or OpenFirmware platform devices.
 	  The code to use these bindings can be selected below.
 
-config SUNXI_LEDS
-	tristate "LED Support for GPIO connected LEDs on sunxi"
-	depends on LEDS_GPIO
-	select LEDS_TRIGGERS
-	select LEDS_TRIGGER_TIMER
-	default m
-	help
-	  This option enables support for the LEDs connected to GPIO
-	  outputs on sunxi platform.
-
 config LEDS_LP3944
 	tristate "LED Support for N.S. LP3944 (Fun Light) I2C chip"
 	depends on LEDS_CLASS
