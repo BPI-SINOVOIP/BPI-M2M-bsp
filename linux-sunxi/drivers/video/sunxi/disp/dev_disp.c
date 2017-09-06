@@ -1023,6 +1023,7 @@ static int __devinit disp_probe(struct platform_device *pdev)
 	info = &g_fbi;
 	info->dev = &pdev->dev;
 	platform_set_drvdata(pdev,info);
+	g_disp_drv.dev = &pdev->dev;
 
 	for(i=0; i<sizeof(disp_mod)/sizeof(struct sunxi_disp_mod); i++)	{
 		res = platform_get_resource_byname(pdev, IORESOURCE_MEM, disp_mod[i].name);

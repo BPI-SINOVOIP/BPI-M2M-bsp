@@ -8,6 +8,7 @@ menu "Video support for sunxi"
 config FB_SUNXI
   tristate "DISP Driver Support(sunxi)"
   depends on (ARCH_SUN9IW1P1 || ARCH_SUN8IW5P1)
+  select FB_BACKLIGHT
   default m
   ---help---
 

@@ -81,6 +81,7 @@ typedef struct
 
 typedef struct
 {
+	struct device           *dev;
 	u32    		        exit_mode;//0:clean all  1:disable interrupt
 	bool			        b_lcd_enabled[3];
 }disp_drv_info;

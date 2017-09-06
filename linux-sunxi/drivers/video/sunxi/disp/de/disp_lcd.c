@@ -10,6 +10,8 @@
  *
  */
 #include "disp_lcd.h"
+#include "../dev_disp.h"
+#include <linux/backlight.h>
 
 struct disp_lcd_private_data
 {
@@ -34,6 +36,7 @@ struct disp_lcd_private_data
 		u32                     duty_ns;
 		u32                     enabled;
 	}pwm_info;
+	struct backlight_device  *backlight;
 	disp_clk_info_t           lcd_clk;
 	disp_clk_info_t           dsi_clk;
 	disp_clk_info_t           lvds_clk;
@@ -2357,6 +2360,41 @@ static s32 disp_lcd_gpio_set_value(struct disp_lcd* lcd, u32 io_index, u32 data)
 	return OSAL_GPIO_DevWRITE_ONEPIN_DATA(lcdp->lcd_cfg.gpio_hdl[io_index], data, gpio_name);
 }
 
+static int sunxi_update_bl(struct backlight_device *bdev)
+{
+	struct disp_lcd *lcd = bl_get_data(bdev);
+	int brightness = bdev->props.brightness;
+
+	if (bdev->props.power != FB_BLANK_UNBLANK ||
+	    bdev->props.state & (BL_CORE_SUSPENDED | BL_CORE_FBBLANK))
+		brightness = 0;
+
+  	return disp_lcd_set_bright(lcd, brightness);
+}
+
+static int sunxi_get_brightness(struct backlight_device *bdev)
+{
+	u32 backlight;
+	
+	struct disp_lcd *lcd = bl_get_data(bdev);
+	disp_lcd_get_bright(lcd, &backlight);
+
+	return backlight;
+}
+
+static int sunxi_check_fb(struct backlight_device *bdev,
+				   struct fb_info *info)
+{
+	return 0;
+}
+
+static struct backlight_ops sunxi_bl_ops = {
+	.options 		= BL_CORE_SUSPENDRESUME,
+	.update_status  = sunxi_update_bl,
+	.get_brightness = sunxi_get_brightness,
+	.check_fb 		= sunxi_check_fb,
+};
+
 static s32 disp_lcd_init(struct disp_lcd* lcd)
 {
 	struct disp_lcd_private_data *lcdp = disp_lcd_get_priv(lcd);
@@ -2432,6 +2470,7 @@ static s32 disp_lcd_init(struct disp_lcd* lcd)
 	if(lcdp->pwm_info.dev) {
 		__u64 backlight_bright;
 		__u64 period_ns, duty_ns;
+		u32 bright;
 
 		if(lcdp->panel_info.lcd_pwm_freq != 0) {
 			period_ns = 1000*1000*1000 / lcdp->panel_info.lcd_pwm_freq;
@@ -2448,6 +2487,17 @@ static s32 disp_lcd_init(struct disp_lcd* lcd)
 		OSAL_Pwm_Config(lcdp->pwm_info.dev, duty_ns, period_ns);
 		lcdp->pwm_info.duty_ns = duty_ns;
 		lcdp->pwm_info.period_ns = period_ns;
+
+		lcdp->backlight = backlight_device_register(lcd->name, g_disp_drv.dev, lcd, &sunxi_bl_ops, NULL);
+		if (IS_ERR(lcdp->backlight)) {
+     		dev_err(g_disp_drv.dev, "unable to register backlight device: %ld\n",
+     		PTR_ERR(lcdp->backlight));
+     	} else {
+       		lcdp->backlight->props.max_brightness = 255;
+       		disp_lcd_get_bright(lcd, &bright);
+			lcdp->backlight->props.brightness = bright;
+      		backlight_update_status(lcdp->backlight);
+       	}
 	}
 
 	return 0;
@@ -2482,6 +2532,12 @@ static s32 disp_lcd_exit(struct disp_lcd* lcd)
 	}
 
 	disp_al_lcd_exit(lcd->channel_id);
+	
+	if (lcdp->backlight) {
+   		backlight_device_unregister(lcdp->backlight);
+		lcdp->backlight = NULL;
+   	}
+	
 	lcd_clk_exit(lcd);
 
 	return 0;
