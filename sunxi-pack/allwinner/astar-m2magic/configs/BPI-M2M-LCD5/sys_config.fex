@@ -1151,8 +1151,8 @@ frame_width          = 1
 tx_data_mode 	     = 1
 rx_data_mode 	     = 1
 i2s0_mclk            =
-i2s0_bclk            = port:PB04<2><1><default><default>
-i2s0_lrclk           = port:PB05<2><1><default><default>
+i2s0_bclk            = port:PB05<2><1><default><default>
+i2s0_lrclk           = port:PB04<2><1><default><default>
 i2s0_dout0           = port:PB06<2><1><default><default>
 i2s0_dout1           =
 i2s0_dout2           =
@@ -1229,6 +1229,7 @@ headphone_direct_used	= 1
 headset_mic_vol 	= 3
 main_mic_vol        	= 1
 audio_lowlevel_detect	= 1
+;audio_linein_detect    = port:PB07<0><default><default><0>
 audio_pa_ctrl          	= port:PH09<1><default><default><0>
 aif2_used              	= 0
 aif3_used              	= 0
@@ -1242,17 +1243,17 @@ aif1_lrlk_div  = 0x40
 aif2_lrlk_div = 0x20
 aif2master = 1
 aif2fmt = 0
-aif2_bclk            = 
-aif2_lrclk           = 
-aif2_dout            = 
-aif2_din             = 
+aif2_bclk            = port:PB05<3><1><default><default>
+aif2_lrclk           = port:PB04<3><1><default><default>
+aif2_dout            = port:PB06<3><1><default><default>
+aif2_din             = port:PB07<3><1><default><default>
 
 [codec_aif3]
 aif3fmt = 4
-aif3_bclk            = 
-aif3_lrclk           = 
-aif3_dout            = 
-aif3_din             = 
+aif3_bclk            = port:PG11<3><1><default><default>
+aif3_lrclk           = port:PG10<3><1><default><default>
+aif3_dout            = port:PG12<3><1><default><default>
+aif3_din             = port:PG13<3><1><default><default>
 
 ;-------------------------------------------------------------------------------------
 ;pmu_used                    ---0:not used,1:used
