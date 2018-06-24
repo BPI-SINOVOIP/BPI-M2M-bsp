@@ -10,7 +10,7 @@ script=script.bin
 
 ahello=echo Banaan Pi ${board} chip: $chip Service: $service
 
-aboot=if fatload $device $partition 0x43100000 ${bpi}/berryboot.img; then bootm 0x48000000 0x43100000; else bootm 0x48000000; fi
+aboot=if fatload $device $partition 0x43100000 ${bpi}/${board}/${service}/uInitrd; then bootm 0x48000000 0x43100000; else bootm 0x48000000; fi
 aload_script=fatload $device $partition 0x43000000 ${bpi}/${board}/${service}/${type}/${script}
 aload_kernel=fatload $device $partition 0x48000000 ${bpi}/${board}/${service}/${kernel}
 
@@ -29,4 +29,4 @@ uenvcmd=run aload_script aload_kernel aboot
 #
 #bootargs=board=bpi-m2m enforcing=1 console=ttyS2,115200 console=tty1 root=/dev/mmcblk0p2 rw rootwait init=/sbin/init ion_cma_list="8m,32m,64m,128m,256m" loglevel=8 bootmenutimeout=10 datadev=mmcblk0p2
 
-bootargs=board=bpi-m2m enforcing=1 console=ttyS2,115200 console=tty1 root=/dev/mmcblk0p2 rw rootwait init=/sbin/init ion_cma_list="8m,32m,64m,128m,256m" loglevel=8 bootmenutimeout=10 datadev=mmcblk0p2
+bootargs=board=bpi-m2m enforcing=1 console=tty1 console=ttyS2,115200 root=/dev/mmcblk0p2 rw rootwait init=/sbin/init ion_cma_list="8m,32m,64m,128m,256m" loglevel=8 bootmenutimeout=10 datadev=mmcblk0p2 fsck.mode=force fsck.repair=yes
