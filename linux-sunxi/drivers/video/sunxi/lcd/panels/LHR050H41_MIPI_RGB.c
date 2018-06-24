@@ -391,7 +391,7 @@ static void LCD_panel_init(u32 sel)
         } else if (lcm_initialization_setting[i].cmd == REGFLAG_DELAY) {
             sunxi_lcd_delay_ms(lcm_initialization_setting[i].count);
         } else {
-            dsi_dcs_wr(sel, (u8)lcm_initialization_setting[i].cmd, lcm_initialization_setting[i].para_list, lcm_initialization_setting[i].count);
+            sunxi_lcd_dsi_dcs_write(sel, (u8)lcm_initialization_setting[i].cmd, lcm_initialization_setting[i].para_list, lcm_initialization_setting[i].count);
         }
     }
 

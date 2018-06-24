@@ -11,9 +11,10 @@ fi
 
 echo "--------------------------------------------------------------------------------"
 echo "  1. LCD5 Panel"
+echo "  2. LCD7 Panel"
 echo "--------------------------------------------------------------------------------"
 
-read -p "Please choose a type to install(1): " type
+read -p "Please choose a type to install: " type
 echo
 
 if [ -z "${type}" ]; then
@@ -23,6 +24,7 @@ fi
 
 case ${type} in
 	1) VARIANT="LCD5";;
+	2) VARIANT="LCD7";;
 esac
 
 read -p "Please type the SD device(/dev/sdX): " DEVICE
@@ -56,7 +58,7 @@ if [ ! -f ${BOOTLOADER} ]; then
 fi
 
 echo "sudo gunzip -c ${BOOTLOADER} | dd of=${DEVICE} bs=1024 seek=8"
-sudo gunzip -c ${BOOTLOADER} | dd of=${DEVICE} bs=1024 seek=8
+sudo gunzip -c ${BOOTLOADER} | sudo dd of=${DEVICE} bs=1024 seek=8
 sync
 echo
 echo "bootloader download finished"

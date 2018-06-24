@@ -373,6 +373,119 @@ __s32 dsi_dcs_wr_memory(__u32 sel,__u32* p_data,__u32 length)
 	return 0;
 }
 
+__s32 dsi_gen_wr(__u32 sel,__u8 cmd,__u8* para_p,__u32 para_num)
+{
+	
+	volatile __u8*	p = (__u8*)dsi_dev[sel]->dsi_cmd_tx;
+	__u32 count = 0;
+	
+	while((dsi_dev[sel]->dsi_basic_ctl0.bits.inst_st == 1) && (count < 50)) {
+		count ++;
+		bsp_disp_lcd_delay_us(100);
+	}
+	if(count >= 50)
+	{
+		dsi_dev[sel]->dsi_basic_ctl0.bits.inst_st = 0;
+	}
+
+	switch(para_num)
+	{
+	case 0:
+		*(p++)= DSI_DT_GEN_WR_P1;
+		*(p++)= cmd;
+		*(p++)= 0x00;
+		break;
+	case 1:
+		*(p++)= DSI_DT_GEN_WR_P2;
+		*(p++)= cmd;
+		*(p++)= *para_p;
+		break;
+	default:
+		*(p++)= DSI_DT_GEN_LONG_WR;
+		*(p++)= (para_num>>0) & 0xff;
+		*(p++)	= (para_num>>8) & 0xff;
+		break;
+	}
+
+	*(p++) = dsi_ecc_pro(dsi_dev[sel]->dsi_cmd_tx[0].dwval);
+	
+	if(para_num>1)
+	{
+		__u16 crc, i;
+		*(p++) = cmd;
+		for(i=0;i<para_num;i++)
+		{
+			*(p++)	= *(para_p+i);
+		}
+		crc	= dsi_crc_pro((__u8*)(dsi_dev[sel]->dsi_cmd_tx+1),para_num+1);
+		*(p++) = (crc>>0) &	0xff;
+		*(p++) = (crc>>8) &	0xff;
+		dsi_dev[sel]->dsi_cmd_ctl.bits.tx_size = 4+1+para_num+2-1;
+	}
+	else
+	{
+		dsi_dev[sel]->dsi_cmd_ctl.bits.tx_size = 4-1;
+	}
+	
+	dsi_start(sel,DSI_START_LPTX);
+
+	return 0;
+}
+
+__s32 dsi_gen_wr_0para(__u32 sel,__u8 cmd)
+{
+	__u8 tmp;
+	dsi_gen_wr(sel,cmd,&tmp,0);
+	return 0;
+}
+
+__s32 dsi_gen_wr_1para(__u32 sel,__u8 cmd,__u8 para)
+{
+	__u8 tmp = para;
+	dsi_gen_wr(sel,cmd,&tmp,1);
+	return 0;
+}
+
+__s32 dsi_gen_wr_2para(__u32 sel,__u8 cmd,__u8 para1,__u8 para2)
+{
+	__u8 tmp[2];
+	tmp[0] = para1;
+	tmp[1] = para2;
+	dsi_gen_wr(sel,cmd,tmp,2);
+	return 0;
+}
+
+__s32 dsi_gen_wr_3para(__u32 sel,__u8 cmd,__u8 para1,__u8 para2,__u8 para3)
+{
+	__u8 tmp[3];
+	tmp[0] = para1;
+	tmp[1] = para2;
+	tmp[2] = para3;
+	dsi_gen_wr(sel,cmd,tmp,3);
+	return 0;
+}
+__s32 dsi_gen_wr_4para(__u32 sel,__u8 cmd,__u8 para1,__u8 para2,__u8 para3,__u8 para4)
+{
+	__u8 tmp[4];
+	tmp[0] = para1;
+	tmp[1] = para2;
+	tmp[2] = para3;
+	tmp[3] = para4;
+	dsi_gen_wr(sel,cmd,tmp,4);
+	return 0;
+}
+
+__s32 dsi_gen_wr_5para(__u32 sel,__u8 cmd,__u8 para1,__u8 para2,__u8 para3,__u8 para4,__u8 para5)
+{
+	__u8 tmp[5];
+	tmp[0] = para1;
+	tmp[1] = para2;
+	tmp[2] = para3;
+	tmp[3] = para4;
+	tmp[4] = para5;
+	dsi_gen_wr(sel,cmd,tmp,5);
+	return 0;
+}
 
 __s32 dsi_set_max_ret_size(__u32 sel,__u32 size)
 {
@@ -1073,6 +1186,13 @@ EXPORT_SYMBOL(dsi_dcs_wr_3para);
 EXPORT_SYMBOL(dsi_dcs_wr_4para);
 EXPORT_SYMBOL(dsi_dcs_wr_5para);
 EXPORT_SYMBOL(dsi_dcs_rd);
+EXPORT_SYMBOL(dsi_gen_wr);
+EXPORT_SYMBOL(dsi_gen_wr_0para);
+EXPORT_SYMBOL(dsi_gen_wr_1para);
+EXPORT_SYMBOL(dsi_gen_wr_2para);
+EXPORT_SYMBOL(dsi_gen_wr_3para);
+EXPORT_SYMBOL(dsi_gen_wr_4para);
+EXPORT_SYMBOL(dsi_gen_wr_5para);
 #endif
 
 

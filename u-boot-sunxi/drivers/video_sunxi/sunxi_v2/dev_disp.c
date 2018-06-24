@@ -331,7 +331,8 @@ s32 drv_disp_exit(void)
 }
 
 extern s32 dsi_clk_enable(u32 sel, u32 en);
-extern s32   dsi_dcs_wr(u32 sel,u8 cmd,u8* para_p,u32 para_num);
+extern s32 dsi_dcs_wr(u32 sel,u8 cmd,u8* para_p,u32 para_num);
+extern s32 dsi_gen_wr(u32 sel,u8 cmd,u8* para_p,u32 para_num);
 int sunxi_disp_get_source_ops(struct sunxi_disp_source_ops *src_ops)
 {
 	src_ops->sunxi_lcd_delay_ms = bsp_disp_lcd_delay_ms;
@@ -346,6 +347,8 @@ int sunxi_disp_get_source_ops(struct sunxi_disp_source_ops *src_ops)
 	src_ops->sunxi_lcd_power_disable = bsp_disp_lcd_power_disable;
 	src_ops->sunxi_lcd_set_panel_funs = bsp_disp_lcd_set_panel_funs;
 	src_ops->sunxi_lcd_dsi_write = dsi_dcs_wr;
+	src_ops->sunxi_lcd_dsi_dcs_write = dsi_dcs_wr;
+	src_ops->sunxi_lcd_dsi_gen_write = dsi_gen_wr;
 	src_ops->sunxi_lcd_dsi_clk_enable = dsi_clk_enable;
 	src_ops->sunxi_lcd_pin_cfg = bsp_disp_lcd_pin_cfg;
 	src_ops->sunxi_lcd_gpio_set_value = bsp_disp_lcd_gpio_set_value;

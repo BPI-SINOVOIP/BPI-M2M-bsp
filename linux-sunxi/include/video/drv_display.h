@@ -636,6 +636,8 @@ struct sunxi_disp_source_ops
   int (*sunxi_lcd_cpu_write_index)(unsigned int scree_id, unsigned int index);
   int (*sunxi_lcd_cpu_write_data)(unsigned int scree_id, unsigned int data);
   int (*sunxi_lcd_dsi_write)(unsigned int scree_id, unsigned char command, unsigned char *para, unsigned int para_num);
+  int (*sunxi_lcd_dsi_dcs_write)(unsigned int scree_id, unsigned char command, unsigned char *para, unsigned int para_num);
+  int (*sunxi_lcd_dsi_gen_write)(unsigned int scree_id, unsigned char command, unsigned char *para, unsigned int para_num);
   int (*sunxi_lcd_dsi_clk_enable)(__u32 screen_id, __u32 en);
   int (*sunxi_disp_get_num_screens)(void);
   int (*sunxi_lcd_backlight_enable)(unsigned int screen_id);

@@ -63,6 +63,7 @@ SUNXI_VIDEO_OBJ = sunxi_v2/dev_disp.o\
 					sunxi_v2/de_bsp/lcd/panels/lp079x01.o\
 					sunxi_v2/de_bsp/lcd/panels/B116XAN03.o\
 					sunxi_v2/de_bsp/lcd/panels/LHR050H41_MIPI_RGB.o\
+					sunxi_v2/de_bsp/lcd/panels/S070WV20_MIPI_RGB.o\
 
 endif
 

@@ -208,6 +208,201 @@ s32 sunxi_lcd_dsi_write(u32 scree_id, u8 command, u8 *para, u32 para_num)
 	return -1;
 }
 
+
+/**
+ * sunxi_lcd_dsi_write - write command and para to mipi panel.
+ * @scree_id: The index of screen.
+ * @command: Command to be transfer.
+ * @para: The pointer to para.
+ * @para_num: The number of para
+ */
+s32 sunxi_lcd_dsi_dcs_write(u32 scree_id, u8 command, u8 *para, u32 para_num)
+{
+	if(g_lcd_drv.src_ops.sunxi_lcd_dsi_dcs_write) {
+		return g_lcd_drv.src_ops.sunxi_lcd_dsi_dcs_write(scree_id, command, para, para_num);
+	}
+
+	return -1;
+}
+
+/**
+ * sunxi_lcd_dsi_dcs_write - write command and para to mipi panel.
+ * @screen_id: The index of screen.
+ * @command: Command to be transfer.
+ */
+s32 sunxi_lcd_dsi_dcs_write_0para(u32 screen_id, u8 command)
+{
+	__u8 tmp[5];
+
+	sunxi_lcd_dsi_dcs_write(screen_id, command, tmp, 0);
+
+	return -1;
+}
+
+/**
+ * sunxi_lcd_dsi_dcs_write_1para - write command and para to mipi panel.
+ * @screen_id: The index of screen.
+ * @command: Command to be transfer.
+ * @paran: Para to be transfer.
+ */
+s32 sunxi_lcd_dsi_dcs_write_1para(u32 screen_id, u8 command, u8 para1)
+{
+	__u8 tmp[5];
+
+	tmp[0] = para1;
+	sunxi_lcd_dsi_dcs_write(screen_id, command, tmp, 1);
+
+	return -1;
+}
+
+s32 sunxi_lcd_dsi_dcs_write_2para(u32 screen_id, u8 command, u8 para1, u8 para2)
+{
+	__u8 tmp[5];
+
+	tmp[0] = para1;
+	tmp[1] = para2;
+	sunxi_lcd_dsi_dcs_write(screen_id, command, tmp, 2);
+
+	return -1;
+}
+
+s32 sunxi_lcd_dsi_dcs_write_3para(u32 screen_id, u8 command, u8 para1, u8 para2, u8 para3)
+{
+	__u8 tmp[5];
+
+	tmp[0] = para1;
+	tmp[1] = para2;
+	tmp[2] = para3;
+	sunxi_lcd_dsi_dcs_write(screen_id, command, tmp, 3);
+
+	return -1;
+}
+
+s32 sunxi_lcd_dsi_dcs_write_4para(u32 screen_id, u8 command, u8 para1, u8 para2, u8 para3, u8 para4)
+{
+	__u8 tmp[5];
+
+	tmp[0] = para1;
+	tmp[1] = para2;
+	tmp[2] = para3;
+	tmp[3] = para4;
+	sunxi_lcd_dsi_dcs_write(screen_id, command, tmp, 4);
+
+	return -1;
+}
+
+s32 sunxi_lcd_dsi_dcs_write_5para(u32 screen_id, u8 command, u8 para1, u8 para2, u8 para3, u8 para4, u8 para5)
+{
+	__u8 tmp[5];
+
+	tmp[0] = para1;
+	tmp[1] = para2;
+	tmp[2] = para3;
+	tmp[3] = para4;
+	tmp[4] = para5;
+	sunxi_lcd_dsi_dcs_write(screen_id, command, tmp, 5);
+
+	return -1;
+}
+
+
+/**
+ * sunxi_lcd_dsi_write - write command and para to mipi panel.
+ * @scree_id: The index of screen.
+ * @command: Command to be transfer.
+ * @para: The pointer to para.
+ * @para_num: The number of para
+ */
+s32 sunxi_lcd_dsi_gen_write(u32 scree_id, u8 command, u8 *para, u32 para_num)
+{
+	if(g_lcd_drv.src_ops.sunxi_lcd_dsi_gen_write) {
+		return g_lcd_drv.src_ops.sunxi_lcd_dsi_gen_write(scree_id, command, para, para_num);
+	}
+
+	return -1;
+}
+
+/**
+ * sunxi_lcd_dsi_gen_write - write command and para to mipi panel.
+ * @screen_id: The index of screen.
+ * @command: Command to be transfer.
+ */
+s32 sunxi_lcd_dsi_gen_write_0para(u32 screen_id, u8 command)
+{
+	__u8 tmp[5];
+
+	sunxi_lcd_dsi_gen_write(screen_id, command, tmp, 0);
+
+	return -1;
+}
+
+/**
+ * sunxi_lcd_dsi_gen_write_1para - write command and para to mipi panel.
+ * @screen_id: The index of screen.
+ * @command: Command to be transfer.
+ * @paran: Para to be transfer.
+ */
+s32 sunxi_lcd_dsi_gen_write_1para(u32 screen_id, u8 command, u8 para1)
+{
+	__u8 tmp[5];
+
+	tmp[0] = para1;
+	sunxi_lcd_dsi_gen_write(screen_id, command, tmp, 1);
+
+	return -1;
+}
+
+s32 sunxi_lcd_dsi_gen_write_2para(u32 screen_id, u8 command, u8 para1, u8 para2)
+{
+	__u8 tmp[5];
+
+	tmp[0] = para1;
+	tmp[1] = para2;
+	sunxi_lcd_dsi_gen_write(screen_id, command, tmp, 2);
+
+	return -1;
+}
+
+s32 sunxi_lcd_dsi_gen_write_3para(u32 screen_id, u8 command, u8 para1, u8 para2, u8 para3)
+{
+	__u8 tmp[5];
+
+	tmp[0] = para1;
+	tmp[1] = para2;
+	tmp[2] = para3;
+	sunxi_lcd_dsi_gen_write(screen_id, command, tmp, 3);
+
+	return -1;
+}
+
+s32 sunxi_lcd_dsi_gen_write_4para(u32 screen_id, u8 command, u8 para1, u8 para2, u8 para3, u8 para4)
+{
+	__u8 tmp[5];
+
+	tmp[0] = para1;
+	tmp[1] = para2;
+	tmp[2] = para3;
+	tmp[3] = para4;
+	sunxi_lcd_dsi_gen_write(screen_id, command, tmp, 4);
+
+	return -1;
+}
+
+s32 sunxi_lcd_dsi_gen_write_5para(u32 screen_id, u8 command, u8 para1, u8 para2, u8 para3, u8 para4, u8 para5)
+{
+	__u8 tmp[5];
+
+	tmp[0] = para1;
+	tmp[1] = para2;
+	tmp[2] = para3;
+	tmp[3] = para4;
+	tmp[4] = para5;
+	sunxi_lcd_dsi_gen_write(screen_id, command, tmp, 5);
+
+	return -1;
+}
+
+
 /**
  * sunxi_lcd_dsi_clk_enable - enable dsi clk.
  * @scree_id: The index of screen.

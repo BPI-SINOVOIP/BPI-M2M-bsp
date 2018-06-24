@@ -14,6 +14,7 @@
 #include "starry768x1024.h"
 #include "B116XAN03.h"
 #include "LHR050H41_MIPI_RGB.h"
+#include "S070WV20_MIPI_RGB.h"
 
 extern __lcd_panel_t sl698ph_720p_panel;
 extern __lcd_panel_t lp079x01_panel;
@@ -28,6 +29,7 @@ __lcd_panel_t* panel_array[] = {
 	&B116XAN03_panel,
 	/* add new panel below */
 	&LHR050H41_MIPI_RGB_panel,
+	&S070WV20_MIPI_RGB_panel,
 	NULL,
 };
 

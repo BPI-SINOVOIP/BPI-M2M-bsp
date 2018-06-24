@@ -3,7 +3,7 @@
 # Build script for BPI-M2U-BSP 2016.09.10
 
 TARGET_PRODUCT="astar-m2magic"
-BOARD=BPI-M2M-LCD5
+BOARD=BPI-M2M-LCD7
 board="bpi-m2m"
 kernel="3.4.39-BPI-M2M-Kernel"
 MODE=$1
@@ -34,9 +34,9 @@ R="${SD}/BPI-ROOT"
 	#
 	## copy files to BPI-BOOT
 	#
+	mkdir -p $B/bananapi/${board}
 	type=$(echo ${BOARD/BPI-M2M-/} | tr '[A-Z]' '[a-z]')
-	mkdir -p $B/bananapi/${board}/linux/${type}
-	cp -a $T/sunxi-pack/allwinner/${TARGET_PRODUCT}/configs/${BOARD}/linux/* $B/bananapi/${board}/linux/${type}/
+	cp -a $T/sunxi-pack/allwinner/${TARGET_PRODUCT}/configs/default/linux $B/bananapi/${board}/linux/
 	cp -a $T/linux-sunxi/arch/arm/boot/uImage $B/bananapi/${board}/linux/uImage
 
 	#
