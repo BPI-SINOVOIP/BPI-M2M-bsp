@@ -1727,6 +1727,10 @@ static s32 disp_lcd_backlight_enable(struct disp_lcd *lcd)
 	if(!((!strcmp(lcdp->lcd_cfg.lcd_bl_regulator, "")) || (!strcmp(lcdp->lcd_cfg.lcd_bl_regulator, "none"))))
 		OSAL_Power_Enable(lcdp->lcd_cfg.lcd_bl_regulator);
 
+	if (lcdp->backlight) {
+ 		lcdp->backlight->props.power = FB_BLANK_UNBLANK;
+	}
+
 	if(disp_lcd_is_used(lcd)) {
 		if(lcdp->lcd_cfg.lcd_bl_en_used) {
 			memcpy(gpio_info, &(lcdp->lcd_cfg.lcd_bl_en), sizeof(disp_gpio_set_t));
@@ -1749,6 +1753,10 @@ static s32 disp_lcd_backlight_disable(struct disp_lcd *lcd)
 	if((NULL == lcd) || (NULL == lcdp)) {
 		DE_WRN("NULL hdl!\n");
 		return DIS_FAIL;
+	}
+
+	if (lcdp->backlight) {
+		lcdp->backlight->props.power = FB_BLANK_POWERDOWN;
 	}
 
 	if(disp_lcd_is_used(lcd)) {
@@ -1778,6 +1786,7 @@ static s32 disp_lcd_pwm_enable(struct disp_lcd *lcd)
 	}
 
 	if(disp_lcd_is_used(lcd) && lcdp->pwm_info.dev) {
+		OSAL_Pwm_Set_Polarity(lcdp->pwm_info.dev, lcdp->pwm_info.polarity);
 		return OSAL_Pwm_Enable(lcdp->pwm_info.dev);
 	}
 	DE_WRN("pwm device hdl is NULL\n");
@@ -2364,12 +2373,20 @@ static int sunxi_update_bl(struct backlight_device *bdev)
 {
 	struct disp_lcd *lcd = bl_get_data(bdev);
 	int brightness = bdev->props.brightness;
+	int ret;
 
 	if (bdev->props.power != FB_BLANK_UNBLANK ||
 	    bdev->props.state & (BL_CORE_SUSPENDED | BL_CORE_FBBLANK))
 		brightness = 0;
 
-  	return disp_lcd_set_bright(lcd, brightness);
+	ret = disp_lcd_set_bright(lcd, brightness);
+
+	if (bdev->props.power != FB_BLANK_UNBLANK)
+		disp_lcd_backlight_disable(lcd);
+	else
+		disp_lcd_backlight_enable(lcd);
+
+  	return ret;
 }
 
 static int sunxi_get_brightness(struct backlight_device *bdev)
@@ -2385,7 +2402,7 @@ static int sunxi_get_brightness(struct backlight_device *bdev)
 static int sunxi_check_fb(struct backlight_device *bdev,
 				   struct fb_info *info)
 {
-	return 0;
+	return 1;
 }
 
 static struct backlight_ops sunxi_bl_ops = {
