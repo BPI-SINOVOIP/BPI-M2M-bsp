@@ -24,6 +24,7 @@
 #include <common.h>
 #include <command.h>
 #include <mmc.h>
+#include <part.h>
 
 #ifndef CONFIG_GENERIC_MMC
 int do_mmc (cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
@@ -153,6 +154,42 @@ U_BOOT_CMD(
 	"    - device number of the device to dislay info of\n"
 	""
 );
+
+
+int do_card0_probe(cmd_tbl_t *cmdtp, int flag,
+			 int argc, char * const argv[])
+{
+	extern int get_boot_storage_type(void);
+	int boot_type = get_boot_storage_type() ;
+	struct mmc *mmc_boot = NULL;
+	static int card0_init = 0;
+
+	if(boot_type == STORAGE_SD || card0_init)
+	{
+		printf("card0 has inited\n");
+		return 0;
+	}
+
+	board_mmc_pre_init(0);
+	mmc_boot = find_mmc_device(0);
+	if(!mmc_boot){
+		printf("fail to find card0\n");
+		return -1;
+	}
+	if (mmc_init(mmc_boot)) {
+		puts("card0 init failed\n");
+		return  -1;
+	}
+	card0_init = 1;
+	return 0;
+}
+
+U_BOOT_CMD(
+	sunxi_card0_probe, 1, 0, do_card0_probe,
+	"probe sunxi card0 device",
+	"sunxi_card0_probe"
+);
+
 
 int do_mmcops(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 {

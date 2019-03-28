@@ -754,6 +754,8 @@ static void sunxi_hcd_shutdown(struct platform_device *pdev)
 	sunxi_set_regulator_io(sunxi_hcd, 0);
 	close_usb_clock(&g_sunxi_hcd_io);
 
+	sunxi_hcd->enable = 0;
+
 	DMSG_INFO_HCD0("Set aside some time to AXP\n");
 
 	/* Set aside some time to AXP */
@@ -1461,6 +1463,11 @@ int sunxi_usb_host0_enable(void)
 		return -1;
 	}
 
+	if (sunxi_hcd->enable == 1) {
+		DMSG_PRINT("hcd is already enable, can not enable again\n");
+		return -1;
+	}
+
 	g_sunxi_hcd0 = sunxi_hcd;
 
 	spin_lock_irqsave(&sunxi_hcd->lock, flags);
@@ -1532,9 +1539,19 @@ int sunxi_usb_host0_disable(void)
 		return -1;
 	}
 
+	if (g_sunxi_hcd0 == NULL) {
+		printk("WRN: hcd is disable, g_sunxi_hcd0 is null\n");
+		return -1;
+	}
+
 	sunxi_hcd = dev_to_sunxi_hcd(&pdev->dev);
 	if (sunxi_hcd == NULL) {
 		DMSG_PANIC("ERR: sunxi_hcd is null\n");
+		return -1;
+	}
+
+	if (!sunxi_hcd->enable) {
+		DMSG_PRINT("hcd is disable, can not enter to disable again\n");
 		return -1;
 	}
 
@@ -1627,6 +1644,8 @@ static int sunxi_hcd_probe_otg(struct platform_device *pdev)
 	if(sunxi_hcd != NULL){
 		sunxi_set_regulator_io(sunxi_hcd, 1);
 	}
+
+	g_sunxi_hcd0 = sunxi_hcd;
 
 	ret = sunxi_usb_host0_disable();
 	if (ret != 0) {
@@ -1779,7 +1798,7 @@ static int __init sunxi_hcd_probe(struct platform_device *pdev)
 #endif
 }
 
-static int __exit sunxi_hcd_remove(struct platform_device *pdev)
+static int __devexit sunxi_hcd_remove(struct platform_device *pdev)
 {
 #ifdef  CONFIG_USB_SUNXI_USB0_OTG
 #if defined (CONFIG_ARCH_SUN8IW6) || defined (CONFIG_ARCH_SUN8IW9)

@@ -1,14 +1,3 @@
-/*
- * drivers/net/wireless/bcmdhd/dhd_config.h
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 
 #ifndef _dhd_config_
 #define _dhd_config_
@@ -22,7 +11,6 @@
 #define FW_PATH_AUTO_SELECT 1
 //#define CONFIG_PATH_AUTO_SELECT
 extern char firmware_path[MOD_PARAM_PATHLEN];
-extern int disable_proptx;
 extern uint dhd_rxbound;
 extern uint dhd_txbound;
 #ifdef BCMSDIO
@@ -35,6 +23,7 @@ extern uint dhd_slpauto;
 #define BCM43430A0_CHIP_REV     0
 #define BCM43430A1_CHIP_REV     1
 #define BCM43430A2_CHIP_REV     2
+#define BCM43012B0_CHIP_REV     1
 #define BCM4330B2_CHIP_REV      4
 #define BCM4334B1_CHIP_REV      3
 #define BCM43341B0_CHIP_REV     2
@@ -122,6 +111,18 @@ typedef struct conf_country_list {
 	wl_country_t cspec[CONFIG_COUNTRY_LIST_SIZE];
 } conf_country_list_t;
 
+/* btc_flags */
+typedef struct wl_btc_flags {
+	int bit[8];
+	uint value[8];
+} wl_btc_flags_t;
+
+/* btc_params */
+typedef struct wl_btc_params {
+	int bit[10];
+	uint value[10];
+} wl_btc_params_t;
+
 typedef struct dhd_conf {
 	uint	chip;			/* chip number */
 	uint	chiprev;		/* chip revision */
@@ -143,7 +144,8 @@ typedef struct dhd_conf {
 	int fullroamperiod;			/* Full Roaming period */
 	uint keep_alive_period;		/* The perioid in ms to send keep alive packet */
 	int force_wme_ac;
-	wme_param_t wme;	/* WME parameters */
+	wme_param_t wme_sta;	/* WME parameters */
+	wme_param_t wme_ap;	/* WME parameters */
 	int stbc;			/* STBC for Tx/Rx */
 	int phy_oclscdenable;		/* phy_oclscdenable */
 #ifdef PKT_FILTER_SUPPORT
@@ -159,7 +161,6 @@ typedef struct dhd_conf {
 	int lpc;
 	int disable_proptx;
 #ifdef BCMSDIO
-	bool kso_enable;
 	int bus_txglom;	/* bus:txglom */
 	int use_rxchain;
 	bool bus_rxglom; /* bus:rxglom */
@@ -185,12 +186,19 @@ typedef struct dhd_conf {
 	 * 43340/43341/43241: 1684
 	 */
 	int txglom_bucket_size;
+	int txinrx_thres;
+	int dhd_txminmax; // -1=DATABUFCNT(bus)
+	uint sd_f2_blocksize;
+	bool oob_enabled_later;
 #endif
 	int ampdu_ba_wsize;
+	int ampdu_hostreorder;
 	int dpc_cpucore;
+	int rxf_cpucore;
 	int frameburst;
 	bool deepsleep;
 	int pm;
+	int pm_in_suspend;
 	int pm2_sleep_ret;
 #ifdef DHDTCPACK_SUPPRESS
 	uint8 tcpack_sup_mode;
@@ -199,6 +207,29 @@ typedef struct dhd_conf {
 	int rsdb_mode;
 	int vhtmode;
 	int num_different_channels;
+	int xmit_in_suspend;
+	int ap_in_suspend;
+#ifdef SUSPEND_EVENT
+	bool suspend_eventmask_enable;
+	char suspend_eventmask[WL_EVENTING_MASK_LEN];
+	char resume_eventmask[WL_EVENTING_MASK_LEN];
+#endif
+#ifdef IDHCP
+	int dhcpc_enable;
+	int dhcpd_enable;
+	struct ipv4_addr dhcpd_ip_addr;
+	struct ipv4_addr dhcpd_ip_mask;
+	struct ipv4_addr dhcpd_ip_start;
+	struct ipv4_addr dhcpd_ip_end;
+#endif
+#ifdef IAPSTA_PREINIT
+	char iapsta_init[50];
+	char iapsta_config[300];
+	char iapsta_enable[50];
+#endif
+	int autocountry;
+	wl_btc_flags_t btc_flags_mgmt;
+	wl_btc_params_t btc_params_mgmt;
 } dhd_conf_t;
 
 #ifdef BCMSDIO
@@ -211,13 +242,15 @@ void dhd_conf_set_hw_oob_intr(bcmsdh_info_t *sdh, uint chip);
 void dhd_conf_set_txglom_params(dhd_pub_t *dhd, bool enable);
 #endif
 void dhd_conf_set_fw_name_by_chip(dhd_pub_t *dhd, char *fw_path);
+void dhd_conf_set_clm_name_by_chip(dhd_pub_t *dhd, char *clm_path);
 void dhd_conf_set_nv_name_by_chip(dhd_pub_t *dhd, char *nv_path);
-void dhd_conf_set_conf_path_by_nv_path(dhd_pub_t *dhd, char *conf_path, char *nv_path);
+void dhd_conf_set_path(dhd_pub_t *dhd, char *dst_name, char *dst_path, char *src_path);
 #ifdef CONFIG_PATH_AUTO_SELECT
 void dhd_conf_set_conf_name_by_chip(dhd_pub_t *dhd, char *conf_path);
 #endif
-int dhd_conf_set_fw_int_cmd(dhd_pub_t *dhd, char *name, uint cmd, int val, int def, bool down);
-int dhd_conf_set_fw_string_cmd(dhd_pub_t *dhd, char *cmd, int val, int def, bool down);
+int dhd_conf_set_intiovar(dhd_pub_t *dhd, uint cmd, char *name, int val, int def, bool down);
+int dhd_conf_get_iovar(dhd_pub_t *dhd, int cmd, char *name, char *buf, int len, int ifidx);
+int dhd_conf_set_bufiovar(dhd_pub_t *dhd, uint cmd, char *name, char *buf, int len, bool down);
 uint dhd_conf_get_band(dhd_pub_t *dhd);
 int dhd_conf_set_country(dhd_pub_t *dhd);
 int dhd_conf_get_country(dhd_pub_t *dhd, wl_country_t *cspec);
@@ -226,21 +259,25 @@ int dhd_conf_fix_country(dhd_pub_t *dhd);
 bool dhd_conf_match_channel(dhd_pub_t *dhd, uint32 channel);
 int dhd_conf_set_roam(dhd_pub_t *dhd);
 void dhd_conf_set_bw_cap(dhd_pub_t *dhd);
-void dhd_conf_get_wme(dhd_pub_t *dhd, edcf_acparam_t *acp);
-void dhd_conf_set_wme(dhd_pub_t *dhd);
+void dhd_conf_set_wme(dhd_pub_t *dhd, int mode);
+void dhd_conf_set_btc_mgmt(dhd_pub_t *dhd);
 void dhd_conf_add_pkt_filter(dhd_pub_t *dhd);
 bool dhd_conf_del_pkt_filter(dhd_pub_t *dhd, uint32 id);
 void dhd_conf_discard_pkt_filter(dhd_pub_t *dhd);
-void dhd_conf_set_disable_proptx(dhd_pub_t *dhd);
 int dhd_conf_read_config(dhd_pub_t *dhd, char *conf_path);
 int dhd_conf_set_chiprev(dhd_pub_t *dhd, uint chip, uint chiprev);
 uint dhd_conf_get_chip(void *context);
 uint dhd_conf_get_chiprev(void *context);
 int dhd_conf_get_pm(dhd_pub_t *dhd);
+#ifdef PROP_TXSTATUS
+int dhd_conf_get_disable_proptx(dhd_pub_t *dhd);
+#endif
+int dhd_conf_get_ap_mode_in_suspend(dhd_pub_t *dhd);
+int dhd_conf_set_ap_in_suspend(dhd_pub_t *dhd, int suspend);
 int dhd_conf_preinit(dhd_pub_t *dhd);
 int dhd_conf_reset(dhd_pub_t *dhd);
 int dhd_conf_attach(dhd_pub_t *dhd);
 void dhd_conf_detach(dhd_pub_t *dhd);
 void *dhd_get_pub(struct net_device *dev);
-
+void *dhd_get_conf(struct net_device *dev);
 #endif /* _dhd_config_ */

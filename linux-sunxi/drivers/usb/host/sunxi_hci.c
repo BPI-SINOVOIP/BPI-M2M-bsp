@@ -46,6 +46,11 @@
 
 #include  "sunxi_hci.h"
 
+static DEFINE_MUTEX(usb_passby_lock);
+static DEFINE_MUTEX(usb_vbus_lock);
+static DEFINE_MUTEX(usb_clock_lock);
+static DEFINE_MUTEX(usb_phy_lock);
+
 #ifdef CONFIG_USB_SUNXI_USB_MANAGER
 #if defined (CONFIG_ARCH_SUN8IW8) || defined (CONFIG_ARCH_SUN8IW7)
 int usb_otg_id_status(void);
@@ -1121,6 +1126,9 @@ static s32 clock_exit(struct sunxi_hci_hcd *sunxi_hci, u32 ohci)
 static int open_clock(struct sunxi_hci_hcd *sunxi_hci, u32 ohci)
 {
 	DMSG_INFO("[%s]: open clock, is_open: %d\n", sunxi_hci->hci_name, sunxi_hci->clk_is_open);
+
+	mutex_lock(&usb_clock_lock);
+
 #ifdef CONFIG_ARCH_SUN9IW1
 
 	#ifdef CONFIG_USB_SUNXI_HSIC
@@ -1218,6 +1226,9 @@ static int open_clock(struct sunxi_hci_hcd *sunxi_hci, u32 ohci)
 			sunxi_hci->mod_usb);
 	}
 #endif
+
+	mutex_unlock(&usb_clock_lock);
+
 	return 0;
 }
 
@@ -1495,6 +1506,8 @@ static void hci_phy_ctrl(struct sunxi_hci_hcd *sunxi_hci, u32 enable)
 	spinlock_t lock;
 	unsigned long flags = 0;
 
+	mutex_lock(&usb_phy_lock);
+
 	spin_lock_init(&lock);
 	spin_lock_irqsave(&lock, flags);
 
@@ -1549,10 +1562,12 @@ static void hci_phy_ctrl(struct sunxi_hci_hcd *sunxi_hci, u32 enable)
 	}else{
 		DMSG_PANIC("EER: unkown usbc_no(%d)\n", sunxi_hci->usbc_no);
 		spin_unlock_irqrestore(&lock, flags);
+		mutex_unlock(&usb_phy_lock);
 		return;
 	}
 
 	spin_unlock_irqrestore(&lock, flags);
+	mutex_unlock(&usb_phy_lock);
 
 	return;
 }
@@ -1581,6 +1596,8 @@ static void usb_passby(struct sunxi_hci_hcd *sunxi_hci, u32 enable)
 	unsigned long reg_value = 0;
 	spinlock_t lock;
 	unsigned long flags = 0;
+
+	mutex_lock(&usb_passby_lock);
 
 	spin_lock_init(&lock);
 	spin_lock_irqsave(&lock, flags);
@@ -1725,10 +1742,13 @@ static void usb_passby(struct sunxi_hci_hcd *sunxi_hci, u32 enable)
 	}else{
 		DMSG_PANIC("EER: unkown usbc_no(%d)\n", sunxi_hci->usbc_no);
 		spin_unlock_irqrestore(&lock, flags);
+		mutex_unlock(&usb_passby_lock);
+
 		return;
 	}
 
 	spin_unlock_irqrestore(&lock, flags);
+	mutex_unlock(&usb_passby_lock);
 
 	return;
 }
@@ -1952,6 +1972,8 @@ static void sunxi_set_vbus(struct sunxi_hci_hcd *sunxi_hci, int is_on)
 		sunxi_hci->hci_name,
 		(sunxi_hci->usbc_no == 1) ? usb1_set_vbus_cnt : usb2_set_vbus_cnt);
 
+	mutex_lock(&usb_vbus_lock);
+
 	if(sunxi_hci->usbc_no == HCI0_USBC_NO){
 		if(is_on && usb1_set_vbus_cnt == 0){
 			__sunxi_set_vbus(sunxi_hci, is_on);  /* power on */
@@ -2008,6 +2030,8 @@ static void sunxi_set_vbus(struct sunxi_hci_hcd *sunxi_hci, int is_on)
 	}else{
 		DMSG_INFO("[%s]: sunxi_set_vbus no: %d\n", sunxi_hci->hci_name, sunxi_hci->usbc_no);
 	}
+
+	mutex_unlock(&usb_vbus_lock);
 
 	return;
 }

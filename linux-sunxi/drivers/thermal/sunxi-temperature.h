@@ -1,18 +1,7 @@
-/*
- * drivers/thermal/sunxi-temperature.h
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #ifndef _SUNXI_TEMPERATURE_H
 #define _SUNXI_TEMPERATURE_H
 
-#define THERMAL_DATA_DELAY	(100)
+#define THERMAL_DATA_DELAY	(1000)
 
 #ifdef CONFIG_ARCH_SUN8IW3P1
 #define THERMAL_BASSADDRESS	(0xf1c25000)

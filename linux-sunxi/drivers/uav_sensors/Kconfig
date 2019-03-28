@@ -10,6 +10,16 @@ menuconfig UAV_SENSORS
 
 if UAV_SENSORS
 
+#
+# IMU SENSOR
+#
+
+config UAV_SENSORS_ICM20689
+	tristate "icm20689"
+	depends on I2C
+	help
+		6-axis sensor include acc and gyro
+
 config UAV_SENSORS_MPU6050
 	tristate "mpu6050"
 	depends on I2C

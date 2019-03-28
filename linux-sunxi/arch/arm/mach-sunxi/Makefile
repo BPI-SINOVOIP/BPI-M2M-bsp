@@ -51,11 +51,7 @@ endif
 
 obj-y += sys_config.o sunxi_dump_reg.o sunxi-chip.o sunxi_sram.o
 
-obj-$(CONFIG_ROOT_DEVICE) += sunxi-debug.o
 obj-$(CONFIG_SUNXI_TRUSTZONE) += firmware.o
 obj-$(CONFIG_SUNXI_TRUSTZONE) += sunxi-smc.o
 obj-$(CONFIG_HIBERNATION)    += hibernate/
-
-ifeq ($(CONFIG_SUNXI_BOOTUP_EXTEND), y)
-obj-y += sunxi_bootup_extend.o
-endif
+obj-$(CONFIG_SUNXI_BOOTUP_EXTEND) += sunxi_bootup_extend.o

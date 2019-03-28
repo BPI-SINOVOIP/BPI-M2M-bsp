@@ -1,14 +1,3 @@
-/*
- * drivers/char/sunxi_soc_info/sunxi_soc_info.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #include <linux/atomic.h>
 #include <linux/uaccess.h>
 #include <linux/module.h>
@@ -35,6 +24,7 @@
 #define CHECK_SOC_SECURE_ATTR 0x00
 #define CHECK_SOC_VERSION     0x01
 #define CHECK_SOC_BONDING     0x03
+#define CHECK_SOC_BOOT_ATTR   0x04
 
 
 static int soc_info_open(struct inode *inode, struct file *file)
@@ -57,7 +47,7 @@ static long soc_info_ioctl(struct file *file, unsigned int ioctl_num,
 	switch(ioctl_num){
 		case CHECK_SOC_SECURE_ATTR:
 			err = sunxi_soc_is_secure();
-			if(err){
+			if (err) {
 				pr_debug("soc is secure. return value: %d\n", err);
 			}else{
 				pr_debug("soc is normal. return value: %d\n", err);
@@ -72,8 +62,15 @@ static long soc_info_ioctl(struct file *file, unsigned int ioctl_num,
 			err = copy_to_user((void __user *)ioctl_param, id, 8);
 			pr_debug("soc id:%s\n", id);
 			break;
+		case CHECK_SOC_BOOT_ATTR:
+			err = sunxi_boot_is_secure();
+			if (err)
+				pr_debug("secure boot %d\n" , err);
+			else
+				pr_debug("normal boot %d\n" , err);
+			break;
 		default:
-			pr_err("un supported cmd:%d\n", ioctl_num);
+			pr_err("un supported cmd:%d\n" , ioctl_num);
 			break;
 	}
 	return err;

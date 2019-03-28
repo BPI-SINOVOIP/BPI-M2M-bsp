@@ -1,7 +1,6 @@
 /* linux/drivers/video/sunxi/lcd/video_source_interface.c
  *
  * Copyright (c) 2013 Allwinnertech Co., Ltd.
- * Author: Tyle <tyle@allwinnertech.com>
  *
  * Video source interface for LCD driver
  *

@@ -1,14 +1,3 @@
-/*
- * drivers/video/sunxi/disp2/disp/dev_composer.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #ifndef DEV_COMPOSER_C_C
 #define DEV_COMPOSER_C_C
 
@@ -23,6 +12,20 @@
 #define DBG_TIME_SIZE 100
 #define WB_CHECK_SIZE  5
 #define DISP_NUMS_SCREEN 2
+enum {
+    /* flip source image horizontally (around the vertical axis) */
+    HAL_TRANSFORM_FLIP_H = 0x01,
+    /* flip source image vertically (around the horizontal axis)*/
+    HAL_TRANSFORM_FLIP_V = 0x02,
+    /* rotate source image 90 degrees clockwise */
+    HAL_TRANSFORM_ROT_90 = 0x04,
+    /* rotate source image 180 degrees */
+    HAL_TRANSFORM_ROT_180 = 0x03,
+    /* rotate source image 270 degrees clockwise */
+    HAL_TRANSFORM_ROT_270 = 0x07,
+    /* don't use. see system/window.h */
+    HAL_TRANSFORM_RESERVED = 0x08,
+};
 enum {
     HWC_SYNC_NEED = -2,
     HWC_SYNC_INIT = -1,

@@ -363,6 +363,12 @@ extern int snd_codec_put_volsw(struct	snd_kcontrol	*kcontrol,
 	.put	= snd_codec_put_volsw,\
 	.private_value	= CODEC_SINGLE_VALUE(reg, shift, max, invert)}
 
+#define CODEC_SINGLE_EXT(xname,	reg,	shift,	max,	invert,	codec_set)\
+{	.iface	= SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname,\
+	.info	= snd_codec_info_volsw,	.get = snd_codec_get_volsw,\
+	.put	= codec_set,\
+	.private_value	= CODEC_SINGLE_VALUE(reg, shift, max, invert)}
+
 /*	mixer control*/
 struct	codec_mixer_control{
 	int		min;

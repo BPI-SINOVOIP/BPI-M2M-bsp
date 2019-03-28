@@ -1,12 +1,13 @@
 /*
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ * Allwinner SoCs hdmi driver.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2016 Allwinner.
  *
+ * This file is licensed under the terms of the GNU General Public
+ * License version 2.  This program is licensed "as is" without any
+ * warranty of any kind, whether express or implied.
  */
+
 #include "hdmi_core.h"
 
 static __s32 is_hdmi;
@@ -213,14 +214,25 @@ static __s32 Parse_DTD_Block(__u8 *pbuf)
 static __s32 Parse_VideoData_Block(__u8 *pbuf,__u8 size)
 {
 	int i=0;
-	while(i<size) {
-		Device_Support_VIC[pbuf[i] &0x7f] = 1;
-		if(pbuf[i] &0x80)	{
-			__inf("Parse_VideoData_Block: VIC %d(native) support\n", pbuf[i]&0x7f);
-		}
-		else {
-			__inf("Parse_VideoData_Block: VIC %d support\n", pbuf[i]);
-		}
+	u8 vic_data = 0;
+
+	while (i < size) {
+		vic_data = pbuf[i] & 0x7f;
+		if ((vic_data == 93) ||
+		    (vic_data == 94) ||
+		    (vic_data == 95))
+			Device_Support_VIC[96 - vic_data + 0x100] = 1;
+		else if (vic_data == 98)
+			Device_Support_VIC[0x104] = 1;
+		else
+			Device_Support_VIC[vic_data] = 1;
+
+
+		if (pbuf[i] & 0x80)
+			__inf("edid_parse_videodata_block: VIC %d(native) support\n", pbuf[i]&0x7f);
+		else
+			__inf("edid_parse_videodata_block: VIC %d support\n", pbuf[i]);
+
 		i++;
 	}
 
@@ -246,6 +258,7 @@ static __s32 Parse_HDMI_VSDB(__u8 * pbuf,__u8 size)
 {
 	__u8 index = 8;
 	__u8 vic_len = 0;
+	__u8 vsbd_vic = 0;
 	__u8 i;
 
 	/* check if it's HDMI VSDB */
@@ -280,10 +293,17 @@ static __s32 Parse_HDMI_VSDB(__u8 * pbuf,__u8 size)
 		__inf("3D_multi_present\n");
 
 	vic_len = pbuf[index+1]>>5;
-	for(i=0; i<vic_len; i++) {
+	__inf("vsdb_vic_len = %d\n", vic_len);
+	for (i = 0; i < vic_len; i++) {
 		/* HDMI_VIC for extended resolution transmission */
-		Device_Support_VIC[pbuf[index+1+1+i] + 0x100] = 1;
-		__inf("Parse_HDMI_VSDB: VIC %d support\n", pbuf[index+1+1+i]);
+		vsbd_vic = pbuf[index+2+i];
+		if ((0 < vsbd_vic) && (vsbd_vic < 0x05)) {
+			Device_Support_VIC[vsbd_vic + 0x100] = 1;
+			__inf("edid_parse_vsdb: VIC %d support\n", vsbd_vic);
+		} else {
+			__inf("edid_parse_vsdb: VIC %d is a reserved VIC\n",
+				vsbd_vic);
+		}
 	}
 
 	index += (pbuf[index+1]&0xe0) + 2;

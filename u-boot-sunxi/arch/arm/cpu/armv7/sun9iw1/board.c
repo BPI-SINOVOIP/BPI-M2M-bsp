@@ -730,3 +730,31 @@ int sunxi_get_securemode(void)
 	return gd->securemode;
 }
 
+int sunxi_set_bootmode_flag(u8 flag)
+{
+	volatile uint reg_val;
+
+	do {
+		smc_writel((3 << 16) | (flag << 8), SUNXI_RPRCM_BASE + 0x1f0);
+		smc_writel((3 << 16) | (flag << 8) | (1U << 31), SUNXI_RPRCM_BASE + 0x1f0);
+		__usdelay(10);
+		CP15ISB;
+		CP15DMB;
+		smc_writel((3 << 16) | (flag << 8), SUNXI_RPRCM_BASE + 0x1f0);
+		reg_val = smc_readl(SUNXI_RPRCM_BASE + 0x1f0);
+	} while ((reg_val & 0xff) != flag);
+
+	return 0;
+}
+
+int sunxi_get_bootmode_flag(void)
+{
+	uint fel_flag;
+
+	writel(readl(SUNXI_RPRCM_BASE + 0x1f0) | (3 << 16), SUNXI_RPRCM_BASE + 0x1f0);
+	CP15ISB;
+	CP15DMB;
+	fel_flag = readl(SUNXI_RPRCM_BASE + 0x1f0) & 0xff;
+
+	return fel_flag;
+}

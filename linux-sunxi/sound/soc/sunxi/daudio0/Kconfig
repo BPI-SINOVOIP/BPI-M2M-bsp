@@ -11,7 +11,7 @@ config SND_SUNXI_SOC_DAUDIO0_INTERFACE
 
 config SND_SUNXI_SOC_DAUDIO0_PUBLIC_MACHINE
 	tristate "Daudio0 Public Machine for SUNXI chips"
-	depends on ARCH_SUN9IW1 || ARCH_SUN8IW8 || (ARCH_SUN8IW7  && SND_SOC_RT3261 = n && MFD_ACX00 = n)
+	depends on ARCH_SUN9IW1 || (ARCH_SUN8IW8 && SND_SOC_NAU8540 = n) || (ARCH_SUN8IW7  && SND_SOC_RT3261 = n && MFD_ACX00 = n)
 	default n
 	help
 	  Say Y or M if you want to add audiocodec support
@@ -22,7 +22,7 @@ config SND_SUNXI_SOC_DAUDIO0_KARAOKE_MACHINE
 	default n
 	help
 	  Say Y or M if you want to add audiocodec support
-	 
+
 config SND_SUNXI_SOC_SUN8IW6_ACX00
 	tristate "Machine for A83 ACX00"
 	depends on ARCH_SUN8IW6 && MFD_ACX00 && SND_SOC_ACX00DAPM_CODEC
@@ -43,3 +43,10 @@ config SND_VIRBB_DAI
 	default n
 	help
 	  Say Y or M if you want to add sun8iw1 audiocodec support
+
+config SND_SUNXI_SOC_SUN8IW8_NAU8540
+	tristate "Daudio0 Machine for R11 & NAU8520/40"
+	depends on ARCH_SUN8IW8 && SND_SOC_NAU8540
+	default n
+	help
+	  Say Y or M if you want to add nau8540 codec support

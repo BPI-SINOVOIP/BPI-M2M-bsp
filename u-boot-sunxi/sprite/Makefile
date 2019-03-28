@@ -35,6 +35,7 @@ COBJS-y += encrypt/twofish/twofish.o
 COBJS-y += encrypt/twofish/twofish_new.o
 COBJS-y += sparse/sparse.o
 COBJS-y += sprite_download.o
+COBJS-y += sprite_auto_update.o
 COBJS-y += firmware/imgdecode.o
 COBJS-y += sprite_privatedata.o
 COBJS-y += sprite_main.o
@@ -45,6 +46,7 @@ COBJS-y += sprite_led.o
 COBJS-$(CONFIG_SUNXI_SECURE_STORAGE) += sprite_secstorage.o
 COBJS-$(CONFIG_SUNXI_SECURE_STORAGE) += sprite_secure_object.o
 COBJS-$(CONFIG_SUNXI_SECURE_SYSTEM) += sprite_storage_crypt.o
+#COBJS-$(CONFIG_AUTO_UPDATE) += sprite_auto_update.o
 
 endif
 COBJS	:= $(COBJS-y)

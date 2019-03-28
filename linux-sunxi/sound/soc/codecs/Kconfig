@@ -474,9 +474,34 @@ config SND_SOC_TAS5731_CODEC
 	default n
 	help
 	  Say Y or M if you want to add support for tas5731.
-config SND_SOC_TAS5707
-	tristate "TAS5707 CHIP"
+
+# choice
+# 	prompt "I2S1 CODEC SELECT"
+# 	config SND_SOC_TAS5707
+# 		tristate "TAS5707 CHIP"
+# 		depends on ARCH_SUN8IW5
+# 		default n
+# 		help
+# 	  	Say Y or M if you want to add support for TAS5707.
+config SND_SOC_AC108
+	tristate "AC108 Mic Array"
 	depends on ARCH_SUN8IW5
+	select SND_SUNXI_SOC_I2S0_INTERFACE
 	default n
 	help
-	  Say Y or M if you want to add support for TAS5707.
+	Say Y or M if you want to add support for AC108.
+# 	config SND_SOC_AC108
+# 		tristate "AC108 Mic Array"
+# 		depends on ARCH_SUN8IW5
+# 		select SND_SUNXI_SOC_I2S1_INTERFACE
+# 		default n
+# 		help
+# 		Say Y or M if you want to add support for AC108.
+# endchoice
+
+config SND_SOC_NAU8540
+	tristate "NAU85L20/40 Codec"
+	depends on ARCH_SUN8IW8
+	select I2C
+	help
+	  Say Y or M if you want to add support for NAU85L20/40

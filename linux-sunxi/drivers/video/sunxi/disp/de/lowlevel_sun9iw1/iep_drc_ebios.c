@@ -1,14 +1,3 @@
-/*
- * drivers/video/sunxi/disp/de/lowlevel_sun9iw1/iep_drc_ebios.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #include "iep_drc_ebios.h"
 
 static volatile __iep_drc_dev_t *drc_dev[2];

@@ -1,14 +1,4 @@
 /*
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-/*
  * A V4L2 driver for ar0330_mipi Raw cameras.
  *
  */
@@ -33,14 +23,14 @@ MODULE_DESCRIPTION("A low-level driver for Aptina ar0330_mipi Raw sensors");
 MODULE_LICENSE("GPL");
 
 //for internel driver debug
-#define DEV_DBG_EN      0 
-#if(DEV_DBG_EN == 1)    
-#define vfe_dev_dbg(x,arg...) printk("[ar0330_mipi Raw]"x,##arg)
+#define DEV_DBG_EN      0
+#if (DEV_DBG_EN == 1)
+#define vfe_dev_dbg(x, arg...) printk(KERN_DEBUG"[ar0330_mipi Raw]"x, ##arg)
 #else
-#define vfe_dev_dbg(x,arg...) 
+#define vfe_dev_dbg(x, arg...)
 #endif
-#define vfe_dev_err(x,arg...) printk("[ar0330_mipi Raw]"x,##arg)
-#define vfe_dev_print(x,arg...) printk("[ar0330_mipi Raw]"x,##arg)
+#define vfe_dev_err(x, arg...) printk(KERN_ERR"[ar0330_mipi Raw]"x, ##arg)
+#define vfe_dev_print(x, arg...) printk(KERN_INFO"[ar0330_mipi Raw]"x, ##arg)
 
 #define LOG_ERR_RET(x)  { \
                           int ret;  \
@@ -116,6 +106,8 @@ static inline struct sensor_info *to_state(struct v4l2_subdev *sd)
 
 static struct regval_list sensor_default_regs[] = 
 {
+};
+static struct regval_list sensor_fullsize_30fps_regs[] = {
     {0x301a,0x0059},	//Reset Sensor
     {REG_DLY,0x0064},
     {0x31AE,0x0202},  //Output Interface Configured to 2lane MIPI
@@ -181,7 +173,7 @@ static struct regval_list sensor_default_regs[] =
     {0x3042,0x0000}, //EXTRA_DELAY = 0
     {0x30BA,0x002C}, //DIGITAL_CTRL = 44
     {0x3070,0x0000},
-#if 1
+
     {0x30FE, 0x0080},  // RESERVED_MFR_30FE
 	{0x31E0, 0x0703},  // RESERVED_MFR_31E0    dpc enable reg	0x0003
 	{0x3ECE, 0x08FF},  // RESERVED_MFR_3ECE
@@ -201,19 +193,90 @@ static struct regval_list sensor_default_regs[] =
 	{0x3EDA, 0x88BC},  // RESERVED_MFR_3EDA
 	{0x3EDC, 0xAA63},  // RESERVED_MFR_3EDC
 
-#endif
 
 
 
-    {0x301A,0x025C}, //Enable Streaming
+	{0x301A, 0x025C}, /* Enable Streaming */
+
 };
 
+static struct regval_list sensor_fullsize_25fps_regs[] = {
+	{0x301a, 0x0059}, /*Reset Sensor*/
+	{REG_DLY, 0x0064},
+	{0x31AE, 0x0202},  /*Output Interface Configured to 2lane MIPI*/
+	{0x301A, 0x0058},/*Disable Streaming*/
+	{REG_DLY, 0x0032},
+	{0x3064, 0x1802},
+	{0x3078, 0x0001},  /*Marker to say that 'Defaults' have been run*/
+	{0x31e0, 0x0003},
 
-//static struct regval_list sensor_sxga_regs[] = { //SXGA: 1280*960@30fps 
-//};
+	/*Toggle Flash on Each Frame*/
+	{0x3046, 0x4038},  /*Enable Flash Pin*/
+	{0x3048, 0x8480},  /*Flash Pulse Length*/
+	{0x31E0, 0x0203},  /*OTPM V5*/
+	{0x3ED2, 0x0146},
+	{0x3EDA, 0x88BC},
+	{0x3EDC, 0xAA63},
+	{0x305E, 0x00A0},
 
-//static struct regval_list sensor_xga_regs[] = { //XGA: 1024*768
-//};
+	/*PLL_settings 588Mbps 98Mhz*/
+	/*STATE = Master Clock,98000000*/
+	{0x302A, 0x0006},     /*VT_PIX_CLK_DIV = 6*/
+	{0x302C, 0x0002},     /*VT_SYS_CLK_DIV = 2*/
+	{0x302E, 0x0002},     /*PRE_PLL_CLK_DIV = 2*/
+	{0x3030, 0x0031},     /*PLL_MULTIPLIER = 49*/
+	{0x3036, 0x000C},     /*OP_PIX_CLK_DIV = 12*/
+	{0x3038, 0x0001},     /*OP_SYS_CLK_DIV = 1*/
+	{0x31AC, 0x0C0C},     /*DATA_FORMAT_BITS*/
+
+	/*MIPI Port Timing continuous mode*/
+	{0x31B0, 0x002d},
+	{0x31B2, 0x0012},
+	{0x31B4, 0x3b44},
+	{0x31B6, 0x314d},
+	{0x31B8, 0x2089},
+	{0x31BA, 0x0206},
+	{0x31BC, 0x8005},
+	{0x31BE, 0x2003},
+
+	/*Timing_settings*/
+	{0x3002, 0x0078},  /*Y_ADDR_START = 120*/
+	{0x3004, 0x0006},  /*X_ADDR_START = 6*/
+	{0x3006, 0x0587},  /*Y_ADDR_END = 1415*/
+	{0x3008, 0x0905},  /*X_ADDR_END = 2309*/
+	{0x300A, 0x0622},  /*FRAME_LENGTH_LINES = 1570*/
+	{0x300C, 0x04E0},  /*LINE_LENGTH_PCK = 1248*/
+	{0x3012, 0x0621},  /*COARSE_INTEGRATION_TIME = 1569*/
+	{0x3014, 0x0000},  /*FINE_INTEGRATION_TIME = 0*/
+	{0x30A2, 0x0001},  /*X_ODD_INC = 1*/
+	{0x30A6, 0x0001},  /*Y_ODD_INC = 1*/
+
+	{0x3040, 0x0000}, /*READ_MODE = 0*/
+	{0x3042, 0x0000}, /*EXTRA_DELAY = 0*/
+	{0x30BA, 0x002C}, /*DIGITAL_CTRL = 44*/
+	{0x3070, 0x0000},
+
+	{0x30FE, 0x0080},  /*RESERVED_MFR_30FE*/
+	{0x31E0, 0x0703},  /*RESERVED_MFR_31E0 dpc enable reg 0x0003*/
+	{0x3ECE, 0x08FF},  /*RESERVED_MFR_3ECE*/
+	{0x3ED0, 0xE4F6},  /*RESERVED_MFR_3ED0*/
+	{0x3ED2, 0x0146},  /*RESERVED_MFR_3ED2*/
+	{0x3ED4, 0x8F6C},  /*RESERVED_MFR_3ED4*/
+	{0x3ED6, 0x66CC},  /*RESERVED_MFR_3ED6*/
+	{0x3ED8, 0x8C42},  /*RESERVED_MFR_3ED8*/
+	{0x3EDA, 0x889B},  /*RESERVED_MFR_3EDA*/
+	{0x3EDC, 0x8863},  /*RESERVED_MFR_3EDC*/
+	{0x3EDE, 0xAA04},  /*RESERVED_MFR_3EDE*/
+	{0x3EE0, 0x15F0},  /*RESERVED_MFR_3EE0*/
+	{0x3EE6, 0x008C},  /*RESERVED_MFR_3EE6*/
+	{0x3EE8, 0x2024},  /*RESERVED_MFR_3EE8*/
+	{0x3EEA, 0xFF1F},  /*RESERVED_MFR_3EEA*/
+	{0x3F06, 0x046A},  /*RESERVED_MFR_3F06*/
+	{0x3EDA, 0x88BC},  /*RESERVED_MFR_3EDA*/
+	{0x3EDC, 0xAA63},  /*RESERVED_MFR_3EDC*/
+
+	{0x301A, 0x025C}, /*Enable Streaming*/
+};
 
 
 //static struct regval_list sensor_1080p_regs[] = { //1080: 1920*1080@30fps EIS
@@ -247,7 +310,7 @@ static int sensor_read(struct v4l2_subdev *sd, unsigned short reg,
 {
     int ret=0;
     int cnt=0;
-	
+
     ret = cci_read_a16_d16(sd,reg,value);
     while(ret!=0&&cnt<3)
     {
@@ -256,7 +319,7 @@ static int sensor_read(struct v4l2_subdev *sd, unsigned short reg,
     }
     if(cnt>0)
     	vfe_dev_dbg("sensor read retry=%d\n",cnt);
-		
+
     return ret;
 }
 
@@ -325,11 +388,11 @@ static int sensor_s_exp(struct v4l2_subdev *sd, unsigned int exp_val)
         exp_val=0xfffff0;
     if(exp_val<16)
         exp_val=16;
-  
+
     exp_val=(exp_val)>>4;//rounding to 1
-    
+
     sensor_write(sd, 0x3012,exp_val);//coarse integration time
-  
+
     info->exp = exp_val;
     return 0;
 }
@@ -337,7 +400,7 @@ static int sensor_s_exp(struct v4l2_subdev *sd, unsigned int exp_val)
 static int sensor_g_gain(struct v4l2_subdev *sd, __s32 *value)
 {
     struct sensor_info *info = to_state(sd);
-	
+
     *value = info->gain;
     vfe_dev_dbg("sensor_get_gain = %d\n", info->gain);
     return 0;
@@ -450,7 +513,7 @@ static int sensor_s_gain(struct v4l2_subdev *sd, int gain_val)
 	}
 
 	sensor_write(sd, 0x305e, dig_gain);
-    
+
     //sensor_read(sd,0x3060,&tmp_gain);
     //printk("sensor_set_gain = %d,readout gain =0x%x\n", gain_val,tmp_gain);
     info->gain = gain_val;
@@ -735,118 +798,160 @@ static struct sensor_format_struct {
  * Then there is the issue of window sizes.  Try to capture the info here.
  */
 static struct sensor_win_size sensor_win_sizes[] = {
-    /* qsxga: 2304*1296 */  
-    {
-        .width      = 2304,
-        .height     = 1296,
-        .hoffset    = 0,
-        .voffset    = 0,
-        .hts        = 1248,
-        .vts        = 1308,
-        .pclk       = 49*1000*1000,
-        .mipi_bps	= (588*1000*1000),
-        .fps_fixed  = 1,
-        .bin_factor = 1,
-        .intg_min   = 1<<4,
-        .intg_max   = 1308<<4,//
-        .gain_min   = 1<<4,
-        .gain_max   = 64<<4,
-        .regs       = sensor_default_regs,
-        .regs_size  = ARRAY_SIZE(sensor_default_regs),
-        .set_size   = NULL,
-    },
-    
-    /* 1080P */
-    {
-        .width	    = HD1080_WIDTH,
-        .height 	= HD1080_HEIGHT,
-        .hoffset    = 0,
-        .voffset    = 0,
-        .hts        = 1248,
-        .vts        = 1308,
-        .pclk       = 49*1000*1000,
-        .mipi_bps	= (588*1000*1000)/1,
-        .fps_fixed  = 1,
-        .bin_factor = 1,
-        .intg_min   = 1<<4,
-        .intg_max   = 1308<<4,//
-        .gain_min   = 1<<4,
-        .gain_max   = 64<<4,
-        .width_input = 2304,
+	/* qsxga: 2304*1296 */
+	{
+		.width      = 2304,
+		.height     = 1296,
+		.hoffset    = 0,
+		.voffset    = 0,
+		.hts        = 1248,
+		.vts        = 1570,
+		.pclk       = 49*1000*1000,
+		.mipi_bps   = (588*1000*1000),
+		.fps_fixed  = 25,
+		.bin_factor = 1,
+		.intg_min   = 1<<4,
+		.intg_max   = 1570<<4,
+		.gain_min   = 1<<4,
+		.gain_max   = 64<<4,
+		.regs       = sensor_fullsize_25fps_regs,
+		.regs_size  = ARRAY_SIZE(sensor_fullsize_25fps_regs),
+		.set_size   = NULL,
+	},
+#if 0
+	{
+		.width      = 2304,
+		.height     = 1296,
+		.hoffset    = 0,
+		.voffset    = 0,
+		.hts        = 1248,
+		.vts        = 1308,
+		.pclk       = 49*1000*1000,
+		.mipi_bps	= (588*1000*1000),
+		.fps_fixed  = 30,
+		.bin_factor = 1,
+		.intg_min   = 1<<4,
+		.intg_max   = 1308<<4,
+		.gain_min   = 1<<4,
+		.gain_max   = 64<<4,
+		.regs       = sensor_fullsize_30fps_regs,
+		.regs_size  = ARRAY_SIZE(sensor_fullsize_30fps_regs),
+		.set_size   = NULL,
+	},
+#endif
+	/* 1080P */
+	{
+		.width      = HD1080_WIDTH,
+		.height     = HD1080_HEIGHT,
+		.hoffset    = 0,
+		.voffset    = 0,
+		.hts        = 1248,
+		.vts        = 1308,
+		.pclk       = 49*1000*1000,
+		.mipi_bps   = (588*1000*1000)/1,
+		.fps_fixed  = 30,
+		.bin_factor = 1,
+		.intg_min   = 1<<4,
+		.intg_max   = 1308<<4,
+		.gain_min   = 1<<4,
+		.gain_max   = 64<<4,
+		.width_input = 2304,
 		.height_input = 1296,
-        .regs       = sensor_default_regs,
-        .regs_size  = ARRAY_SIZE(sensor_default_regs),
-        .set_size   = NULL,
-    },
+		.regs       = sensor_fullsize_30fps_regs,
+		.regs_size  = ARRAY_SIZE(sensor_fullsize_30fps_regs),
+		.set_size   = NULL,
+	},
+	{
+		.width      = HD720_WIDTH,
+		.height     = HD720_HEIGHT,
+		.hoffset    = 0,
+		.voffset    = 0,
+		.hts        = 1248,
+		.vts        = 1308,
+		.pclk       = 49*1000*1000,
+		.mipi_bps   = (588*1000*1000)/1,
+		.fps_fixed  = 1,
+		.bin_factor = 1,
+		.intg_min   = 1<<4,
+		.intg_max   = 1308<<4,
+		.gain_min   = 1<<4,
+		.gain_max   = 64<<4,
+		.width_input = 2304,
+		.height_input = 1296,
+		.regs       = sensor_default_regs,
+		.regs_size  = ARRAY_SIZE(sensor_default_regs),
+		.set_size   = NULL,
+	},
+#if 0
+	/* SXGA */
+	{
+		.width      = SXGA_WIDTH,
+		.height     = SXGA_HEIGHT,
+		.hoffset    = 288,
+		.voffset    = 120,
+		.hts        = 1248,
+		.vts        = 1308,
+		.pclk       = 49*1000*1000,
+		.mipi_bps   = (588*1000*1000)/1,
+		.fps_fixed  = 1,
+		.bin_factor = 1,
+		.intg_min   = 1<<4,
+		.intg_max   = 1308<<4,
+		.gain_min   = 1<<4,
+		.gain_max   = 16<<4,
+		.width_input = 1728,
+		.height_input = 1296,
+		.regs       = sensor_default_regs,
+		.regs_size  = ARRAY_SIZE(sensor_default_regs),
+		.set_size   = NULL,
+	},
 
-//  	/* SXGA *///1280x960
-//    {     
-//        .width		= SXGA_WIDTH,
-//        .height 	= SXGA_HEIGHT,
-//        .hoffset    = 288,
-//        .voffset    = 120,
-//        .hts        = 1248,
-//        .vts        = 1308,
-//        .pclk       = 49*1000*1000,
-//        .mipi_bps   = (588*1000*1000)/1,
-//        .fps_fixed  = 1,
-//        .bin_factor = 1,
-//        .intg_min   = 1<<4,
-//        .intg_max   = 1308<<4,//
-//        .gain_min   = 1<<4,
-//        .gain_max   = 16<<4,
-//        .width_input = 1728,
-//		.height_input = 1296,
-//        .regs       = sensor_default_regs,
-//        .regs_size  = ARRAY_SIZE(sensor_default_regs),
-//        .set_size   = NULL,
-//    },
-//   
-//    /* 720p */
-//    {
-//        .width      = HD720_WIDTH,
-//        .height     = HD720_HEIGHT,
-//        .hoffset    = 0,
-//        .voffset    = 120,
-//        .hts        = 1248,
-//        .vts        = 1308,
-//        .pclk       = 49*1000*1000,
-//        .mipi_bps   = (588*1000*1000)/1,
-//        .fps_fixed  = 1,
-//        .bin_factor = 1,
-//        .intg_min   = 1<<4,
-//        .intg_max   = 1308<<4,//
-//        .gain_min   = 1<<4,
-//        .gain_max   = 16<<4,
-//        .width_input = 2304,
-//		.height_input = 1296,
-//        .regs       = sensor_default_regs,
-//        .regs_size  = ARRAY_SIZE(sensor_default_regs),
-//        .set_size   = NULL,
-//    },
-//    
-//    /* VGA */
-//    {
-//        .width	    = VGA_WIDTH,
-//        .height 	= VGA_HEIGHT,
-//        .hoffset    = 288,
-//        .voffset    = 120,
-//        .hts        = 1248,
-//        .vts        = 1308,
-//        .pclk       = 49*1000*1000,
-//        .mipi_bps   = (588*1000*1000)/1,
-//        .fps_fixed  = 1,
-//        .bin_factor = 1,
-//        .intg_min   = 1<<4,
-//        .intg_max   = 1308<<4,//
-//        .gain_min   = 1<<4,
-//        .gain_max   = 16<<4,
-//        .width_input = 1728,
-//        .height_input = 1296,
-//        .regs       = sensor_default_regs,
-//        .regs_size  = ARRAY_SIZE(sensor_default_regs),
-//        .set_size   = NULL,
-//    },
+	/* 720p */
+	{
+		.width      = HD720_WIDTH,
+		.height     = HD720_HEIGHT,
+		.hoffset    = 0,
+		.voffset    = 120,
+		.hts        = 1248,
+		.vts        = 1308,
+		.pclk       = 49*1000*1000,
+		.mipi_bps   = (588*1000*1000)/1,
+		.fps_fixed  = 1,
+		.bin_factor = 1,
+		.intg_min   = 1<<4,
+		.intg_max   = 1308<<4,
+		.gain_min   = 1<<4,
+		.gain_max   = 16<<4,
+		.width_input = 2304,
+		.height_input = 1296,
+		.regs       = sensor_default_regs,
+		.regs_size  = ARRAY_SIZE(sensor_default_regs),
+		.set_size   = NULL,
+	},
+
+	/* VGA */
+	{
+		.width      = VGA_WIDTH,
+		.height     = VGA_HEIGHT,
+		.hoffset    = 288,
+		.voffset    = 120,
+		.hts        = 1248,
+		.vts        = 1308,
+		.pclk       = 49*1000*1000,
+		.mipi_bps   = (588*1000*1000)/1,
+		.fps_fixed  = 1,
+		.bin_factor = 1,
+		.intg_min   = 1<<4,
+		.intg_max   = 1308<<4,
+		.gain_min   = 1<<4,
+		.gain_max   = 16<<4,
+		.width_input = 1728,
+		.height_input = 1296,
+		.regs       = sensor_default_regs,
+		.regs_size  = ARRAY_SIZE(sensor_default_regs),
+		.set_size   = NULL,
+	},
+#endif
 };
 
 #define N_WIN_SIZES (ARRAY_SIZE(sensor_win_sizes))
@@ -854,24 +959,24 @@ static struct sensor_win_size sensor_win_sizes[] = {
 static int sensor_enum_fmt(struct v4l2_subdev *sd, unsigned index,
                  enum v4l2_mbus_pixelcode *code)
 {
-    if (index >= N_FMTS)
-        return -EINVAL;
+	if (index >= N_FMTS)
+		return -EINVAL;
 
-    *code = sensor_formats[index].mbus_code;
-    return 0;
+	*code = sensor_formats[index].mbus_code;
+	return 0;
 }
 
 static int sensor_enum_size(struct v4l2_subdev *sd,
                             struct v4l2_frmsizeenum *fsize)
 {
-    if(fsize->index > N_WIN_SIZES-1)
-    	return -EINVAL;
-  
-    fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
-    fsize->discrete.width = sensor_win_sizes[fsize->index].width;
-    fsize->discrete.height = sensor_win_sizes[fsize->index].height;
-  
-    return 0;
+	if (fsize->index > N_WIN_SIZES-1)
+		return -EINVAL;
+
+	fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
+	fsize->discrete.width = sensor_win_sizes[fsize->index].width;
+	fsize->discrete.height = sensor_win_sizes[fsize->index].height;
+
+	return 0;
 }
 
 static int sensor_try_fmt_internal(struct v4l2_subdev *sd,
@@ -879,49 +984,50 @@ static int sensor_try_fmt_internal(struct v4l2_subdev *sd,
     struct sensor_format_struct **ret_fmt,
     struct sensor_win_size **ret_wsize)
 {
-    int index;
-    struct sensor_win_size *wsize;
-    struct sensor_info *info = to_state(sd);
+	int index;
+	struct sensor_win_size *wsize;
+	struct sensor_info *info = to_state(sd);
 
-    for (index = 0; index < N_FMTS; index++)
-        if (sensor_formats[index].mbus_code == fmt->code)
-            break;
+	for (index = 0; index < N_FMTS; index++)
+		if (sensor_formats[index].mbus_code == fmt->code)
+			break;
 
-    if (index >= N_FMTS) 
-        return -EINVAL;
-  
-    if (ret_fmt != NULL)
-        *ret_fmt = sensor_formats + index;
-    
-    /*
-    * Fields: the sensor devices claim to be progressive.
-    */
-  
-    fmt->field = V4L2_FIELD_NONE;
-  
-    /*
-    * Round requested image size down to the nearest
-    * we support, but not below the smallest.
-    */
-    for (wsize = sensor_win_sizes; wsize < sensor_win_sizes + N_WIN_SIZES;
-       wsize++)
-        if (fmt->width >= wsize->width && fmt->height >= wsize->height)
-            break;
-    
-    if (wsize >= sensor_win_sizes + N_WIN_SIZES)
-        wsize--;   /* Take the smallest one */
-    if (ret_wsize != NULL)
-        *ret_wsize = wsize;
-    /*
-    * Note the size we'll actually handle.
-    */
-    fmt->width = wsize->width;
-    fmt->height = wsize->height;
-    info->current_wins = wsize;
-    //pix->bytesperline = pix->width*sensor_formats[index].bpp;
-    //pix->sizeimage = pix->height*pix->bytesperline;
+	if (index >= N_FMTS)
+		return -EINVAL;
 
-    return 0;
+	if (ret_fmt != NULL)
+		*ret_fmt = sensor_formats + index;
+
+	/*
+	* Fields: the sensor devices claim to be progressive.
+	*/
+
+	fmt->field = V4L2_FIELD_NONE;
+
+	/*
+	* Round requested image size down to the nearest
+	* we support, but not below the smallest.
+	*/
+	for (wsize = sensor_win_sizes;
+		wsize < sensor_win_sizes + N_WIN_SIZES; wsize++)
+		if (fmt->width >= wsize->width
+			&& fmt->height >= wsize->height)
+			break;
+
+	if (wsize >= sensor_win_sizes + N_WIN_SIZES)
+		wsize--;   /* Take the smallest one */
+	if (ret_wsize != NULL)
+		*ret_wsize = wsize;
+	/*
+	* Note the size we'll actually handle.
+	*/
+	fmt->width = wsize->width;
+	fmt->height = wsize->height;
+	info->current_wins = wsize;
+	/*pix->bytesperline = pix->width*sensor_formats[index].bpp;*/
+	/*pix->sizeimage = pix->height*pix->bytesperline;*/
+
+	return 0;
 }
 
 static int sensor_try_fmt(struct v4l2_subdev *sd, 

@@ -16,6 +16,11 @@ config SUNXI_KEY_POWER
 	help
 	  Say Y here to enable power control by the power-key.
 
+config SUNXI_KEY_POWER_INPUT
+	bool "Sunxi key power input"
+	help
+	  Say Y here to enable power key input control by the power-key.
+
 config POWER_SUPPLY_DEBUG
 	bool "Power supply debug"
 	help

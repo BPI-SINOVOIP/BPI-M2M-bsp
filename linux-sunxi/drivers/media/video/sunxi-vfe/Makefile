@@ -21,8 +21,9 @@ vfe_v4l2-y					+= config.o
 vfe_v4l2-y					+= utility/sensor_info.o
 vfe_v4l2-y					+= isp_cfg/isp_cfg.o
 vfe_v4l2-y					+= utility/cfg_op.o
+vfe_v4l2-y					+= camera_debug.o
 vfe_v4l2-y					+= vfe.o
-vfe_v4l2-y					+= isp.o
+vfe_v4l2-y					+= lib/libisp
 EXTRA_LDFLAGS += --strip-debug		
 ifneq ($(strip $(CONFIG_ARCH_SUN9I)),)
 vfe_v4l2-y					+= lib/lib_mipicsi2_v2
@@ -36,5 +37,5 @@ vfe_v4l2-y					+= mipi_csi/bsp_mipi_csi_v1.o \
 							mipi_csi/dphy/dphy_reg.o
 else
 obj-$(CONFIG_CSI_VFE) += vfe_v4l2.o
-vfe_v4l2-y					+= bsp_mipi_csi_v2.o
+vfe_v4l2-y					+= lib/lib_mipicsi2_v1
 endif

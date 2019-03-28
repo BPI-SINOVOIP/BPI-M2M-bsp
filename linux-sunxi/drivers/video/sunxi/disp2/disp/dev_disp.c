@@ -411,7 +411,7 @@ static s32 parser_disp_init_para(disp_init_para * init_para)
 	}
 
 	//fb0
-	init_para->buffer_num[0]= 2;
+	init_para->buffer_num[0] = 1;
 
 	if(disp_sys_script_get_item("disp_init", "fb0_format", &value, 1) < 0) {
 		__wrn("fetch script data disp_init.fb0_format fail\n");
@@ -1488,11 +1488,26 @@ long disp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	{
 		disp_layer_config para;
 
-		if(copy_from_user(&para, (void __user *)ubuffer[1],sizeof(disp_layer_config)))	{
+		if (copy_from_user(&para, (void __user *)ubuffer[1],
+					sizeof(disp_layer_config))) {
 			__wrn("copy_from_user fail\n");
 			return  -EFAULT;
 		}
-		if(mgr && mgr->set_layer_config)
+#ifdef CONFIG_ARCH_SUN8IW8
+		if (mgr && mgr->rot_sw && mgr->rot_sw->apply) {
+			disp_rect dirty_rect;
+			if (0 != para.enable) {
+				dirty_rect.x = (para.info.fb.crop.x >> 32);
+				dirty_rect.y = (para.info.fb.crop.y >> 32);
+				dirty_rect.width = (para.info.fb.crop.width >> 32);
+				dirty_rect.height = (para.info.fb.crop.height >> 32);
+			} else {
+				memset((void *)&dirty_rect, 0, sizeof(disp_rect));
+			}
+			ret = mgr->rot_sw->apply(mgr->rot_sw, &para, dirty_rect);
+		}
+#endif
+		if (mgr && mgr->set_layer_config)
 			ret = mgr->set_layer_config(mgr, &para, ubuffer[2]);
 		break;
 	}
@@ -1501,19 +1516,53 @@ long disp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	{
 		disp_layer_config para;
 
-		if(copy_from_user(&para, (void __user *)ubuffer[1],sizeof(disp_layer_config)))	{
+		if (copy_from_user(&para, (void __user *)ubuffer[1],
+					sizeof(disp_layer_config))) {
 			__wrn("copy_from_user fail\n");
 			return  -EFAULT;
 		}
-		if(mgr && mgr->get_layer_config)
+		if (mgr && mgr->get_layer_config)
 			ret = mgr->get_layer_config(mgr, &para, ubuffer[2]);
-		if(copy_to_user((void __user *)ubuffer[1], &para, sizeof(disp_layer_config)))	{
+#ifdef CONFIG_ARCH_SUN8IW8
+		if (mgr && mgr->rot_sw && mgr->rot_sw->checkout)
+			ret = mgr->rot_sw->checkout(mgr->rot_sw, &para);
+#endif
+		if (copy_to_user((void __user *)ubuffer[1], &para, sizeof(disp_layer_config)))	{
 			__wrn("copy_to_user fail\n");
 			return  -EFAULT;
 		}
 		break;
 	}
 
+	case DISP_ROTATION_SW_SET_ROT:
+	{
+		int num_screens = bsp_disp_feat_get_num_screens();
+		if (!mgr || !mgr->rot_sw || num_screens <= ubuffer[0]) {
+			ret = -1;
+			break;
+		}
+		switch (ubuffer[1]) {
+		case ROTATION_SW_0:
+		case ROTATION_SW_90:
+		case ROTATION_SW_180:
+		case ROTATION_SW_270:
+			mgr->rot_sw[ubuffer[0]].degree = ubuffer[1];
+			break;
+		default:
+			ret = -1;
+		}
+		break;
+	}
+	case DISP_ROTATION_SW_GET_ROT:
+	{
+		int num_screens = bsp_disp_feat_get_num_screens();
+		if (mgr && mgr->rot_sw && num_screens > ubuffer[0]) {
+			ret = mgr->rot_sw[ubuffer[0]].degree;
+		} else {
+			ret = -1;
+		}
+		break;
+	}
 	//---- lcd ---
 	case DISP_LCD_SET_BRIGHTNESS:
 	{
@@ -1531,6 +1580,18 @@ long disp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		break;
 	}
 
+	case DISP_LCD_BACKLIGHT_ENABLE:
+	{
+		if (dispdev && (DISP_OUTPUT_TYPE_LCD == dispdev->type))
+			ret = dispdev->backlight_enable(dispdev);
+		break;
+	}
+	case DISP_LCD_BACKLIGHT_DISABLE:
+	{
+		if (dispdev && (DISP_OUTPUT_TYPE_LCD == dispdev->type))
+			ret = dispdev->backlight_disable(dispdev);
+		break;
+	}
 	//---- hdmi ---
 	case DISP_HDMI_SUPPORT_MODE:
 	{

@@ -1,14 +1,3 @@
-/*
- * drivers/video/sunxi/disp2/disp/de/disp_display.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #include "disp_display.h"
 
 disp_dev_t gdisp;
@@ -44,6 +33,7 @@ s32 bsp_disp_init(disp_bsp_init_para * para)
 	disp_init_smbl(para);
 	disp_init_capture(para);
 
+	disp_init_rotation_sw(para);
 	disp_init_connections(para);
 
 	return DIS_SUCCESS;
@@ -102,7 +92,7 @@ s32 disp_device_attached(int disp_mgr, int disp_dev, disp_output_type output_typ
 	dispdev = disp_device_get(disp_dev, output_type);
 	if(dispdev && dispdev->set_manager) {
 			dispdev->set_manager(dispdev, mgr);
-			DE_WRN("attched ok, mgr%d<-->device%d, type=%d\n", disp_mgr, disp_dev, (u32)output_type);
+			DE_WRN("attached ok, mgr%d<-->device%d, type=%d\n", disp_mgr, disp_dev, (u32)output_type);
 			if(mgr->device->set_mode)
 				mgr->device->set_mode(mgr->device, mode);
 			return 0;
@@ -167,7 +157,7 @@ s32 disp_device_attached_and_enable(int disp_mgr, int disp_dev, disp_output_type
 	dispdev = disp_device_get(disp_dev, output_type);
 	if(dispdev && dispdev->set_manager) {
 			dispdev->set_manager(dispdev, mgr);
-			DE_WRN("attched ok, mgr%d<-->device%d, type=%d, mode=%d\n", disp_mgr, disp_dev, (u32)output_type, (u32)mode);
+			DE_WRN("attached ok, mgr%d<-->device%d, type=%d, mode=%d\n", disp_mgr, disp_dev, (u32)output_type, (u32)mode);
 			if(dispdev->set_mode)
 				dispdev->set_mode(dispdev, mode);
 			if(dispdev->enable)
@@ -243,6 +233,7 @@ s32 disp_init_connections(disp_bsp_init_para * para)
 		struct disp_smbl *smbl = NULL;
 		struct disp_capture *cptr = NULL;
 
+		struct disp_rotation_sw *rot_sw = NULL;
 		mgr = disp_get_layer_manager(disp);
 		if(!mgr)
 			continue;
@@ -288,6 +279,14 @@ s32 disp_init_connections(disp_bsp_init_para * para)
 		cptr = disp_get_capture(disp);
 		if(cptr && (cptr->set_manager)) {
 			cptr->set_manager(cptr, mgr);
+		}
+		rot_sw = disp_get_rotation_sw(disp);
+		if (rot_sw && (rot_sw->set_manager)) {
+			rot_sw->set_manager(rot_sw, mgr);
+		} else {
+			DE_WRN("NULL pointer: %x, %x\n",
+				(unsigned int)rot_sw, rot_sw ?
+				(unsigned int)rot_sw->set_manager : 0x0);
 		}
 	}
 
@@ -762,6 +761,22 @@ s32 bsp_disp_get_screen_width_from_output_type(u32 disp, u32 output_type, u32 ou
 			width = 3840;
 			height = 2160;
 			break;
+		case DISP_TV_MOD_4096_2160P_24HZ:
+			width = 4096;
+			height = 2160;
+			break;
+		case DISP_TV_MOD_1280_1024P_60HZ:
+			width = 1280;
+			height = 1024;
+			break;
+		case DISP_TV_MOD_1024_768P_60HZ:
+			width = 1024;
+			height = 768;
+			break;
+		case DISP_TV_MOD_900_540P_60HZ:
+			width = 900;
+			height = 540;
+			break;
 		}
 	}
 	/* FIXME: add other output device res */
@@ -813,6 +828,22 @@ s32 bsp_disp_get_screen_height_from_output_type(u32 disp, u32 output_type, u32 o
 		case DISP_TV_MOD_3840_2160P_24HZ:
 			width = 3840;
 			height = 2160;
+			break;
+		case DISP_TV_MOD_4096_2160P_24HZ:
+			width = 4096;
+			height = 2160;
+			break;
+		case DISP_TV_MOD_1280_1024P_60HZ:
+			width = 1280;
+			height = 1024;
+			break;
+		case DISP_TV_MOD_1024_768P_60HZ:
+			width = 1024;
+			height = 768;
+			break;
+		case DISP_TV_MOD_900_540P_60HZ:
+			width = 900;
+			height = 540;
 			break;
 		}
 	}

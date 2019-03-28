@@ -63,7 +63,13 @@ typedef struct
 	__u32 		good_block_ratio;					//good block ratio get from hwscan
 	__u32		ReadRetryType;						//the read retry type
 	__u32       DDRType;
-	__u32		Reserved[22];
+	__u32		uboot_start_block;
+	__u32		uboot_next_block;
+	__u32		logic_start_block;
+	__u32		nand_specialinfo_page;
+	__u32		nand_specialinfo_offset;
+	__u32 		physic_block_reserved;
+	__u32		Reserved[16];
 }boot_nand_para_t;
 
 typedef struct boot_flash_info{

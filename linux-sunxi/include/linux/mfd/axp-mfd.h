@@ -147,4 +147,8 @@ extern void axp_powerkey_set(int value);
 extern unsigned long axp_read_power_sply(void);
 extern int axp_read_bat_cap(void);
 extern int axp_read_ac_chg(void);
+
+#if defined(CONFIG_SUNXI_LRADC_BATTERY)
+extern void lradc_set_usb_type(u32 type);
+#endif
 #endif

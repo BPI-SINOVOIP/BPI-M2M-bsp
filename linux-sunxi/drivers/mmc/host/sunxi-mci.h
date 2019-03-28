@@ -23,7 +23,7 @@
 #endif
 
 #define DRIVER_NAME "sunxi-mmc"
-#define DRIVER_RIVISION "v1.123 2017-01-11 15:04"
+#define DRIVER_RIVISION "v1.125 2017-02-1 11:05"
 #define DRIVER_VERSION "SD/MMC/SDIO Host Controller Driver(" DRIVER_RIVISION ")" \
 			" Compiled in " __DATE__ " at " __TIME__""
 
@@ -467,6 +467,19 @@ struct sunxi_mmc_clk_dly {
 };
 
 
+struct sunxi_mmc_host_perf{
+	ktime_t start;
+	int64_t rbytes;
+	int64_t wbytes;
+	ktime_t rtime;
+	ktime_t wtime;
+
+	/***use to compute the time no include busy***/
+	int64_t wbytestran;
+	ktime_t wtimetran;
+};
+
+
 struct sunxi_mmc_platform_data {
 	/* predefine information */
 	u32 ocr_avail;
@@ -481,7 +494,7 @@ struct sunxi_mmc_platform_data {
 	char* power_supply;
 #if defined(CONFIG_ARCH_SUN8IW5P1) || defined(CONFIG_ARCH_SUN8IW6P1) \
 		||defined(CONFIG_ARCH_SUN8IW8P1) || defined(CONFIG_ARCH_SUN8IW7P1) \
-		|| defined(CONFIG_ARCH_SUN8IW9P1) 
+		|| defined(CONFIG_ARCH_SUN8IW9P1)
 	u32  used_2xmod;
 	u32  used_ddrmode;
 #endif
@@ -518,6 +531,9 @@ struct sunxi_mmc_host {
 	struct tasklet_struct tasklet;
 	//for dat3 detect
 	struct tasklet_struct d3_det_tasklet;
+	struct workqueue_struct *swq;
+	/**bottom_half_work**/
+	struct work_struct bh_work;
 
 	/* clock management */
 	struct clk 	*hclk;
@@ -551,6 +567,10 @@ struct sunxi_mmc_host {
 	void		*sg_cpu;
 
 	struct mmc_request *mrq;
+	struct mmc_request *mrq_busy;
+	/**Here means we has send manual stop**/
+	struct mmc_request *manual_stop_mrq;
+
 	volatile u32	error;
 	volatile u32	ferror;
 	volatile u32	wait;
@@ -601,6 +621,17 @@ struct sunxi_mmc_host {
 
 	/* backup register structrue */
 	struct sunxi_mmc_ctrl_regs bak_regs;
+
+	#define NO_MANUAL_WAIT_BUSY_WRITE_END  0x1
+	#define SUNXI_R1B_WAIT_MAX					0x10
+	#define SUNXI_EN_WQ					0x80
+	/*control specal function control,for customer need*/
+	u32 ctl_spec_cap;
+
+
+	bool perf_enable;
+	struct device_attribute host_perf;
+	struct sunxi_mmc_host_perf perf;
 };
 
 #define SMC_MSG(d, ...)    do { printk("[mmc]: "__VA_ARGS__); } while(0)
@@ -622,6 +653,12 @@ struct sunxi_mmc_host {
 #ifndef	__io_address
 #define __io_address(n)     IOMEM(IO_ADDRESS(n))
 #endif
+
+/*10 min = 600000 ms,warning,not less then 20**/
+#define SUNXI_MAX_R1B_TIMEOUT_MS (600000U)
+/*if wait time up to this wait ,send uevent to let app know**/
+#define SUNXI_MAX_R1B_TO_UET_MS  (120000U)
+
 
 
 extern void sunxi_mci_regs_save(struct sunxi_mmc_host *smc_host);

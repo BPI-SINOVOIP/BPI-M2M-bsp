@@ -2585,7 +2585,7 @@ static struct attribute_group audio_debug_attr_group = {
 };
 
 
-static int __init sndpcm_codec_probe(struct platform_device *pdev)
+static int sndpcm_codec_probe(struct platform_device *pdev)
 {
 	int err = -1;
 	int req_status;

@@ -50,6 +50,10 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#define PARTITION_SETS_MAX_SIZE  1024
+#define PARTITION_NAME_MAX_SIZE  16
+#define ROOT_PART_NAME_MAX_SIZE  (PARTITION_NAME_MAX_SIZE + 5)
+
 int loglel_change_flag __attribute__((section(".data"))) = 0;
 extern int update_user_data(void);
 extern void jump_to(unsigned int entey_addr);
@@ -98,7 +102,6 @@ int __mmc_exit(void)
 }
 int mmc_exit(void)
 	__attribute__((weak, alias("__mmc_exit")));
-
 
 void sunxi_board_close_source(void)
 {
@@ -331,18 +334,30 @@ void sunxi_update_subsequent_processing(int next_work)
 	return ;
 }
 
-//(SUNXI_MBR_MAX_PART_COUNT * (16*2 + 2))
-#define PARTITION_SETS_MAX_SIZE	 1024
+#define FIX_UDISK_SIZE
+
 void fastboot_partition_init(void)
 {
 	fastboot_ptentry fb_part;
 	int index, part_total;
 	char partition_sets[PARTITION_SETS_MAX_SIZE];
-	char part_name[16];
+	char part_name[PARTITION_NAME_MAX_SIZE];
+	char root_part_name[ROOT_PART_NAME_MAX_SIZE];
 	char *partition_index = partition_sets;
 	int offset = 0;
 	int temp_offset = 0;
-	int storage_type = uboot_spare_head.boot_data.storage_type;
+	int storage_type = get_boot_storage_type();
+	char* root_partition;
+
+#ifdef FIX_UDISK_SIZE
+	int  flash_sector;
+	flash_sector = sunxi_flash_size();
+	printf("the flash size is %d MB\n", flash_sector/2/1024);
+#endif
+
+	root_partition = getenv("root_partition");
+	if(root_partition)
+		printf("root_partition is %s\n",root_partition);
 
 	printf("--------fastboot partitions--------\n");
 	part_total = sunxi_partition_get_total_num();
@@ -356,6 +371,7 @@ void fastboot_partition_init(void)
 	printf("%-12s  %-12s  %-12s\n", "-name-", "-start-", "-size-");
 
 	memset(partition_sets, 0, PARTITION_SETS_MAX_SIZE);
+	memset(root_part_name, 0, ROOT_PART_NAME_MAX_SIZE);
 
 	for(index = 0; index < part_total && index < SUNXI_MBR_MAX_PART_COUNT; index++)
 	{
@@ -363,14 +379,25 @@ void fastboot_partition_init(void)
 		fb_part.start = sunxi_partition_get_offset(index) * 512;
 		fb_part.length = sunxi_partition_get_size(index) * 512;
 		fb_part.flags = 0;
+#ifdef FIX_UDISK_SIZE
+		if (strncmp(&fb_part.name[0], "UDISK" ,5) == 0) {
+			sunxi_partition_set_size_byname("UDISK", flash_sector - fb_part.start/512);
+			fb_part.length = sunxi_partition_get_size(index) * 512;
+		}
+#endif
+
 		printf("%-12s: %-12x  %-12x\n", fb_part.name, fb_part.start, fb_part.length);
 
-		memset(part_name, 0, 16);
-		if(!storage_type)
+		memset(part_name, 0, PARTITION_NAME_MAX_SIZE);
+		if(storage_type == STORAGE_NAND)
 		{
 			sprintf(part_name, "nand%c", 'a' + index);
 		}
-		else if (storage_type == 1 || storage_type == 2)
+		else if (storage_type == STORAGE_NOR)
+		{
+			sprintf(part_name, "mtdblock%d", index + 1);
+		}
+		else
 		{
 			if(index == 0)
 			{
@@ -384,10 +411,10 @@ void fastboot_partition_init(void)
 			{
 				sprintf(part_name, "mmcblk0p%d", index + 4);
 			}
-		} else
-        {
-			sprintf(part_name, "mtdblock%d", index + 1);
-        }
+		}
+
+		if(root_partition != NULL && strcmp(root_partition, fb_part.name) == 0)
+			sprintf(root_part_name, "/dev/%s", part_name);
 
 		temp_offset = strlen(fb_part.name) + strlen(part_name) + 2;
 		if(temp_offset >= PARTITION_SETS_MAX_SIZE)
@@ -404,6 +431,17 @@ void fastboot_partition_init(void)
 	partition_sets[offset-1] = '\0';
 	partition_sets[PARTITION_SETS_MAX_SIZE - 1] = '\0';
 	printf("-----------------------------------\n");
+
+	if(*root_part_name != 0)
+	{
+		printf("set root to %s\n", root_part_name);
+		if(storage_type == STORAGE_NAND)
+			setenv("nand_root", root_part_name);
+		else if(storage_type == STORAGE_NOR)
+			setenv("nor_root", root_part_name);
+		else
+			setenv("mmc_root", root_part_name);
+	}
 
 	setenv("partitions", partition_sets);
 }
@@ -948,31 +986,38 @@ int check_update_key(void)
 		fel_key_mode = 2;
 	}
 
-//detect fel_key exist
-    else
-    {
+	//detect fel_key exist
+	else
+	{
 		ret = script_parser_fetch("fel_key", "fel_key_max", &fel_key_max, 1);
-	    if(ret)
-	    {
-	    	printf("fel key old mode\n");
+		if(ret)
+		{
+			printf("fel key old mode\n");
 			fel_key_mode = 1;
 		}
 		else
 		{
 			printf("fel key new mode\n");
 		}
-    }
+	}
 	printf("run key detect\n");
+	printf("fel_key_mode:%d\n",fel_key_mode);
 
 	sunxi_key_read();
 	__msdelay(10);
 
 	if(!fel_key_mode)
 	{
-		int key_value;
+		int key_value = -1;
 		int fel_key_max, fel_key_min;
 		time_tick = 0;
-	    key_value = sunxi_key_read();  		//读取按键信息
+		int i;
+		for(i=0; i<10; i++) {
+			key_value = sunxi_key_read();
+			if(key_value >= 0)
+				break;
+			__msdelay(10);
+		}
 	    if(key_value < 0)             				//没有按键按下
 	    {
 	        printf("no key found\n");
@@ -1603,6 +1648,29 @@ void sunxi_read_bootlogo(char *part_name)
 }
 #endif
 
+int get_boot_storage_type_ext(void)
+{
+	/* get real storage type that from BROM at boot mode*/
+	return uboot_spare_head.boot_data.storage_type;
+}
+
+int get_boot_storage_type(void)
+{
+	/* we think that nand and spi-nand are the same storage medium */
+	/* so we can use the same process to deal with them */
+	if(uboot_spare_head.boot_data.storage_type == STORAGE_NAND
+		|| uboot_spare_head.boot_data.storage_type == STORAGE_SPI_NAND)
+	{
+		return STORAGE_NAND;
+	}
+	return uboot_spare_head.boot_data.storage_type;
+}
+
+void set_boot_storage_type(int storage_type)
+{
+	uboot_spare_head.boot_data.storage_type = storage_type;
+}
+
 /*
 ************************************************************************************************************
 *
@@ -1612,7 +1680,7 @@ void sunxi_read_bootlogo(char *part_name)
 *
 *    parmeters     :
 *
-*    return        : 
+*    return        :
 *
 *    note          :	guoyingyang@allwinnertech.com
 *

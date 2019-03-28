@@ -38,8 +38,14 @@
 struct timer_list timer0_t;
 struct timer_list timer1_t;
 static int timer_test_flag[2];
+#ifdef CONFIG_AUTO_UPDATE
+static  u32 sunxi_sprite_next_action = 1;
+#endif
 extern int sprite_led_init(void);
 extern int sprite_led_exit(int status);
+extern int sunxi_card_update_main(void);
+extern int sunxi_udisk_update_main(void);
+
 
 static  void  timer0_test_func(void *p)
 {
@@ -167,6 +173,52 @@ int do_sprite_test(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
 		sprite_led_exit(ret);
 		return ret;
 	}
+#ifdef CONFIG_AUTO_UPDATE
+	else if(uboot_spare_head.boot_data.work_mode == WORK_MODE_USB_UPDATE)
+	{
+		printf("run udisk update\n");
+		ret = sunxi_udisk_update_main();
+#ifdef CONFIG_UDISK_AUTO_CHECK
+		sunxi_flashing_led();
+		sunxi_set_rtc3_flag(SUNXI_UDDISK_SPRITE_OVER_FLAG);
+#endif
+		if (!ret)
+		{
+			script_parser_fetch("update", "next_action", (int *)&sunxi_sprite_next_action, 1);
+			if(sunxi_sprite_next_action == SUNXI_UPDATE_NEXT_ACTION_REBOOT)
+			{
+				/*default is reboot*/
+				printf("update finish,going to reboot the system...\n");
+				reset_cpu(0);
+			}else if(sunxi_sprite_next_action == SUNXI_UPDATE_NEXT_ACTION_SHUTDOWN){
+				printf("update finish,going to shutdown the system...\n");
+				sunxi_board_shutdown();
+			}
+		}
+		return ret;
+	}
+	else if(uboot_spare_head.boot_data.work_mode == WORK_MODE_CARD_UPDATE)
+	{
+		printf("run card update\n");
+		sprite_led_init();
+		ret = sunxi_card_update_main();
+		sunxi_flashing_led();
+		if (!ret)
+		{
+			script_parser_fetch("update", "next_action", (int *)&sunxi_sprite_next_action, 1);
+			if(sunxi_sprite_next_action == SUNXI_UPDATE_NEXT_ACTION_REBOOT)
+			{
+				/*default is reboot*/
+				printf("update finish,going to reboot the system...\n");
+				reset_cpu(0);
+			}else if(sunxi_sprite_next_action == SUNXI_UPDATE_NEXT_ACTION_SHUTDOWN){
+				printf("update finish,going to shutdown the system...\n");
+				sunxi_board_shutdown();
+			}
+		}
+		return ret;
+	}
+#endif
 	else if(uboot_spare_head.boot_data.work_mode == WORK_MODE_USB_DEBUG)
 	{
 		unsigned int val;

@@ -60,7 +60,7 @@ struct completion udc_complete_notify;
 #endif
 
 __u32 thread_run_flag = 1;
-static __u32 thread_stopped_flag = 1;
+__u32 thread_stopped_flag = 1;
 atomic_t thread_suspend_flag;
 
 #ifndef  SUNXI_USB_FPGA

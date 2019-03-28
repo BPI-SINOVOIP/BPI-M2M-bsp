@@ -388,6 +388,16 @@ static int gic_set_affinity(struct irq_data *d, const struct cpumask *mask_val,
 	mask = 0xff << shift;
         bit = gic_cpu_map[cpu] << shift;
 
+	if (gic_irq(d) == SUNXI_IRQ_USBOTG || gic_irq(d) == SUNXI_IRQ_USBEHCI0
+		|| gic_irq(d) == SUNXI_IRQ_USBOHCI0 ||
+		   gic_irq(d) == SUNXI_IRQ_USBEHCI1) {
+		bit = 0;
+		do {
+			bit |= 1 << (cpu_logical_map(cpu) + shift);
+			cpu = cpumask_next(cpu, mask_val);
+		} while (cpu < nr_cpu_ids);
+	}
+
 	val = cpu_gic_readl(reg) & ~mask;
 	cpu_gic_writel(val | bit, reg);
 	raw_spin_unlock(&irq_controller_lock);

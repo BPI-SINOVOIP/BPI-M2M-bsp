@@ -34,7 +34,9 @@
 #define WORK_MODE_CARD_PRODUCT	0x11	//用于卡量产
 #define WORK_MODE_USB_DEBUG	    0x12    //利用usb量产协议完成的测试
 #define WORK_MODE_SPRITE_RECOVERY 0x13	//一键恢复
-#define WORK_MODE_USB_UPDATE	0x20	//用于USB升级
+#define WORK_MODE_CARD_UPDATE   0x14	//update firmware from sdcard
+#define WORK_MODE_USB_UPDATE	0x15	//用于USB升级
+#define WORK_MODE_CMD_UPDATE	0x16	//for cmd need to update flash, eg:savecfg
 #define WORK_MODE_OUTER_UPDATE	0x21	//用于外部盘升级
 
 #define WORK_MODE_USB_TOOL_PRODUCT	0x04	//用于量产
@@ -54,6 +56,8 @@
 #define SUNXI_UPDATE_NEXT_ACTION_BOOT			(5)
 #define SUNXI_UPDATA_NEXT_ACTION_SPRITE_TEST    (6)
 
+#define SUNXI_UDDISK_SPRITE_OVER_FLAG           (0x59)
+
 #define SUNXI_VBUS_UNKNOWN                      (0)
 #define SUNXI_VBUS_EXIST                        (1)
 #define SUNXI_VBUS_NOT_EXIST                    (2)
@@ -66,18 +70,9 @@
 #define UBOOT_START_SECTOR_PRE_IN_SDMMC         (38192)
 #endif
 
-#ifdef CONFIG_UBOOT_BACKUP_MODE
-#define UBOOT_START_BACKUP_IN_SDMMC             (38192)
-#endif
-
-#ifdef CONFIG_TOC1_BACKUP_MODE
-#define UBOOT_START_SECTOR_BACKUP_IN_SDMMC      (12800)
-#endif
-
 #define SUNXI_NORMAL_MODE                            0
 #define SUNXI_SECURE_MODE_WITH_SECUREOS              1
 #define SUNXI_SECURE_MODE_NO_SECUREOS                2
-#define SUNXI_SECURE_MODE                            3
 
 #define   BOOT_FROM_SD0     0
 #define   BOOT_FROM_SD2     2
@@ -95,9 +90,6 @@
 #define	TOC_ITEM_ENTRY_TYPE_KEY_CERTIF			0x01
 #define	TOC_ITEM_ENTRY_TYPE_BIN_CERTIF			0x02
 #define	TOC_ITEM_ENTRY_TYPE_BIN     			0x03
-
-#define SUNXI_BOOT_FILE_NORMAL                  0x00
-#define SUNXI_BOOT_FILE_TOC                     0x01
 
 typedef struct _normal_gpio_cfg
 {
@@ -119,6 +111,14 @@ typedef struct _special_gpio_cfg
 	char				data;				//输出电平
 }special_gpio_cfg;
 
+typedef struct _simple_gpio_cfg
+{
+       char    port;
+       char    port_num;
+}
+simple_gpio_cfg;
+
+
 //SD卡相关数据结构
 typedef struct sdcard_spare_info_t
 {
@@ -129,6 +129,15 @@ typedef struct sdcard_spare_info_t
 }
 sdcard_spare_info;
 
+typedef enum
+{
+	STORAGE_NAND =0,
+	STORAGE_SD,
+	STORAGE_EMMC,
+	STORAGE_NOR,
+	STORAGE_EMMC3,
+	STORAGE_SPI_NAND,
+}SUNXI_BOOT_STORAGE;
 
 
 #endif

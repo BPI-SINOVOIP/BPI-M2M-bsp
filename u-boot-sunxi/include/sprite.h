@@ -42,5 +42,7 @@ extern uint sunxi_sprite_part_rawdata_verify(uint base_start, long long base_byt
 extern int sprite_form_sysrecovery(void);
 extern int sprite_led_init(void);
 extern int sprite_led_exit(int status);
+int sunxi_flashing_led(void);
+
 
 #endif /* __SPRITE_SYS_H */

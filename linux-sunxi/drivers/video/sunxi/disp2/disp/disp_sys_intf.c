@@ -1,14 +1,3 @@
-/*
- * drivers/video/sunxi/disp2/disp/disp_sys_intf.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #include "de/bsp_display.h"
 #include "disp_sys_intf.h"
 #include "asm/cacheflush.h"
@@ -392,7 +381,6 @@ int disp_sys_power_enable(char *name)
 {
 	int ret = 0;
 #ifdef CONFIG_AW_AXP
-	//printk("disp_sys_power_enable-------------into\n");
 	struct regulator *regu= NULL;
 	regu= regulator_get(NULL, name);
 	if (IS_ERR(regu)) {
@@ -678,6 +666,24 @@ int disp_sys_clk_disable(const char *id)
 	clk_put(hclk);
 
 	return ret;
+}
+
+unsigned long disp_sys_clk_round_rate(const char *id, unsigned long rate)
+{
+	struct clk *hclk = NULL;
+	unsigned long round_rate;
+
+	hclk = clk_get(NULL, id);
+
+	if (NULL == hclk || IS_ERR(hclk)) {
+		__wrn("Fail to get handle for clock %s.\n", id);
+		return rate;
+	}
+
+	round_rate =  clk_round_rate(hclk, rate);
+	clk_put(hclk);
+
+	return round_rate;
 }
 
 EXPORT_SYMBOL(disp_sys_clk_get_rate);

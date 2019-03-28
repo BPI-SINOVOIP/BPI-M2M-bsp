@@ -23,8 +23,36 @@
 #include <linux/poll.h>
 #include <linux/workqueue.h>
 
+#ifdef CONFIG_MMAP_FOR_FUSE
+	#define FUSE_MMAP_
+#endif
+
+#ifdef FUSE_MMAP_
+	/* This value should not be set too large, otherwise the request will be longer
+	 * and the memset operation in fuse_request_init will be very time consuming
+	 */
+	#define REQ_MAX_PAGE_MUN 	(32)
+
+	#define DBG_ERR_INFO(fmt, ...) \
+			printk(KERN_EMERG "KEFM->%s: " fmt "\n", __FUNCTION__, ##__VA_ARGS__)
+
+	/* #define FUSE_MMAP_DBG_ */
+	#ifdef 	FUSE_MMAP_DBG_
+		#define DBG_INFO(fmt, ...) \
+		printk(KERN_EMERG "KFM->%s: " fmt "\n", __FUNCTION__, ##__VA_ARGS__)
+	#else
+		#define DBG_INFO(fmt, ...)
+	#endif
+#endif
+
+
+
 /** Max number of pages that can be used in a single read request */
+#ifndef FUSE_MMAP_
 #define FUSE_MAX_PAGES_PER_REQ 32
+#else
+#define FUSE_MAX_PAGES_PER_REQ REQ_MAX_PAGE_MUN
+#endif
 
 /** Bias for fi->writectr, meaning new writepages must not be sent */
 #define FUSE_NOWRITE INT_MIN
@@ -43,6 +71,11 @@
 /** If the FUSE_ALLOW_OTHER flag is given, then not only the user
     doing the mount will be allowed to access the filesystem */
 #define FUSE_ALLOW_OTHER         (1 << 1)
+
+#ifdef FUSE_MMAP_
+#define FUSE_FOR_NTFS			 (1UL << 2)
+#endif
+
 
 /** List of active connections */
 extern struct list_head fuse_conn_list;
@@ -253,6 +286,11 @@ struct fuse_req {
 
 	/** Request is counted as "waiting" */
 	unsigned waiting:1;
+
+#ifdef FUSE_MMAP_
+	/* All of req->pages is phy-conseq from get_user_pages */
+	unsigned single_mmap_flag:1;
+#endif
 
 	/** State of the request */
 	enum fuse_req_state state;
@@ -522,7 +560,19 @@ struct fuse_conn {
 
 	/** Read/write semaphore to hold when accessing sb. */
 	struct rw_semaphore killsb;
+
+#ifdef FUSE_MMAP_
+	struct fuse_req *cur_req;
+	__u64	cur_req_id;
+#endif
 };
+
+#ifdef FUSE_MMAP_
+static inline int is_for_ntfs(struct fuse_conn *fc)
+{
+	return fc->flags & FUSE_FOR_NTFS;
+}
+#endif
 
 static inline struct fuse_conn *get_fuse_conn_super(struct super_block *sb)
 {

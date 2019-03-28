@@ -1776,6 +1776,8 @@ static void sunxi_gadget_disable_phy(struct sunxi_otgc *otgc, u8 speed)
 #if defined(CONFIG_AW_AXP)
 		axp_usbvol(CHARGE_USB_30);
 		axp_usbcur(CHARGE_USB_30);
+#elif defined(CONFIG_SUNXI_LRADC_BATTERY)
+		lradc_set_usb_type(3);
 #endif
 
 		break;
@@ -1785,6 +1787,8 @@ static void sunxi_gadget_disable_phy(struct sunxi_otgc *otgc, u8 speed)
 #if defined(CONFIG_AW_AXP)
 		axp_usbvol(CHARGE_USB_20);
 		axp_usbcur(CHARGE_USB_20);
+#elif defined(CONFIG_SUNXI_LRADC_BATTERY)
+		lradc_set_usb_type(2);
 #endif
 		sunxi_gadget_usb3_phy_power(otgc, false);
 		break;

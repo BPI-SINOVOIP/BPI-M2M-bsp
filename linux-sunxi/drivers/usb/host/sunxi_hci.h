@@ -4,7 +4,7 @@
  * Allwinner Technology Co., Ltd. <www.allwinnertech.com>
  * yangnaitian, 2011-5-24, create this file
  *
- * Include file for AW1623 HCI Host Controller Driver
+ * Include file for SUNXI HCI Host Controller Driver
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as

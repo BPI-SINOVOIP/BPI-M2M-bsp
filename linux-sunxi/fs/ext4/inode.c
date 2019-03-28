@@ -2260,7 +2260,13 @@ static int ext4_da_writepages(struct address_space *mapping,
 	 * sbi->max_writeback_mb_bump whichever is smaller.
 	 */
 	max_pages = sbi->s_max_writeback_mb_bump << (20 - PAGE_CACHE_SHIFT);
+#ifdef CONFIG_FILE_DIRTY_LIMIT
+	if (wbc->for_file) {
+		desired_nr_to_write = wbc->nr_to_write;
+	} else if (!range_cyclic && range_whole) {
+#else
 	if (!range_cyclic && range_whole) {
+#endif
 		if (wbc->nr_to_write == LONG_MAX)
 			desired_nr_to_write = wbc->nr_to_write;
 		else

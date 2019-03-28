@@ -72,7 +72,13 @@ typedef struct
 	__u32 		good_block_ratio;					//good block ratio get from hwscan
 	__u32		ReadRetryType;						//the read retry type
 	__u32       DDRType;
-	__u32		Reserved[22];
+	__u32		uboot_start_block;
+	__u32		uboot_next_block;
+	__u32		logic_start_block;
+	__u32		nand_specialinfo_page;
+	__u32		nand_specialinfo_offset;
+	__u32 		physic_block_reserved;
+	__u32		Reserved[16];
 }boot_nand_para_t;
 
 typedef struct boot_flash_info{
@@ -314,6 +320,8 @@ struct __NandDriverGlobal_t
 #define NAND_PAGE_ADR_NO_SKIP	(1<<10)			    //nand falsh page adr no skip is requiered
 #define NAND_DIE_SKIP           (1<<11)             //nand flash die adr skip
 #define NAND_LSB_PAGE_TYPE		 (0xff<<12)			//nand flash lsb page type....
+#define NAND_WITH_TWO_ROW_ADR   (1<<30)             //nand flash has two row address only
+
 
 //define the mask for the nand flash operation status
 #define NAND_OPERATE_FAIL       (1<<0)              //nand flash program/erase failed mask

@@ -1,14 +1,3 @@
-/*
- * drivers/video/sunxi/disp2/disp/de/lowlevel_sun8iw8/de_feat.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #include "de_feat.h"
 
 static const int de_num_chns[] = {
@@ -63,7 +52,26 @@ static const int de_is_support_scale[] = {
 	0,
 };
 
+static const int de_scale_line_buffer_yuv[] = {
+	/* DISP0 CH0 */
+	1024,
+	/* DISP0 CH1 */
+	1024,
+	/* DISP0 CH2 */
+	0,
+};
+
+static const int de_scale_line_buffer_rgb[] = {
+	/* DISP0 CH0 */
+	1024,
+	/* DISP0 CH1 */
+	1024,
+	/* DISP0 CH2 */
+	0,
+};
+
 static const struct de_feat de_cur_features = {
+	.num_screens = DE_NUM,
 	.num_devices = DEVICE_NUM,
 	.num_chns = de_num_chns,
 	.num_vi_chns = de_num_vi_chns,
@@ -73,7 +81,14 @@ static const struct de_feat de_cur_features = {
 	.is_support_wb = de_is_support_wb,
 	.supported_output_types = de_supported_output_types,
 	.is_support_scale = de_is_support_scale,
+	.scale_line_buffer_rgb = de_scale_line_buffer_rgb,
+	.scale_line_buffer_yuv = de_scale_line_buffer_yuv,
 };
+
+int de_feat_get_num_screens(void)
+{
+	return de_cur_features.num_screens;
+}
 
 int de_feat_get_num_devices(void)
 {
@@ -210,6 +225,38 @@ int de_feat_is_support_scale_by_chn(unsigned int disp, unsigned int chn)
 	index += chn;
 
 	return de_cur_features.is_support_scale[index];
+}
+
+int de_feat_get_scale_linebuf_for_yuv(unsigned int disp, unsigned int chn)
+{
+	unsigned int i, index = 0;
+
+	if (disp >= de_feat_get_num_screens())
+		return 0;
+	if (chn >= de_feat_get_num_chns(disp))
+		return 0;
+
+	for (i = 0; i < disp; i++)
+		index += de_feat_get_num_chns(i);
+	index += chn;
+
+	return de_cur_features.scale_line_buffer_yuv[index];
+}
+
+int de_feat_get_scale_linebuf_for_rgb(unsigned int disp, unsigned int chn)
+{
+	unsigned int i, index = 0;
+
+	if (disp >= de_feat_get_num_screens())
+		return 0;
+	if (chn >= de_feat_get_num_chns(disp))
+		return 0;
+
+	for (i = 0; i < disp; i++)
+		index += de_feat_get_num_chns(i);
+	index += chn;
+
+	return de_cur_features.scale_line_buffer_rgb[index];
 }
 
 int de_feat_init(void)

@@ -171,6 +171,9 @@ static ssize_t device_chose(struct device * dev,struct device_attribute * attr,c
 	//stop usb scan
 	thread_run_flag = 0;
 
+	while (!thread_stopped_flag)
+		msleep(1000);
+
 	hw_rmmod_usb_host();
 	hw_rmmod_usb_device();
 	usb_msg_center(&g_usb_cfg);
@@ -185,6 +188,9 @@ static ssize_t host_chose(struct device * dev,struct device_attribute * attr,cha
 {
 	//stop usb scan
 	thread_run_flag = 0;
+
+	while (!thread_stopped_flag)
+		msleep(1000);
 
 	g_usb_cfg.port[0].port_type = USB_PORT_TYPE_HOST;
 
@@ -202,6 +208,10 @@ static ssize_t null_chose(struct device * dev,struct device_attribute * attr,cha
 {
 	 //stop usb scan
 	thread_run_flag = 0;
+
+	while (!thread_stopped_flag)
+		msleep(1000);
+
 	hw_rmmod_usb_host();
 	hw_rmmod_usb_device();
 	usb_msg_center(&g_usb_cfg);
@@ -248,7 +258,7 @@ static struct device_attribute chose_attrs[] = {
 	__ATTR(usb_null, 0400, null_chose, NULL),
 	__ATTR(usb_host, 0400, host_chose, NULL),
 	__ATTR(usb_device, 0400, device_chose, NULL),
-	__ATTR(otg_role, 0777, show_otg_role, set_otg_role),
+	__ATTR(otg_role, 0644, show_otg_role, set_otg_role),
 };
 #endif
 

@@ -139,7 +139,9 @@ struct sunxi_spi {
 };
 
 static int spi_used_mask = 0;
-
+#ifdef CONFIG_SUPORT_GPIO_CS
+struct gpio_config spi_csgpio;
+#endif
 /* config chip select */
 static s32 spi_set_cs(u32 chipselect, void __iomem *base_addr)
 {
@@ -799,6 +801,10 @@ static void sunxi_spi_cs_control(struct spi_device *spi, bool on)
 			cs = (spi->mode & SPI_CS_HIGH) ? 0 : 1;
 		}
 		spi_ss_level(sspi->base_addr, cs);
+#ifdef CONFIG_SUPORT_GPIO_CS
+		if (spi->chip_select == 1)
+			gpio_direction_output(spi_csgpio.gpio, cs);
+#endif
 	}
 }
 
@@ -1430,6 +1436,37 @@ static void sunxi_spi_release_gpio(struct sunxi_spi *sspi)
 	sspi->pctrl = NULL;
 }
 
+#ifdef CONFIG_SUPORT_GPIO_CS
+static struct gpio_config sunxi_spi_get_csgpio(int bus_num)
+{
+	script_item_u spi_cs1;
+	script_item_value_type_e type;
+	char main_name[8] = {0};
+
+	snprintf(main_name, 8, SUNXI_SPI_DEV_NAME"%d", bus_num);
+	type = script_get_item(main_name, "spi_cs1", &spi_cs1);
+	if (SCIRPT_ITEM_VALUE_TYPE_PIO != type)
+		SPI_ERR("[spi-%d] get spi_cs1 from sysconfig failed\n", bus_num);
+
+	return spi_cs1.gpio;
+}
+static int sunxi_spi_get_cfg_csnum(int bus_num)
+{
+	script_item_u cs_num;
+	script_item_value_type_e type;
+	char main_name[8] = {0};
+
+	snprintf(main_name, 8, SUNXI_SPI_DEV_NAME"%d", bus_num);
+	type = script_get_item(main_name, "spi_cs_num", &cs_num);
+	if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+		SPI_ERR("[spi-%d] get spi_cs_num from sysconfig failed\n", bus_num);
+		cs_num.val = 2;
+	}
+
+	return cs_num.val;
+}
+#endif
+
 #ifdef CONFIG_EVB_PLATFORM
 
 static int sunxi_spi_get_cfg_csbitmap(int bus_num)
@@ -1539,6 +1576,14 @@ static int sunxi_spi_hw_init(struct sunxi_spi *sspi, struct sunxi_spi_platform_d
         return -1;
 	}
 	
+
+#ifdef CONFIG_SUPORT_GPIO_CS
+	if (0 != gpio_request(spi_csgpio.gpio, NULL))
+		pr_err("csgpio gpio_request is failed\n");
+
+	if (0 != gpio_direction_output(spi_csgpio.gpio, 1))
+		pr_err("csgpio gpio set err!");
+#endif
 	sclk_freq = sunxi_spi_clk_init(sspi, SPI_MODULE_FREQUENCY);
     if (sclk_freq < 0) {
         SPI_ERR("[spi-%d] sunxi_spi_clk_init(%s) failed!\n", sspi->master->bus_num, sspi->dev_name);
@@ -1599,6 +1644,9 @@ static int __devinit sunxi_spi_probe(struct platform_device *pdev)
 	struct spi_master *master;
 	int ret = 0, err = 0, irq;
 	int cs_bitmap = 0;
+#ifdef CONFIG_SUPORT_GPIO_CS
+	int cs_num = 0;
+#endif
 
 	if (pdev->id < 0) {
 		SPI_ERR("Invalid platform device id-%d\n", pdev->id);
@@ -1662,9 +1710,13 @@ static int __devinit sunxi_spi_probe(struct platform_device *pdev)
 #endif
 	if(cs_bitmap & 0x3){
 	    sspi->cs_bitmap = cs_bitmap & 0x3;
-	    SPI_INF("[spi-%d]: cs bitmap from cfg = 0x%x \n", master->bus_num, cs_bitmap);
+	    SPI_INF("[spi-%d]: cs bitmap from cfg = 0x%x\n", master->bus_num, cs_bitmap);
 	}
-
+#ifdef CONFIG_SUPORT_GPIO_CS
+	spi_csgpio = sunxi_spi_get_csgpio(pdev->id);
+	cs_num = sunxi_spi_get_cfg_csnum(pdev->id);
+	master->num_chipselect = cs_num & 0x3;
+#endif
 	snprintf(sspi->dev_name, sizeof(sspi->dev_name), SUNXI_SPI_DEV_NAME"%d", pdev->id);
 	err = request_irq(sspi->irq, sunxi_spi_handler, IRQF_DISABLED, sspi->dev_name, sspi);
 	if (err) {
@@ -1858,7 +1910,6 @@ static void __init sunxi_spi_device_scan(void)
 
 		sunxi_spi_pdata[i].cs_bitmap = SUNXI_CS_BITMAP(i);
 		sunxi_spi_pdata[i].cs_num    = SUNXI_CS_NUM(i);
-		
 		sunxi_spi_device[i].name = SUNXI_SPI_DEV_NAME;
 		sunxi_spi_device[i].id   = i;
 		sunxi_spi_device[i].resource = &sunxi_spi_resources[i * SUNXI_SPI_RES_NUM];
@@ -1906,7 +1957,7 @@ static ssize_t sunxi_spi_status_show(struct device *dev,
 	char *busy_state[] = {"Unknown", "Free", "Suspend", "Busy"};
 	char *result_str[] = {"Success", "Fail"};
 #ifdef CONFIG_DMA_ENGINE
-	char *dma_dir[] = {"DMA NULL", "DMA read", "DMA write"};
+	char *dma_dir[] = {"DMA NULL", "DMA write", "DMA read"};
 #endif
 
 	if (master == NULL)
@@ -1988,7 +2039,6 @@ static int __init sunxi_spi_register_spidev(void)
         return -1;
     }
 	spidev_num = spi_dev_num.val;
-
     SPI_INF("[spi]: Found %d spi devices in config files\n", spidev_num);
 
     /* alloc spidev board information structure */

@@ -46,6 +46,7 @@
 #define  SUNXI_AXP_20X                   20
 #define  SUNXI_AXP_22X                   22
 #define  SUNXI_AXP_15X                   15
+#define  SUNXI_AXP_259                   259
 #define  SUNXI_AXP_809                   809
 #define  SUNXI_AXP_806                   806
 #define  SUNXI_AXP_81X                   81
@@ -57,11 +58,14 @@
 #define  PMU_TYPE_809                    4
 #define  PMU_TYPE_806                    5
 #define  PMU_TYPE_81X                    6
+#define  PMU_TYPE_259                    7
+
 
 #define  RSB_SADDR_AXP22X	         	(0x3A3)
 #define  RSB_SADDR_AXP809		        (0x3A3)
 #define  RSB_SADDR_AXP806		        (0x745)
 #define  RSB_SADDR_AXP81X		        (0x3A3)
+#define  RSB_SADDR_AXP259 	            (0x745)
 
 
 typedef struct
@@ -155,6 +159,9 @@ sunxi_axp_module_ext(SUNXI_AXP_NULL);
 #if defined(CONFIG_SUNXI_AXP22)
 	sunxi_axp_module_ext(SUNXI_AXP_22X);
 #endif
+#if defined(CONFIG_SUNXI_AXP259)
+	sunxi_axp_module_ext(SUNXI_AXP_259);
+#endif
 
 #if defined(CONFIG_SUNXI_AXP20)
 	sunxi_axp_module_ext(SUNXI_AXP_20X);
@@ -223,11 +230,16 @@ static inline int axp_i2c_config(unsigned int chip, unsigned char slave_id)
         sunxi_rsb_config(slave_id, RSB_SADDR_AXP809);
     }
 #endif
-    #if defined(CONFIG_SUNXI_AXP81X)
+#if defined(CONFIG_SUNXI_AXP81X)
     if(chip == SUNXI_AXP_81X)
     {
         sunxi_rsb_config(slave_id, RSB_SADDR_AXP81X);
     }
+#endif
+#if defined(CONFIG_SUNXI_AXP259)
+	if(chip == SUNXI_AXP_259) {
+		sunxi_rsb_config(slave_id, RSB_SADDR_AXP259);
+	}
 #endif
 #endif
     return 0;

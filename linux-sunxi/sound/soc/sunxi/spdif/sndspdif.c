@@ -136,7 +136,7 @@ static struct snd_soc_codec_driver soc_codec_dev_sndspdif = {
 	.remove =   sndspdif_soc_remove,
 };
 
-static int __init sndspdif_codec_probe(struct platform_device *pdev)
+static int sndspdif_codec_probe(struct platform_device *pdev)
 {
 	return snd_soc_register_codec(&pdev->dev, &soc_codec_dev_sndspdif, &sndspdif_dai, 1);	
 }

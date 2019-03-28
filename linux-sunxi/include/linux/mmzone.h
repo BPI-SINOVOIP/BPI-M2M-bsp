@@ -1,14 +1,3 @@
-/*
- * include/linux/mmzone.h
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #ifndef _LINUX_MMZONE_H
 #define _LINUX_MMZONE_H
 
@@ -385,6 +374,9 @@ struct zone {
 #ifdef CONFIG_MEMORY_HOTPLUG
 	/* see spanned/present_pages for more description */
 	seqlock_t		span_seqlock;
+#endif
+#ifdef CONFIG_CMA
+	bool			cma_alloc;
 #endif
 	struct free_area	free_area[MAX_ORDER];
 

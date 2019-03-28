@@ -8,3 +8,17 @@ config SND_SUNXI_SOC_I2S0_INTERFACE
 	  Say Y or M if you want to add support for codecs attached to
 	  the SUNXI AC97, I2S or PCM interface. You will also need
 	  to select the audio interfaces to support below.
+
+config I2S0_FOR_ASTAR_DM_PATCH
+	tristate "patch for ASTAR_DM"
+	depends on ARCH_SUN8IW5
+	default n
+	help
+	  Say Y for patch for SUN8IW5 ASTAR DM
+
+config I2S0_FOR_ASTAR_NOMA_PATCH
+	tristate "patch for ASTAR_NOMA"
+	depends on ARCH_SUN8IW5
+	default n
+	help
+	  Say Y for patch for SUN8IW5 ASTAR NOMA

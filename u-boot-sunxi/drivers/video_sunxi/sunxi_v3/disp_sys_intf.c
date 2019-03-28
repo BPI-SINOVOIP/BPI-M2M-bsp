@@ -1,12 +1,13 @@
 /*
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ * Allwinner SoCs display driver.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2016 Allwinner.
  *
+ * This file is licensed under the terms of the GNU General Public
+ * License version 2.  This program is licensed "as is" without any
+ * warranty of any kind, whether express or implied.
  */
+
 #include "de/bsp_display.h"
 #include "disp_sys_intf.h"
 #include "asm/io.h"
@@ -39,64 +40,65 @@
 *
 *******************************************************************************
 */
-void disp_sys_cache_flush(void*address, u32 length, u32 flags)
+void disp_sys_cache_flush(void *address, u32 length, u32 flags)
 {
-	if(address == NULL || length == 0) {
+	if (address == NULL || length == 0)
 		return;
-	}
 
-	switch(flags) {
+	switch (flags) {
 	case CACHE_FLUSH_I_CACHE_REGION:
-	break;
+		break;
 
 	case CACHE_FLUSH_D_CACHE_REGION:
-	break;
+		break;
 
 	case CACHE_FLUSH_CACHE_REGION:
-	break;
+		break;
 
 	case CACHE_CLEAN_D_CACHE_REGION:
-	break;
+		break;
 
 	case CACHE_CLEAN_FLUSH_D_CACHE_REGION:
-	break;
+		break;
 
 	case CACHE_CLEAN_FLUSH_CACHE_REGION:
-	break;
+		break;
 
 	default:
-	break;
+		break;
 	}
 	return;
 }
 
 /*
 *******************************************************************************
-*                     disp_sys_register_irq
+* disp_sys_register_irq
 *
 * Description:
-*    irq register
+* irq register
 *
 * Parameters:
-*    irqno    	    ��input.  irq no
-*    flags    	    ��input.
-*    Handler  	    ��input.  isr handler
-*    pArg 	        ��input.  para
-*    DataSize 	    ��input.  len of para
-*    prio	        ��input.    priority
-
+* irqno	    ��input.  irq no
+* flags	    ��input.
+* Handler	    ��input.  isr handler
+* pArg	        ��input.  para
+* DataSize	    ��input.  len of para
+* prio	        ��input.    priority
+*
 *
 * Return value:
 *
 *
 * note:
-*    typedef s32 (*ISRCallback)( void *pArg)��
+* typedef s32 (*ISRCallback)( void *pArg)��
 *
 *******************************************************************************
 */
-int disp_sys_register_irq(u32 IrqNo, u32 Flags, void* Handler,void *pArg,u32 DataSize,u32 Prio)
+int disp_sys_register_irq(u32 IrqNo, u32 Flags, void *Handler,
+				void *pArg, u32 DataSize, u32 Prio)
 {
-	__inf("%s, irqNo=%d, Handler=0x%x, pArg=0x%x\n", __func__, IrqNo, (int)Handler, (int)pArg);
+	__inf("%s, irqNo=%d, Handler=0x%x, pArg=0x%x\n", __func__,
+					IrqNo, (int)Handler, (int)pArg);
 	irq_install_handler(IrqNo, (interrupt_handler_t *)Handler,  pArg);
 
 	return 0;
@@ -104,25 +106,25 @@ int disp_sys_register_irq(u32 IrqNo, u32 Flags, void* Handler,void *pArg,u32 Dat
 
 /*
 *******************************************************************************
-*                     disp_sys_unregister_irq
+* disp_sys_unregister_irq
 *
 * Description:
 *    irq unregister
 *
 * Parameters:
-*    irqno    	��input.  irq no
-*    handler  	��input.  isr handler
-*    Argment 	��input.    para
+* irqno	input.  irq no
+* handler	input.  isr handler
+* Argment	input.  para
 *
 * Return value:
-*    void
+* void
 *
 * note:
-*    void
+* void
 *
 *******************************************************************************
 */
-void disp_sys_unregister_irq(u32 IrqNo, void* Handler, void *pArg)
+void disp_sys_unregister_irq(u32 IrqNo, void *Handler, void *pArg)
 {
 	irq_free_handler(IrqNo);
 }
@@ -173,32 +175,32 @@ void disp_sys_disable_irq(u32 IrqNo)
 	irq_disable(IrqNo);
 }
 
-void disp_sys_irqlock(void* lock, unsigned long *cpu_sr)
-{
-	return ;
-}
-
-void disp_sys_irqunlock(void* lock, unsigned long *cpu_sr)
+void disp_sys_irqlock(void *lock, unsigned long *cpu_sr)
 {
 	return;
 }
 
-void disp_sys_lock(void* lock)
+void disp_sys_irqunlock(void *lock, unsigned long *cpu_sr)
 {
 	return;
 }
 
-void disp_sys_unlock(void* lock)
+void disp_sys_lock(void *lock)
 {
 	return;
 }
 
-void * disp_sys_malloc(u32 Size)
+void disp_sys_unlock(void *lock)
 {
-	void * addr;
+	return;
+}
+
+void *disp_sys_malloc(u32 Size)
+{
+	void *addr;
 
 	addr = malloc(Size);
-	if(addr)
+	if (addr)
 		memset(addr, 0, Size);
 
 	return addr;
@@ -218,15 +220,15 @@ int disp_sys_script_get_item(char *main_name, char *sub_name, int value[], int c
 	script_parser_value_type_t type;
 
 	ret = script_parser_fetch_ex(main_name, sub_name, value, &type, count);
-	if(ret < 0) {
-		retcode = 0;//invalid
-		//__wrn("fetch script data %s.%s fail\n", main_name, sub_name);
+	if (ret < 0) {
+		retcode = 0;/* invalid */
+		/* __wrn("fetch script data %s.%s fail\n", main_name, sub_name); */
 	} else {
-		if(type == SCIRPT_PARSER_VALUE_TYPE_SINGLE_WORD) {
-			retcode = 1;//int
-			//__inf("%s.%s = %d\n", main_name, sub_name, *value);
-		} else if(type == SCIRPT_PARSER_VALUE_TYPE_GPIO_WORD) {
-			retcode = 3;//gpio
+		if (type == SCIRPT_PARSER_VALUE_TYPE_SINGLE_WORD) {
+			retcode = 1;/* int */
+			/* __inf("%s.%s = %d\n", main_name, sub_name, *value); */
+		} else if (type == SCIRPT_PARSER_VALUE_TYPE_GPIO_WORD) {
+			retcode = 3;/* gpio */
 			memcpy(&gpio_info, value, sizeof(user_gpio_set_t));
 			gpio_list = (disp_gpio_set_t  *)value;
 			gpio_list->port = gpio_info.port;
@@ -234,10 +236,10 @@ int disp_sys_script_get_item(char *main_name, char *sub_name, int value[], int c
 			gpio_list->drv_level = gpio_info.drv_level;
 			gpio_list->pull = gpio_info.pull;
 			gpio_list->data = gpio_info.data;
-			//__inf("%s.%s gpio_port=%d,gpio_port_num:%d, data:%d\n",main_name, sub_name, gpio_list->port, gpio_list->port_num, gpio_list->data);
-		} else if(type == SCIRPT_PARSER_VALUE_TYPE_STRING) {
-			retcode = 2;//str
-			//__inf("%s.%s = %s\n", main_name, sub_name, (char*)value);
+			/* __inf("%s.%s gpio_port=%d,gpio_port_num:%d, data:%d\n",main_name, sub_name, gpio_list->port, gpio_list->port_num, gpio_list->data); */
+		} else if (type == SCIRPT_PARSER_VALUE_TYPE_STRING) {
+			retcode = 2;/* str */
+			/* __inf("%s.%s = %s\n", main_name, sub_name, (char*)value); */
 		}
 	}
 
@@ -252,6 +254,7 @@ int disp_sys_get_ic_ver(void)
 int disp_sys_gpio_request(disp_gpio_set_t *gpio_list, u32 group_count_max)
 {
 	user_gpio_set_t gpio_info;
+
 	gpio_info.port = gpio_list->port;
 	gpio_info.port_num = gpio_list->port_num;
 	gpio_info.mul_sel = gpio_list->mul_sel;
@@ -259,22 +262,23 @@ int disp_sys_gpio_request(disp_gpio_set_t *gpio_list, u32 group_count_max)
 	gpio_info.data = gpio_list->data;
 
 	__inf("OSAL_GPIO_Request, port:%d, port_num:%d, mul_sel:%d, pull:%d, drv_level:%d, data:%d\n", gpio_list->port, gpio_list->port_num, gpio_list->mul_sel, gpio_list->pull, gpio_list->drv_level, gpio_list->data);
-	 //gpio_list->port, gpio_list->port_num, gpio_list->mul_sel, gpio_list->pull, gpio_list->drv_level, gpio_list->data);
-	if(gpio_list->port == 0xffff) {
+	 /* gpio_list->port, gpio_list->port_num, gpio_list->mul_sel, gpio_list->pull, gpio_list->drv_level, gpio_list->data); */
+	if (gpio_list->port == 0xffff) {
 		__u32 on_off;
+
 		on_off = gpio_list->data;
-		//axp_set_dc1sw(on_off);
+		/* axp_set_dc1sw(on_off); */
 		axp_set_supply_status(0, PMU_SUPPLY_DC1SW, 0, on_off);
 
 		return 0xffff;
 	}
 
-	return gpio_request(&gpio_info, group_count_max);
+	return gpio_request_early(&gpio_info, group_count_max, 1);
 }
 
 int disp_sys_gpio_release(int p_handler, s32 if_release_to_default_status)
 {
-	if(p_handler != 0xffff)
+	if (p_handler != 0xffff)
 	{
 		gpio_release(p_handler, if_release_to_default_status);
 	}
@@ -301,7 +305,8 @@ int disp_sys_gpio_set_value(u32 p_handler, u32 value_to_gpio, const char *gpio_n
 int disp_sys_power_enable(char *name)
 {
 	int ret = 0;
-	if(0 == strlen(name)) {
+
+	if (strlen(name) == 0) {
 		return 0;
 	}
 	ret = axp_set_supply_status_byregulator(name, 1);
@@ -366,92 +371,234 @@ int disp_sys_pwm_set_polarity(int p_handler, int polarity)
 }
 
 static char *init_clks[] = {"pll_de", "pll_video1", "pll_video", "pll_periph0"};
-
 int disp_sys_clk_init(void)
 {
 	int i;
 	int value;
 
-	for(i=0;i < ARRAY_SIZE(init_clks);i++)
+	for (i = 0; i < ARRAY_SIZE(init_clks); i++)
 	{
-		if(disp_sys_script_get_item("clock", init_clks[i], &value, 1) == 1)
+		if (disp_sys_script_get_item("clock", init_clks[i], &value, 1) == 1)
 		{
-			if(value) {
+			if (value) {
 				printf("script config %s to %d Mhz\n", init_clks[i], value);
 				disp_sys_clk_set_rate(init_clks[i], value*1000000);
 			}
-		}
-		else
-			printf("Not Found clk %s in script \n",init_clks[i]);
+		} else
+			printf("Not Found clk %s in script\n", init_clks[i]);
 	}
 	return 0;
 }
 
+#if defined(CONFIG_ARCH_SUN8IW7P1) || defined(CONFIG_ARCH_SUN8IW6P1)
+int disp_sys_clk_set_rate(const char *id, unsigned long rate)
+{
+	struct clk *hclk = NULL;
+	int ret = 0;
+
+	hclk = clk_get(NULL, id);
+
+	if (NULL == hclk || IS_ERR(hclk)) {
+		__wrn("Fail to get handle for clock %s.\n", id);
+		return -1;
+	}
+
+	if (rate == clk_get_rate(hclk)) {
+		__inf("Sys clk %s rate is alreay %ld, not need to set.\n", id, rate);
+		clk_put(hclk);
+		return 0;
+	}
+
+	ret = clk_set_rate(hclk, rate);
+	if (ret != 0)
+		__wrn("Fail to set rate[%ld] for clock %s.\n", rate, id);
+	else
+		__inf("Success to set rate[%ld] for clock %s.\n", rate, id);
+
+	clk_put(hclk);
+
+	return ret;
+}
+
+unsigned long disp_sys_clk_get_rate(const char *id)
+{
+	struct clk *hclk = NULL;
+	unsigned long rate = 0;
+
+	hclk = clk_get(NULL, id);
+
+	if (NULL == hclk || IS_ERR(hclk)) {
+		__wrn("Fail to get handle for clock %s.\n", id);
+		return -1;
+	}
+
+	rate = clk_get_rate(hclk);
+	__inf("clock %s's rate is %ld\n", id, rate);
+	clk_put(hclk);
+
+	return rate;
+}
+
+int disp_sys_clk_set_parent(const char *id, const char *parent)
+{
+	struct clk *hclk = NULL;
+	struct clk *hckl_parent = NULL;
+	int ret = 0;
+
+	hclk = clk_get(NULL, id);
+
+	if (NULL == hclk || IS_ERR(hclk)) {
+		__wrn("Fail to get handle for clock %s.\n", id);
+		return -1;
+	}
+
+	hckl_parent = clk_get(NULL, parent);
+
+	if (NULL == hckl_parent || IS_ERR(hckl_parent)) {
+		__wrn("Fail to get handle for clock %s.\n", parent);
+		clk_put(hclk);
+		return -1;
+	}
+
+	ret = clk_set_parent(hclk, hckl_parent);
+	if (ret != 0)
+		__wrn("Fail to set parent %s for clk %s\n", parent, id);
+	else
+		__inf("Success to set parent %s for clk %s\n", parent, id);
+
+	clk_put(hclk);
+	clk_put(hckl_parent);
+
+	return ret;
+}
+
+int disp_sys_clk_enable(const char *id)
+{
+	struct clk *hclk = NULL;
+	int ret = 0;
+
+	hclk = clk_get(NULL, id);
+
+	if (NULL == hclk || IS_ERR(hclk)) {
+		__wrn("Fail to get handle for clock %s.\n", id);
+		return -1;
+	}
+
+	ret = clk_prepare_enable(hclk);
+	if (ret == 0)
+		__inf("Success enable clock %s.\n", id);
+	else
+		__wrn("Fail enable clock %s.\n", id);
+	clk_put(hclk);
+
+	return ret;
+}
+
+int disp_sys_clk_disable(const char *id)
+{
+	struct clk *hclk = NULL;
+	int ret = 0;
+
+	hclk = clk_get(NULL, id);
+
+	if (NULL == hclk || IS_ERR(hclk)) {
+		__wrn("Fail to get handle for clock %s.\n", id);
+		return -1;
+	}
+
+	if (hclk->enable_count > 0)
+		clk_disable(hclk);
+	else
+		__wrn("clock %s is already disabled!!!\n", id);
+	clk_put(hclk);
+
+	return ret;
+}
+
+unsigned long disp_sys_clk_round_rate(const char *id, unsigned long rate)
+{
+	struct clk *hclk = NULL;
+	unsigned long round_rate;
+
+	hclk = clk_get(NULL, id);
+
+	if (NULL == hclk || IS_ERR(hclk)) {
+		__wrn("Fail to get handle for clock %s.\n", id);
+		return rate;
+	}
+
+	round_rate =  clk_round_rate(hclk, rate);
+	clk_put(hclk);
+
+	return round_rate;
+}
+#else
 /* clock */
 int disp_sys_clk_set_rate(const char *id, unsigned long rate)
 {
 	int ret = 0;
 
-	if (0 == rate) {
+	if (rate == 0) {
 		printf("disp_sys_clk_set_rate: clock rate is Zero! for clk %s\n", id);
 		return -1;
 	}
 
-	if(!strcmp(id, "pll_video0")) {
+	if (!strcmp(id, "pll_video0")) {
 		/* fix p(1), div(1): rate = 24 * n / (div+1) / p */
 		unsigned int factor_n = rate / 6000000;
-		unsigned int reg_val = 0x00010001;//p(1: /2)
+		unsigned int reg_val = 0x00010001;/* p(1: /2) */
 
-		if(297000000 == rate)
+		if (rate == 297000000)
 			writel(0x80016302, 0x01c20010);
 		else {
-			if(rate >= 600000000) {
-				// 24 * n / (div+1) < 1.2 G
+			if (rate >= 600000000) {
+				/* 24 * n / (div+1) < 1.2 G */
 				factor_n = rate / 12000000;
-				reg_val = 0x00010000; //p(0: /1)
+				reg_val = 0x00010000; /* p(0: /1) */
 			}
 			factor_n &= 0xff;
 			reg_val |= (factor_n << 8);
 			writel(reg_val, 0x01c20010);
 		}
-	} else if(!strcmp(id, "pll_video1")) {
+	} else if (!strcmp(id, "pll_video1")) {
 		/* fix p(1), div(1): rate = 24 * n / (div+1) / p */
 		unsigned int factor_n = rate / 6000000;
-		unsigned int reg_val = 0x80010001;//p(1: /2)
+		unsigned int reg_val = 0x80010001;/* p(1: /2) */
 
-		if(297000000 == rate)
-			writel(0x80016302, 0x01c2004c);
+		if (rate == 297000000)
+			writel(0x8001c603, 0x01c2004c);
 		else {
-			if(rate >= 600000000) {
-				// 24 * n / (div+1) < 1.2 G
+			if (rate >= 600000000) {
+				/* 24 * n / (div+1) < 1.2 G */
 				factor_n = rate / 12000000;
-				reg_val = 0x00010000; //p(0: /1)
+				reg_val = 0x00010000; /* p(0: /1) */
 			}
 			factor_n &= 0xff;
 			reg_val |= (factor_n << 8);
 			writel(reg_val, 0x01c2004c);
 		}
-	} else if(!strcmp(id, "pll_video")) {
+	} else if (!strcmp(id, "pll_video")) {
 		/* fix m(8): rate = 24 * n / m */
 		unsigned int factor_n = rate / 3000000;
 		unsigned int div_m = 8;
 #if defined(CONFIG_ARCH_SUN8IW8)
 		unsigned int reg_val = readl(0x01c20010);
-		if(297000000 == rate)
+
+		if (rate == 297000000)
 			writel(0x02006207, 0x01c20010);
-		else if(270000000 == rate)
+		else if (rate == 270000000)
 			writel(0x00006207, 0x01c20010);
 		else {
 			factor_n &= 0xff;
-			reg_val |= ((factor_n -1) << 8) | (div_m-1);
+			reg_val |= ((factor_n - 1) << 8) | (div_m-1);
 			writel(0x83003507, 0x01c20010);
 		}
 #else
 		unsigned int reg_val = 0x03000000;
 
-		if(297000000 == rate)
+		if (rate == 297000000)
 			writel(0x02006200, 0x01c20010);
-		else if(270000000 == rate)
+		else if (rate == 270000000)
 			writel(0x00006207, 0x01c20010);
 		else {
 			if (rate > 1536000000) {
@@ -472,11 +619,11 @@ int disp_sys_clk_set_rate(const char *id, unsigned long rate)
 			}
 			factor_n = rate / (24000000 / div_m);
 			factor_n &= 0x7f;
-			reg_val |= ((factor_n -1) << 8) | (div_m-1);
+			reg_val |= ((factor_n - 1) << 8) | (div_m-1);
 			writel(reg_val, 0x01c20010);
 		}
 #endif
-	} else if(!strcmp(id, "pll_de")) {
+	} else if (!strcmp(id, "pll_de")) {
 #if defined(CONFIG_ARCH_SUN8IW6)
 		/* fix div2(1), div1(0): rate = 24 * n / (div2+1) / (div1+1) */
 		unsigned int factor_n = rate / 12000000;
@@ -498,15 +645,16 @@ int disp_sys_clk_set_rate(const char *id, unsigned long rate)
 		writel(reg_val, 0x01c20048);
 
 #endif
-	} else if(!strcmp(id, "pll_periph0")) { //sun8iw8
+	} else if (!strcmp(id, "pll_periph0")) { /* sun8iw8 */
 		unsigned int factor_n = rate / 24000000;
 		unsigned int div_k = 2;
 		unsigned int reg_val = readl(0x01c20028);
+
 		factor_n &= 0xff;
 		reg_val |= ((factor_n-1) << 8) | ((div_k-1) << 4);
 		writel(reg_val, 0x01c20028);
 
-	} else if(!strcmp(id, "tcon0")) {
+	} else if (!strcmp(id, "tcon0")) {
 		unsigned int div = 297000000 / rate;
 		unsigned int reg_val = readl(0x01c20118);
 
@@ -514,12 +662,12 @@ int disp_sys_clk_set_rate(const char *id, unsigned long rate)
 		reg_val |= (div-1);
 
 		writel(reg_val, 0x01c20118);
-	} else if(!strcmp(id, "lcd0")) {
+	} else if (!strcmp(id, "lcd0")) {
 		unsigned int reg_val = readl(0x01c20118);
 
 		reg_val &= ~0xf;
 		writel(reg_val, 0x01c20118);
-	} else if(!strcmp(id, "lcd1")) {
+	} else if (!strcmp(id, "lcd1")) {
 		unsigned int div = 297000000 / rate;
 		unsigned int reg_val = readl(0x01c2011c);
 
@@ -527,7 +675,7 @@ int disp_sys_clk_set_rate(const char *id, unsigned long rate)
 		reg_val |= (div-1);
 
 		writel(reg_val, 0x01c2011c);
-	} else if(!strcmp(id, "hdmi")) {
+	} else if (!strcmp(id, "hdmi")) {
 		unsigned int div = 297000000 / rate;
 		unsigned int reg_val = readl(0x01c20150);
 
@@ -535,11 +683,12 @@ int disp_sys_clk_set_rate(const char *id, unsigned long rate)
 		reg_val |= (div-1);
 
 		writel(reg_val, 0x01c20150);
-	}else if(!strcmp(id, "tve")) {
+	} else if (!strcmp(id, "tve")) {
 		unsigned int reg_val = readl(0x01c20120);
+
 		reg_val |= 0x00000003;
 		writel(reg_val, 0x01c20120);
-	} else if(!strcmp(id, "lcdch0")) {
+	} else if (!strcmp(id, "lcdch0")) {
 		/* for sun8iw9 */
 		unsigned int reg_val = readl(0x01c20118);
 
@@ -554,7 +703,7 @@ unsigned long disp_sys_clk_get_rate(const char *id)
 {
 	unsigned long rate = 0;
 
-	if(!strcmp(id, "pll_video0")) {
+	if (!strcmp(id, "pll_video0")) {
 		/* fix div(1): rate = 24 * n / (div+1) / p */
 		unsigned int factor_n;
 		unsigned int p;
@@ -563,7 +712,7 @@ unsigned long disp_sys_clk_get_rate(const char *id)
 		factor_n = (reg_val >> 8) & 0xff;
 		p = reg_val & 0x03;
 		rate = 12000000 * factor_n / (0x1<<p);
-	} else if(!strcmp(id, "pll_video1")) {
+	} else if (!strcmp(id, "pll_video1")) {
 		/* fix div(1): rate = 24 * n / (div+1) / p */
 		unsigned int factor_n;
 		unsigned int p;
@@ -572,14 +721,14 @@ unsigned long disp_sys_clk_get_rate(const char *id)
 		factor_n = (reg_val >> 8) & 0xff;
 		p = reg_val & 0x03;
 		rate = 12000000 * factor_n / (0x1<<p);
-	} else if(!strcmp(id, "pll_de")) {
+	} else if (!strcmp(id, "pll_de")) {
 		/* fix div2(1), div1(0): rate = 24 * n / (div2+1) / (div1+1) */
 		unsigned int factor_n;
 		unsigned int reg_val = readl(0x01c20048);
 
 		factor_n = (reg_val >> 8) & 0xff;
 		rate = 12000000 * factor_n;
-	} else if(!strcmp(id, "pll_video")) { //add for sun8iw8
+	} else if (!strcmp(id, "pll_video")) { /* add for sun8iw8 */
 		/* fix m(8): rate = 24 * n / m */
 		unsigned int factor_n;
 		unsigned int div_m;
@@ -591,19 +740,19 @@ unsigned long disp_sys_clk_get_rate(const char *id)
 			/* integer mode */
 			factor_n = (reg_val >> 8) & 0x7f;
 			div_m = reg_val & 0xf;
-			rate = 24000000 * (factor_n+1) /(div_m+1);
+			rate = 24000000 * (factor_n+1) / (div_m+1);
 		} else {
 			/* fractional mode */
 			rate = frac_clk_out?297000000:270000000;
 		}
-	} else if(!strcmp(id, "pll_periph0")) { //add for sun8iw8
+	} else if (!strcmp(id, "pll_periph0")) { /* add for sun8iw8 */
 		unsigned int factor_n;
 		unsigned int div_k;
 		unsigned int reg_val = readl(0x01c20028);
 
 		factor_n = (reg_val >> 8) & 0x1f;
 		div_k = (reg_val >> 4) & 0x3;
-		rate = 24000000 * (factor_n+1) /(div_k+1) /2;
+		rate = 24000000 * (factor_n+1) / (div_k+1) / 2;
 
 	}
 	return rate;
@@ -621,40 +770,40 @@ int disp_sys_clk_enable(const char *id)
 	int ret = 0;
 	unsigned int reg_val;
 
-	if(!strcmp(id, "pll_video0")) {
+	if (!strcmp(id, "pll_video0")) {
 		reg_val = readl(0x01c20010);
 
 		reg_val |= 0x80000000;
 		writel(reg_val, 0x01c20010);
 		/* wait for pll stable */
 		__usdelay(100);
-	} else if(!strcmp(id, "pll_video")) {
+	} else if (!strcmp(id, "pll_video")) {
 		reg_val = readl(0x01c20010);
 		reg_val |= 0x80000000;
 		writel(reg_val, 0x01c20010);
 		/* wait for pll stable */
 		__usdelay(100);
-	} else if(!strcmp(id, "pll_video1")) {
+	} else if (!strcmp(id, "pll_video1")) {
 		reg_val = readl(0x01c2004c);
 
 		reg_val |= 0x80000000;
 		writel(reg_val, 0x01c2004c);
 		/* wait for pll stable */
 		__usdelay(100);
-	} else if(!strcmp(id, "pll_de")) {
+	} else if (!strcmp(id, "pll_de")) {
 		reg_val = readl(0x01c20048);
 
 		reg_val |= 0x80000000;
 		writel(reg_val, 0x01c20048);
 		/* wait for pll stable */
 		__usdelay(100);
-	} else if(!strcmp(id, "pll_periph0")) {
+	} else if (!strcmp(id, "pll_periph0")) {
 		reg_val = readl(0x01c20028);
 		reg_val |= 0x80000000;
 		writel(reg_val, 0x01c20028);
 		/* wait for pll stable */
 		__usdelay(100);
-	} else if(!strcmp(id, "lcd0")) {
+	} else if (!strcmp(id, "lcd0")) {
 		/* pll_video0 */
 		reg_val = readl(0x01c20010);
 
@@ -675,7 +824,7 @@ int disp_sys_clk_enable(const char *id)
 		reg_val = readl(0x01c20118);
 		reg_val |= 0x80000000;
 		writel(reg_val, 0x01c20118);
-	} else if(!strcmp(id, "tcon0")) {
+	} else if (!strcmp(id, "tcon0")) {
 		/* pll_vide */
 		reg_val = readl(0x01c20010);
 
@@ -696,7 +845,7 @@ int disp_sys_clk_enable(const char *id)
 		reg_val = readl(0x01c20118);
 		reg_val |= 0x80000000;
 		writel(reg_val, 0x01c20118);
-	} else if(!strcmp(id, "tcon1")) {
+	} else if (!strcmp(id, "tcon1")) {
 		/* reset */
 		reg_val = readl(0x01c202c4);
 		reg_val |= 0x10;
@@ -705,9 +854,9 @@ int disp_sys_clk_enable(const char *id)
 		reg_val = readl(0x01c20064);
 		reg_val |= 0x10;
 		writel(reg_val, 0x01c20064);
-	} else if(!strcmp(id, "lvds")) {
+	} else if (!strcmp(id, "lvds")) {
 		writel(1, 0x01c202c8);
-	} else if(!strcmp(id, "de")) {
+	} else if (!strcmp(id, "de")) {
 		/* pll_de */
 #if defined(CONFIG_ARCH_SUN8IW8)
 		reg_val = readl(0x01c20028);
@@ -739,7 +888,7 @@ int disp_sys_clk_enable(const char *id)
 		reg_val = 0x82000001;
 		writel(reg_val, 0x01c20104);
 #endif
-	} else if(!strcmp(id, "mipi_dsi0")) {
+	} else if (!strcmp(id, "mipi_dsi0")) {
 		/* pll_video0 */
 		reg_val = readl(0x01c20010);
 
@@ -758,17 +907,17 @@ int disp_sys_clk_enable(const char *id)
 		writel(reg_val, 0x01c20060);
 		/* module gating */
 		reg_val = readl(0x01c20168);
-		reg_val |= 0x3;//div 4(force)
+		reg_val |= 0x3;/* div 4(force) */
 		writel(reg_val, 0x01c20168);
-		reg_val |= 0x8000000;//src video pll
+		reg_val |= 0x8000000;/* src video pll */
 		writel(reg_val, 0x01c20168);
-		reg_val |= 0x80000000;//en
+		reg_val |= 0x80000000;/* en */
 		writel(reg_val, 0x01c20168);
 		/* module gating(phy) */
 		reg_val = readl(0x01c2016c);
 		reg_val |= 0x80000000;
 		writel(reg_val, 0x01c2016c);
-	} else if(!strcmp(id, "lcd1")) {
+	} else if (!strcmp(id, "lcd1")) {
 		/* pll_video1 */
 		reg_val = readl(0x01c2004c);
 
@@ -789,11 +938,11 @@ int disp_sys_clk_enable(const char *id)
 		reg_val = readl(0x01c2011c);
 		reg_val |= 0x80000000;
 		writel(reg_val, 0x01c2011c);
-	}  else if(!strcmp(id, "hdmi")) {
+	}  else if (!strcmp(id, "hdmi")) {
 #if defined(CONFIG_ARCH_SUN8IW6)
-		u32 reg_addr = 0x01c2004c;//pll_video1
+		u32 reg_addr = 0x01c2004c;/* pll_video1 */
 #else
-		u32 reg_addr = 0x01c20010;//pll_video0
+		u32 reg_addr = 0x01c20010;/* pll_video0 */
 #endif
 		reg_val = readl(reg_addr);
 
@@ -820,7 +969,7 @@ int disp_sys_clk_enable(const char *id)
 		reg_val = readl(0x01c20154);
 		reg_val |= 0x80000000;
 		writel(reg_val, 0x01c20154);
-	} else if(!strcmp(id, "tve")) {
+	} else if (!strcmp(id, "tve")) {
 		/* pll_de */
 		reg_val = readl(0x01c20048);
 
@@ -842,7 +991,7 @@ int disp_sys_clk_enable(const char *id)
 		reg_val = readl(0x01c20120);
 		reg_val |= 0x80000000;
 		writel(reg_val, 0x01c20120);
-	} else if(!strcmp(id, "lcdch0")) {
+	} else if (!strcmp(id, "lcdch0")) {
 		/* for sun8iw9 */
 		/* pll_video */
 		reg_val = readl(0x01c20010);
@@ -875,24 +1024,24 @@ int disp_sys_clk_disable(const char *id)
 	int ret = 0;
 	unsigned int reg_val;
 
-	if(!strcmp(id, "pll_video0")) {
+	if (!strcmp(id, "pll_video0")) {
 		reg_val = readl(0x01c20010);
 
 		reg_val &= ~0x80000000;
 		writel(reg_val, 0x01c20010);
-	} else if(!strcmp(id, "pll_de")) {
+	} else if (!strcmp(id, "pll_de")) {
 		reg_val = readl(0x01c20048);
 
 		reg_val &= ~0x80000000;
 		writel(reg_val, 0x01c20048);
-	} else if(!strcmp(id, "pll_periph0")) {
+	} else if (!strcmp(id, "pll_periph0")) {
 		reg_val = readl(0x01c20028);
 
 		reg_val &= ~0x80000000;
 		writel(reg_val, 0x01c20028);
 		/* wait for pll stable */
 		__usdelay(100);
-	} else if(!strcmp(id, "lcd0")) {
+	} else if (!strcmp(id, "lcd0")) {
 		/* module gating */
 		reg_val = readl(0x01c20118);
 		reg_val &= ~0x80000000;
@@ -906,9 +1055,9 @@ int disp_sys_clk_disable(const char *id)
 		reg_val &= ~0x10;
 		writel(reg_val, 0x01c202c4);
 
-	} else if(!strcmp(id, "lvds")) {
+	} else if (!strcmp(id, "lvds")) {
 		writel(0, 0x01c202c8);
-	} else if(!strcmp(id, "de")) {
+	} else if (!strcmp(id, "de")) {
 		/* bus gating */
 		reg_val = readl(0x01c20064);
 		reg_val &= ~0x1000;
@@ -917,10 +1066,10 @@ int disp_sys_clk_disable(const char *id)
 		reg_val = readl(0x01c202c4);
 		reg_val &= ~0x1000;
 		writel(reg_val, 0x01c202c4);
-	} else if(!strcmp(id, "mipi_dsi0")) {
+	} else if (!strcmp(id, "mipi_dsi0")) {
 		/* module gating */
 		reg_val = readl(0x01c20168);
-		reg_val &= ~0x80000000;//en
+		reg_val &= ~0x80000000;/* en */
 		writel(reg_val, 0x01c20168);
 
 		/* module gating(phy) */
@@ -937,7 +1086,7 @@ int disp_sys_clk_disable(const char *id)
 		reg_val = readl(0x01c202c0);
 		reg_val &= ~0x2;
 		writel(reg_val, 0x01c202c0);
-	} else if(!strcmp(id, "lcd1")) {
+	} else if (!strcmp(id, "lcd1")) {
 		/* module gating */
 		reg_val = readl(0x01c2011c);
 		reg_val &= ~0x80000000;
@@ -952,7 +1101,7 @@ int disp_sys_clk_disable(const char *id)
 		reg_val = readl(0x01c202c4);
 		reg_val &= ~(0x1<<5);
 		writel(reg_val, 0x01c202c4);
-	}  else if(!strcmp(id, "hdmi")) {
+	}  else if (!strcmp(id, "hdmi")) {
 		/* module gating */
 		reg_val = readl(0x01c20150);
 		reg_val &= ~0x80000000;
@@ -979,7 +1128,7 @@ int disp_sys_clk_disable(const char *id)
 
 		reg_val &= ~0x80000000;
 		writel(reg_val, 0x01c2004c);
-	} else if(!strcmp(id, "lcdch0")) {
+	} else if (!strcmp(id, "lcdch0")) {
 		/* for sun8iw9 */
 		/* module gating */
 		reg_val = readl(0x01c20118);
@@ -1002,4 +1151,11 @@ int disp_sys_clk_disable(const char *id)
 
 	return ret;
 }
+
+unsigned long disp_sys_clk_round_rate(const char *id, unsigned long rate)
+{
+	return rate;
+}
+
+#endif
 

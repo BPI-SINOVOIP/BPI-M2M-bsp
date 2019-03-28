@@ -586,6 +586,12 @@ config KEYBOARD_SUNXI
 		Say Y here to enable the keyboard, support 7 keys.
 		based on verify board.
 
+config KEYBOARD_SUNXI_GW
+	tristate "KEY BOARD GW support"
+	help
+		Say Y here to enable the keyboard, support 4 keys.
+		based on verify board.
+
 config IR_RX_SUNXI
        tristate "sunxi IR RX support"
          help
@@ -595,7 +601,7 @@ config IR_TX_SUNXI
        tristate "sunxi IR TX support"
          help
           Say Y here to enable the IR TX, support NEC code.
-		  
+
 config KEYPAD_SUNXI
 	tristate "softwinnner KEY PAD support"
 	depends on ARCH_SUN8IW9

@@ -72,6 +72,8 @@ extern void board_display_setenv(char *data);
 
 extern void board_status_probe(int standby_mode);
 
+extern void power_pin_check(void);
+
 extern void power_limit_detect_enter(void);
 extern void power_limit_detect_exit(void);
 extern void power_limit_init(void);
@@ -88,6 +90,8 @@ extern int drv_disp_init(void);
 extern int drv_disp_exit(void);
 extern int drv_disp_standby(unsigned int cmd, void *pArg);
 extern long disp_ioctl(void *hd, unsigned int cmd, void *arg);
+
+extern int get_boot_storage_type(void);
 
 extern int board_init(void);
 extern void dram_init_banksize(void);
@@ -123,7 +127,14 @@ extern int power_off(void);
 
 extern void sunxi_set_fel_flag(void);
 extern void sunxi_clear_fel_flag(void);
+extern int sunxi_set_rtc3_flag(u8 flag);
 
+extern int sunxi_get_rtc3_flag(void);
+
+#ifdef CONFIG_DETECT_RTC_BOOT_MODE
+extern int sunxi_get_bootmode_flag(void);
+extern int sunxi_set_bootmode_flag(u8 flag);
+#endif
 extern int sunxi_verify_signature(void *buff, uint len, const char *cert_name);
 extern int sunxi_verify_rotpk_hash(void *input_hash_buf, int len);
 

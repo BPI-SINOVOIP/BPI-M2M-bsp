@@ -1,14 +1,3 @@
-/*
- * include/video/sunxi_display2.h
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #ifndef __SUNXI_DISPLAY_H__
 #define __SUNXI_DISPLAY_H__
 
@@ -141,7 +130,12 @@ typedef enum
 	DISP_TV_MOD_3840_2160P_30HZ     = 0x1c,
 	DISP_TV_MOD_3840_2160P_25HZ     = 0x1d,
 	DISP_TV_MOD_3840_2160P_24HZ     = 0x1e,
-	DISP_TV_MODE_NUM                = 0x1f,
+	DISP_TV_MOD_4096_2160P_24HZ     = 0x1f,
+
+	DISP_TV_MOD_1280_1024P_60HZ     = 0x41,
+	DISP_TV_MOD_1024_768P_60HZ      = 0x42,
+	DISP_TV_MOD_900_540P_60HZ       = 0x43,
+	DISP_TV_MODE_NUM                = 0x59,
 }disp_tv_mode;
 
 
@@ -175,6 +169,12 @@ typedef enum
 	DISP_SCAN_INTERLACED_EVEN_FLD_FIRST   = 1 << 1,//interlace,even field first
 }disp_scan_flags;
 
+enum {
+	ROTATION_SW_0 = 0,
+	ROTATION_SW_90 = 1,
+	ROTATION_SW_180 = 2,
+	ROTATION_SW_270 = 3,
+};
 typedef struct
 {
 	unsigned int type;
@@ -261,7 +261,7 @@ typedef struct
 
 typedef struct
 {
-	unsigned int    vic;  //video infomation code
+	unsigned int    vic;  /* video information code */
 	unsigned int	tv_mode;
 	unsigned int    pixel_clk;
 	unsigned int    pixel_repeat;//pixel repeat (pixel_repeat+1) times
@@ -521,6 +521,8 @@ typedef enum tag_DISP_CMD
 	DISP_MEM_REQUEST = 0x2c0,
 	DISP_MEM_RELEASE = 0x2c1,
 	DISP_MEM_GETADR = 0x2c2,
+	DISP_ROTATION_SW_SET_ROT = 0x300,
+	DISP_ROTATION_SW_GET_ROT = 0x301,
 }__DISP_t;
 
 #define FBIOGET_LAYER_HDL_0 0x4700

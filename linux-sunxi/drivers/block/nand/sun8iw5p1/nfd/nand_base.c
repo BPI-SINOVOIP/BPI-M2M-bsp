@@ -12,6 +12,7 @@ extern int init_blklayer_for_dragonboard(void);
 extern void   exit_blklayer(void);
 extern void set_cache_level(struct _nand_info*nand_info,unsigned short cache_level);
 extern int NAND_get_storagetype(void);
+extern int nand_thread(void *arg);
 extern __s32 GetUbootStartBlock(void);
 extern __s32 GetUbootNextBlock(void);
 extern  void check_phyisc(void);
@@ -19,6 +20,7 @@ extern  void check_phyisc(void);
 uint32 suspend_flush_write_cache(void);
 extern __u32 PHY_erase_chip(void);
 extern void set_capacity_level(struct _nand_info*nand_info,unsigned short capacity_level);
+extern void *malloc_uncache_buff(void);
 
 #define BLK_ERR_MSG_ON
 
@@ -80,8 +82,8 @@ static int nand_suspend(struct platform_device *plat_dev, pm_message_t state)
 		NandHwSuperStandby();
     }
 
-    nand_dbg_err("[NAND] nand_suspend ok \n");
-    
+    nand_dbg_err("[NAND] nand_suspend ok\n");
+
 	return 0;
 }
 
@@ -105,8 +107,8 @@ static int nand_resume(struct platform_device *plat_dev)
 		unlock_all_blk();
     }
 
-    nand_dbg_err("[NAND] nand_resume ok \n");  
-     
+    nand_dbg_err("[NAND] nand_resume ok\n");
+
     return 0;
 }
 
@@ -254,7 +256,7 @@ static struct resource flash_resource = {
 	.flags		= 0x1,
 };
 
-static struct platform_device nand_device = {
+struct platform_device nand_device = {
 	.name		= "sw_nand",
 	.id		= 33,
 	.resource	= &flash_resource,
@@ -263,8 +265,6 @@ static struct platform_device nand_device = {
 		.release =  nand_release_dev,
 	}
 };
-
-
 
 /*****************************************************************************
 *Name         :
@@ -284,6 +284,7 @@ int __init nand_init(void)
 	uchar *data = kmalloc(0x400,GFP_KERNEL);
 //    char * dev_name = "nand_dev";
 //    char * dev_id = "nand_id";
+	malloc_uncache_buff();
 
 #ifdef __LINUX_NAND_SUPPORT_INT__
     unsigned long irqflags_ch0, irqflags_ch1;
@@ -331,7 +332,7 @@ int __init nand_init(void)
 		printk("[NAND]run on A33\n");
 	#endif
 
-	#ifdef SUN8IW1P1 
+	#ifdef SUN8IW1P1
 		if (request_irq(SUNXI_IRQ_NAND0, nand_interrupt_ch0, IRQF_DISABLED, mytr.name, &mytr))
 		{
 		    kfree(data);
@@ -341,8 +342,8 @@ int __init nand_init(void)
 		else
 		{
 		    printk("nand interrupte ch0 irqno: %d register ok\n", SUNXI_IRQ_NAND0);
-		}	
-	
+		}
+
 		if (request_irq(SUNXI_IRQ_NAND1, nand_interrupt_ch1, IRQF_DISABLED, mytr.name, &mytr))
 		{
 		    kfree(data);
@@ -354,8 +355,8 @@ int __init nand_init(void)
 		    printk("nand interrupte ch1, irqno: %d register ok\n", SUNXI_IRQ_NAND1);
 		}
 	#endif
-	
-	#ifdef SUN8IW3P1 
+
+	#ifdef SUN8IW3P1
 		if (request_irq(SUNXI_IRQ_NAND, nand_interrupt_ch0, IRQF_DISABLED, mytr.name, &mytr))
 		{
 		    kfree(data);
@@ -365,10 +366,10 @@ int __init nand_init(void)
 		else
 		{
 		    //printk("nand interrupte ch0 irqno: %d register ok\n", SUNXI_IRQ_NAND0);
-		}	
-	#endif		
+		}
+	#endif
 
-	#ifdef SUN8IW5P1 
+	#ifdef SUN8IW5P1
 	printk("regisger ISP =====================\n");
 	if (request_irq(SUNXI_IRQ_NAND, nand_interrupt_ch0, IRQF_DISABLED, mytr.name, &mytr))
 	{
@@ -378,10 +379,10 @@ int __init nand_init(void)
 	else
 	{
 	    //printk("nand interrupte ch0 irqno: %d register ok\n", SUNXI_IRQ_NAND0);
-	}	
-	#endif		
+	}
+	#endif
 
-	#ifdef SUN9IW1P1 
+	#ifdef SUN9IW1P1
 		if (request_irq(SUNXI_IRQ_NAND0, nand_interrupt_ch0, IRQF_DISABLED, mytr.name, &mytr))
 		{
 		    kfree(data);
@@ -391,8 +392,8 @@ int __init nand_init(void)
 		else
 		{
 		    printk("nand interrupte ch0 irqno: %d register ok\n", SUNXI_IRQ_NAND0);
-		}	
-	
+		}
+
 		if (request_irq(SUNXI_IRQ_NAND1, nand_interrupt_ch1, IRQF_DISABLED, mytr.name, &mytr))
 		{
 		    kfree(data);
@@ -404,7 +405,7 @@ int __init nand_init(void)
 		    printk("nand interrupte ch1, irqno: %d register ok\n", SUNXI_IRQ_NAND1);
 		}
 	#endif
-	
+
 #endif
 
     if(nand0_used_flag.val == 0)
@@ -437,7 +438,7 @@ int __init nand_init(void)
 	    }
 
 		platform_device_register(&nand_device);
-	   	platform_driver_register(&nand_driver);
+		platform_driver_register(&nand_driver);
 
 	    init_blklayer();
 	}
@@ -446,9 +447,10 @@ int __init nand_init(void)
 		nand_dbg_err("storage_type=%d,run nand test for dragonboard\n",storage_type);
 		init_blklayer_for_dragonboard();
 	}
-	
 
-    nand_dbg_err("nand init end \n");
+	kthread_run(nand_thread, &mytr, "%sd", "nand_rc");
+
+    nand_dbg_err("nand init end\n");
 
 //    //init sysfs
 //    nand_dbg_err("init nand sysfs !\n");
@@ -478,15 +480,15 @@ void __exit nand_exit(void)
 
     if(nand0_used_flag.val == 0)
     {
-        nand_dbg_err("nand driver is disabled \n");
+		nand_dbg_err("nand driver is disabled\n");
     }
-	nand_dbg_err("nand driver unregister start \n");
+	nand_dbg_err("nand driver unregister start\n");
     platform_driver_unregister(&nand_driver);
 	nand_dbg_err("nand driver unregister end \n");
 
-	nand_dbg_err("nand device unregister start \n");
+	nand_dbg_err("nand device unregister start\n");
 	platform_device_unregister(&nand_device);
-	nand_dbg_err("nand device unregister end \n");	
+	nand_dbg_err("nand device unregister end\n");
     exit_blklayer();
 
 //  kobject_del(&kobj);
@@ -495,6 +497,6 @@ void __exit nand_exit(void)
 
 //module_init(nand_init);
 //module_exit(nand_exit);
-MODULE_LICENSE ("GPL");
-MODULE_AUTHOR ("nand flash groups");
-MODULE_DESCRIPTION ("Generic NAND flash driver code");
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("nand flash groups");
+MODULE_DESCRIPTION("Generic NAND flash driver code");

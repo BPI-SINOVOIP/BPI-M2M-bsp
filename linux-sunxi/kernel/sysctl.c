@@ -1,15 +1,4 @@
 /*
- * kernel/sysctl.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-/*
  * sysctl.c: General linux system control interface
  *
  * Begun 24 March 1995, Stephen Tweedie
@@ -1114,6 +1103,17 @@ static struct ctl_table vm_table[] = {
 		.mode		= 0444 /* read-only*/,
 		.proc_handler	= proc_dointvec,
 	},
+#ifdef CONFIG_FILE_DIRTY_LIMIT
+	{
+		.procname	= "limit_file_dirty",
+		.data		= &limit_file_dirty,
+		.maxlen		= sizeof(limit_file_dirty),
+		.mode		= 0644,
+		.proc_handler	= proc_dointvec_minmax,
+		.extra1		= &zero,
+		.extra2		= &one,
+	},
+#endif
 	{
 		.procname	= "swappiness",
 		.data		= &vm_swappiness,

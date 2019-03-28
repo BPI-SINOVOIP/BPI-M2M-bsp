@@ -426,6 +426,7 @@ static void goodix_touch_down(struct goodix_ts_data* ts,s32 id,s32 x,s32 y,s32 w
 	input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, w);
 	input_report_abs(ts->input_dev, ABS_MT_WIDTH_MAJOR, w);
 	input_report_abs(ts->input_dev, ABS_MT_TRACKING_ID, id);
+	input_report_abs(ts->input_dev, ABS_PRESSURE, 200);
 	input_mt_sync(ts->input_dev);
 }
 /*******************************************************
@@ -440,6 +441,7 @@ static void goodix_touch_up(struct goodix_ts_data* ts)
 {
 	input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0);
 	input_report_abs(ts->input_dev, ABS_MT_WIDTH_MAJOR, 0);
+	input_report_abs(ts->input_dev, ABS_PRESSURE, 0);
 	input_mt_sync(ts->input_dev);
 }
 
@@ -772,12 +774,14 @@ static int goodix_ts_probe(struct i2c_client *client, const struct i2c_device_id
 #else
 	ts->input_dev->absbit[0] = BIT_MASK(ABS_MT_TRACKING_ID) |
 		BIT_MASK(ABS_MT_TOUCH_MAJOR)| BIT_MASK(ABS_MT_WIDTH_MAJOR) |
-  		BIT_MASK(ABS_MT_POSITION_X) | BIT_MASK(ABS_MT_POSITION_Y); 	// for android
+		BIT_MASK(ABS_MT_POSITION_X) | BIT_MASK(ABS_MT_POSITION_Y) |
+		BIT(ABS_PRESSURE);
 	input_set_abs_params(ts->input_dev, ABS_MT_WIDTH_MAJOR, 0, 255, 0, 0);
 	input_set_abs_params(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0, 255, 0, 0);
 	input_set_abs_params(ts->input_dev, ABS_MT_POSITION_X, 0, SCREEN_MAX_X, 0, 0);
 	input_set_abs_params(ts->input_dev, ABS_MT_POSITION_Y, 0, SCREEN_MAX_Y, 0, 0);	
 	input_set_abs_params(ts->input_dev, ABS_MT_TRACKING_ID, 0, MAX_FINGER_NUM, 0, 0);	
+	input_set_abs_params(ts->input_dev, ABS_PRESSURE, 0, 255, 0, 0);
 #endif	
 
 #ifdef FOR_TSLIB_TEST

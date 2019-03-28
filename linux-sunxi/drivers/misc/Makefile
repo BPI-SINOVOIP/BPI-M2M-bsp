@@ -59,3 +59,6 @@ obj-$(CONFIG_SUNXI_VIBRATOR)	+= sunxi-vibrator.o
 obj-$(CONFIG_SUNXI_BROM_READ)	+= sunxi_brom_read.o
 obj-$(CONFIG_AW_RF_PM)        += rf_pm/
 obj-y                           += sunxi-clk-prepare/
+
+obj-$(CONFIG_SUNXI_LRADC_BATTERY) += lradc_battery.o
+obj-$(CONFIG_SUNXI_LRADC_BATTERY) += lradc_dev.o

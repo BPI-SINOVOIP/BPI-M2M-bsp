@@ -199,6 +199,7 @@
 #define SUNXI_USB_30
 
 #define BOARD_LATE_INIT				/* init the fastboot partitions */
+//#define CONFIG_DETECT_RTC_BOOT_MODE
 
 #define CONFIG_USE_ARCH_MEMCPY       (1)
 #define CONFIG_USE_ARCH_MEMSET       (1)

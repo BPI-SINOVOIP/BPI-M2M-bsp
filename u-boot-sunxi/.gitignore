@@ -5,35 +5,39 @@
 #
 # Normal rules
 #
+.*
 
-*.rej
-*.orig
-#*.a
 *.o
-*~
+*.o.*
+*.a
+*.s
+*.su
+*.mod.c
+*.i
+*.lst
+*.order
+*.elf
 *.swp
-*.patch
 *.bin
+*.patch
+*.cfgtmp
+*.log
+
+# host programs on Cygwin
+*.exe
 
 #
 # Top-level generic files
 #
 
 /System.map
-/u-boot
-/u-boot.hex
-/u-boot.imx
-/u-boot.map
-/u-boot.srec
-/u-boot.ldr
-/u-boot.ldr.hex
-/u-boot.ldr.srec
-/u-boot.img
-/u-boot.kwb
-/u-boot.sha1
-/u-boot.dis
-/u-boot.lds
-/u-boot.ubl
+/u-boot*
+
+#
+# git files that we don't want to ignore even it they are dot-files
+#
+!.gitignore
+!.mailmap
 
 #
 # Generated files
@@ -73,3 +77,7 @@ cscope.*
 /onenand_ipl/onenand-ipl*
 /onenand_ipl/board/*/onenand*
 /onenand_ipl/board/*/*.S
+
+*.orig
+*~
+\#*#

@@ -322,6 +322,8 @@ typedef struct wl_bss_config {
 #define DLOAD_FLAG_VER_SHIFT	12	/* Downloader version shift */
 
 #define DL_CRC_NOT_INUSE 			0x0001
+#define DL_BEGIN		0x0002
+#define DL_END			0x0004
 
 /* generic download types & flags */
 enum {

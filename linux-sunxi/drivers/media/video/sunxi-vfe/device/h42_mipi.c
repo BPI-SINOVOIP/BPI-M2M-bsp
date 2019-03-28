@@ -1,14 +1,4 @@
 /*
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-/*
  * A V4L2 driver for h42_mipi Raw cameras.
  *
  */
@@ -138,12 +128,12 @@ static struct regval_list sensor_default_regs[] =
 	{0x24, 0x00},//
 	{0x25, 0xD0},//
 	{0x26, 0x25},//
-	{0x27, 0x45},//
+	{0x27, 0x3B},/* 49 */
 	{0x28, 0x0D},//
 	{0x29, 0x01},//
 	{0x2A, 0x24},//
 	{0x2B, 0x29},//
-	{0x2C, 0x00},//
+	{0x2C, 0x04},/* 00 */
 	{0x2D, 0x00},//
 	{0x2E, 0xB9},//
 	{0x2F, 0x00},//
@@ -173,7 +163,8 @@ static struct regval_list sensor_default_regs[] =
 	{0x68, 0x04},//
 	{0x69, 0x74},//
 	{0x6F, 0x04},//
-	{0x63, 0x19},//
+	{0x48, 0x40},
+	{0x63, 0x51},/* 19 */
 	{0x6A, 0x09},//
 	{0x13, 0x87},//
 	{0x14, 0x80},//
@@ -373,7 +364,7 @@ static int sensor_s_exp_gain(struct v4l2_subdev *sd, struct sensor_exp_gain *exp
   exp_val = exp_gain->exp_val;
   gain_val = exp_gain->gain_val;
   
-  printk("h42 sensor exp & gain is %d\t%d\n", exp_val, gain_val);
+	/*printk("h42 sensor exp & gain is %d\t%d\n", exp_val, gain_val);*/
   
   if(gain_val<1*16)
 	  gain_val=16;

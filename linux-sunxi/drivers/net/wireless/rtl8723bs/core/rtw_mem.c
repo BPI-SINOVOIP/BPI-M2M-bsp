@@ -1,14 +1,3 @@
-/*
- * drivers/net/wireless/rtl8723bs/core/rtw_mem.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 
 #include <drv_types.h>
 #include <rtw_mem.h>
@@ -67,8 +56,8 @@ static int __init rtw_mem_init(void)
 	pr_info("MAX_RECVBUF_SZ: %d\n", MAX_RECVBUF_SZ);
 
 #ifdef CONFIG_USE_USB_BUFFER_ALLOC_RX
-	for(i=0; i<NR_RECVBUFF; i++)
-	{
+	for(i=0; i<NR_RECVBUFF; i++)
+	{
 		rtk_buf_mem[i] = usb_buffer_alloc(dev, size, (in_interrupt() ? GFP_ATOMIC : GFP_KERNEL), dma);
 	}
 #endif //CONFIG_USE_USB_BUFFER_ALLOC_RX

@@ -28,6 +28,7 @@
 #include <asm/arch/timer.h>
 #include <asm/arch/key.h>
 #include <asm/arch/clock.h>
+#include <asm/arch/cpu.h>
 #include <asm/arch/sys_proto.h>
 #include <boot_type.h>
 #include <sys_partition.h>
@@ -164,28 +165,45 @@ int power_source_init(void)
 		{
 			printf("axp_probe_power_supply_condition error\n");
 		}
+
+		axp_set_charge_vol_limit();
+		axp_set_all_limit();
+		axp_set_hardware_poweron_vol();
+		axp_set_power_supply_output();
+		power_limit_init();
 	}
 	else
 	{
 		printf("axp_probe error\n");
+		sunxi_clock_set_corepll(uboot_spare_head.boot_data.run_clock, 0);
 	}
 
 	pll1 = sunxi_clock_get_corepll();
 
 	tick_printf("PMU: pll1 %d Mhz,PLL6=%d Mhz\n", pll1,sunxi_clock_get_pll6());
-    printf("AXI=%d Mhz,AHB=%d Mhz, APB1=%d Mhz \n", sunxi_clock_get_axi(),sunxi_clock_get_ahb(),sunxi_clock_get_apb1());
-
-
-    axp_set_charge_vol_limit();
-    axp_set_all_limit();
-    axp_set_hardware_poweron_vol();
-
-	axp_set_power_supply_output();
-
-	power_limit_init();
+	printf("AXI=%d Mhz,AHB=%d Mhz, APB1=%d Mhz \n", sunxi_clock_get_axi(),sunxi_clock_get_ahb(),sunxi_clock_get_apb1());
 
 	return 0;
 }
 
+#define SUNXI_RTC_GPREG_NUM 3
+int sunxi_set_rtc3_flag(u8 flag)
+{
+	volatile uint reg_val;
+	do {
+		writel(flag, RTC_GENERAL_PURPOSE_REG(SUNXI_RTC_GPREG_NUM));
+		reg_val = readl(RTC_GENERAL_PURPOSE_REG(SUNXI_RTC_GPREG_NUM));
+	} while ((reg_val & 0xff) != flag);
 
+	return 0;
+}
+
+int sunxi_get_rtc3_flag(void)
+{
+	uint rtc3_flag;
+
+	rtc3_flag = readl(RTC_GENERAL_PURPOSE_REG(SUNXI_RTC_GPREG_NUM));
+
+	return rtc3_flag;
+}
 

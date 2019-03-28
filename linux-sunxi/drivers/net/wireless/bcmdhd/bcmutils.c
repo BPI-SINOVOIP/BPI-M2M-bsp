@@ -2008,6 +2008,7 @@ process_nvram_vars(char *varbuf, unsigned int len)
 	int column;
 	unsigned int buf_len, n;
 	unsigned int pad = 0;
+	char nv_ver[128];
 
 	dp = varbuf;
 
@@ -2016,13 +2017,13 @@ process_nvram_vars(char *varbuf, unsigned int len)
 
 	// terence 20130914: print out NVRAM version
 	if (varbuf[0] == '#') {
-		printf("NVRAM version: ");
-		for (n=1; n<len; n++) {
+		memset(nv_ver, 0x00, sizeof(nv_ver));
+		for (n=1; n<len && n<(sizeof(nv_ver)-1); n++) {
 			if (varbuf[n] == '\n')
 				break;
-			printk("%c", varbuf[n]);
+			nv_ver[n-1] = varbuf[n];
 		}
-		printk("\n");
+		printk("NVRAM version: %s\n", nv_ver);
 	}
 
 	for (n = 0; n < len; n++) {

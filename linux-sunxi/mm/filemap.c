@@ -129,6 +129,7 @@ void __delete_from_page_cache(struct page *page)
 	/* Leave page->index set: truncation lookup relies upon it */
 	mapping->nrpages--;
 	__dec_zone_page_state(page, NR_FILE_PAGES);
+
 	if (PageSwapBacked(page))
 		__dec_zone_page_state(page, NR_SHMEM);
 	BUG_ON(page_mapped(page));
@@ -143,6 +144,9 @@ void __delete_from_page_cache(struct page *page)
 	if (PageDirty(page) && mapping_cap_account_dirty(mapping)) {
 		dec_zone_page_state(page, NR_FILE_DIRTY);
 		dec_bdi_stat(mapping->backing_dev_info, BDI_RECLAIMABLE);
+#ifdef CONFIG_FILE_DIRTY_LIMIT
+		mapping->nrdirty--;
+#endif
 	}
 }
 

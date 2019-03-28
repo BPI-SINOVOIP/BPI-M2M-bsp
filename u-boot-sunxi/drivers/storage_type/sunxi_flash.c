@@ -327,7 +327,7 @@ int sunxi_sprite_mmc_secread_backup(int item ,unsigned char *buf,unsigned int nb
 static int
 sunxi_flash_spinor_read(unsigned int start_block, unsigned int nblock, void *buffer)
 {
-	debug("spinor read: start 0x%x, sector 0x%x\n", start_block, nblock);
+	printf("flash spinor read: start 0x%x, sector 0x%x\n", start_block, nblock);
 
     return spinor_read(start_block + CONFIG_SPINOR_LOGICAL_OFFSET, nblock, buffer);
 }
@@ -343,7 +343,7 @@ sunxi_flash_spinor_read(unsigned int start_block, unsigned int nblock, void *buf
 static int
 sunxi_sprite_spinor_write(unsigned int start_block, unsigned int nblock, void *buffer)
 {
-	debug("burn spinor write: start 0x%x, sector 0x%x\n", start_block, nblock);
+	printf("burn spinor write: start 0x%x, sector 0x%x\n", start_block, nblock);
 
 	return spinor_sprite_write(start_block, nblock, buffer);
 }
@@ -726,6 +726,7 @@ int sunxi_flash_sprite_handler(int workmode)
 {
 	if(!nand_uboot_probe())
 	{
+		nand_uboot_exit(1);   /* fix can't not boot after savecfg */
 		printf("try nand successed \n");
 		sunxi_sprite_init_pt  = sunxi_flash_nand_init;
 		sunxi_sprite_exit_pt  = sunxi_flash_nand_exit;

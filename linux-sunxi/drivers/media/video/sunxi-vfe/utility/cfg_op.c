@@ -1,14 +1,4 @@
 /*
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-/*
  * operation on ini file API used in kernel
  * parse ini file to mainkey and subkey value
  * Author: raymonxiu
@@ -597,7 +587,7 @@ int cfg_write_file(	struct file* fp, char *buf, size_t len)
 int cfg_read_ini(char *file_path, struct cfg_section **cfg_section)
 {
 //  struct file* fp;
-  unsigned int i;
+	int i;
   struct cfg_section *cfg_sct = *(cfg_section);
 //  loff_t pos = 0;
 //  mm_segment_t old_fs;

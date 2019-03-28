@@ -165,6 +165,15 @@ static struct ion_platform_data ion_data = {
 			.align = 0, .priv = NULL,
 		},
 #endif
+#ifdef          CONFIG_SUNXI_TRUSTZONE
+		[3] = {
+			.type = ION_HEAP_TYPE_SECURE,
+			.id = (u32)ION_HEAP_TYPE_SECURE,
+			.name = "secure",
+			.base = 0, .size = 0,
+			.align = 0, .priv = NULL,
+		},
+#endif
 	}
 };
 static struct platform_device ion_dev = {

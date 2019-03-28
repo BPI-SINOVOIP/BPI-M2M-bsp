@@ -103,7 +103,7 @@ int sunxi_sprite_erase_flash(void  *img_mbr_buffer)
 		return 0;
 	}
 	//–£—ÈMBR
-	if(sunxi_sprite_verify_mbr(buf))
+	if(sunxi_sprite_get_one_valid_mbr(buf, buf))
 	{
 		printf("the mbr on flash is bad\n");
 		sunxi_sprite_exit(1);

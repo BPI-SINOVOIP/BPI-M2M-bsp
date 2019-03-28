@@ -29,6 +29,9 @@
 #if defined(CONFIG_SUNXI_AXP20)
 #  include <power/axp20_reg.h>
 #endif
+#if defined(CONFIG_SUNXI_AXP259)
+#  include <power/axp259_reg.h>
+#endif
 #include "axp.h"
 #include <pmu.h>
 #include "sys_config.h"
@@ -43,7 +46,7 @@ extern int axp15_probe(void);
 extern int axp809_probe(void);
 extern int axp806_probe(void);
 extern int axp81_probe(void);
-
+extern int axp259_probe(void);
 /*
 ************************************************************************************************************
 *
@@ -60,11 +63,18 @@ extern int axp81_probe(void);
 *
 ************************************************************************************************************
 */
+#if defined(CONFIG_SUNXI_AXP259)
+unsigned int g_pmu_type = 0;
+#endif
 int axp_probe(void)
 {
 	int ret = 0;
 
 	memset(sunxi_axp_dev, 0, SUNXI_AXP_DEV_MAX * 4);
+#if defined(CONFIG_SUNXI_AXP259)
+	g_pmu_type = 0;
+#endif
+
 #if defined(CONFIG_SUNXI_AXP22)
 	if(axp22_probe())
 	{
@@ -74,7 +84,7 @@ int axp_probe(void)
 	{
 		/* pmu type AXP22X */
 		tick_printf("PMU: AXP22x found\n");
-		ret ++;
+		ret = PMU_TYPE_22X;
 	}
 	sunxi_axp_dev[PMU_TYPE_22X] = &sunxi_axp_22;
 #if (CONFIG_SUNXI_AXP_MAIN == PMU_TYPE_22X)
@@ -91,7 +101,7 @@ int axp_probe(void)
 	{
 		/* pmu type AXP22X */
 		tick_printf("PMU: AXP20x found\n");
-		ret ++;
+		ret = PMU_TYPE_20X;
 	}
 	sunxi_axp_dev[PMU_TYPE_20X] = &sunxi_axp_20;
 #if (CONFIG_SUNXI_AXP_MAIN == PMU_TYPE_20X)
@@ -108,7 +118,7 @@ int axp_probe(void)
 	{
 		/* pmu type AXP15X */
 		tick_printf("PMU: AXP15x found\n");
-		ret ++;
+		ret = PMU_TYPE_15X;
 	}
 	sunxi_axp_dev[PMU_TYPE_15X] = &sunxi_axp_15;
 #if (CONFIG_SUNXI_AXP_MAIN == PMU_TYPE_15X)
@@ -125,7 +135,7 @@ int axp_probe(void)
 	{
 		/* pmu type AXP809 */
 		tick_printf("PMU: AXP809 found\n");
-		ret ++;
+		ret = PMU_TYPE_809;
 	}
 	sunxi_axp_dev[PMU_TYPE_809] = &sunxi_axp_809;
 #if (CONFIG_SUNXI_AXP_MAIN == PMU_TYPE_809)
@@ -142,7 +152,7 @@ int axp_probe(void)
 	{
 		/* pmu type AXP806 */
 		tick_printf("PMU: AXP806 found\n");
-		ret ++;
+		ret = PMU_TYPE_806;
 	}
 	sunxi_axp_dev[PMU_TYPE_806] = &sunxi_axp_806;
 #if (CONFIG_SUNXI_AXP_MAIN == PMU_TYPE_806)
@@ -159,12 +169,23 @@ int axp_probe(void)
     {
         /* pmu type AXP81X */
         tick_printf("PMU: AXP81X found\n");
-        ret ++;
+        ret = PMU_TYPE_81X;
     }
     sunxi_axp_dev[PMU_TYPE_81X] = &sunxi_axp_81;
 #if (CONFIG_SUNXI_AXP_MAIN == PMU_TYPE_81X)
         sunxi_axp_dev[0] = &sunxi_axp_81;
 #endif
+#endif
+
+#if defined(CONFIG_SUNXI_AXP259)
+	if(axp259_probe()) {
+		printf("probe axp259 failed\n");
+	} else {
+		tick_printf("PMU: AXP259 found\n");
+		sunxi_axp_dev[0] = &sunxi_axp_259;
+		g_pmu_type = ret;
+	}
+	sunxi_axp_dev[PMU_TYPE_259] = &sunxi_axp_259;
 #endif
 	if(!ret)
 	{
@@ -897,7 +918,12 @@ int axp_set_power_supply_output(void)
 #else
         printf("%s = %d\n", power_name, power_vol_d);
 #endif
+
+#if defined(CONFIG_SUNXI_AXP259)
+        if(sunxi_axp_dev[g_pmu_type]->set_supply_status_byname(power_name, power_vol_d, onoff))
+#else
         if(sunxi_axp_dev[0]->set_supply_status_byname(power_name, power_vol_d, onoff))
+#endif
         {
             printf("axp set %s to %d failed\n", power_name, power_vol_d);
         }

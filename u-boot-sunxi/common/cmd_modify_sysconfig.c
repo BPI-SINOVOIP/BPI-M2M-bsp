@@ -371,6 +371,7 @@ int do_savecfg(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
     char *tmp_target_buffer = NULL;
     int script_offset = 0;
     int script_length = 0;
+    int work_mode_save = 0;
     if(argc != 1)
         return cmd_usage(cmdtp);
 
@@ -389,11 +390,25 @@ int do_savecfg(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
         //copy uboot.bin to CONFIG_SYS_TEXT_BASE -0x01000000
         memcpy(tmp_target_buffer,(char *)CONFIG_SYS_TEXT_BASE,uboot_spare_head.boot_head.uboot_length);
         //copy sys_config.bin to tmp_buf
-        memcpy(tmp_target_buffer+script_offset,(char*)SYS_CONFIG_MEMBASE,script_length);
+        memcpy(tmp_target_buffer+script_offset,gd->script_mod_buf,script_length);
 
         //download uboot
         gd->force_download_uboot = 0;
-        sunxi_sprite_download_uboot(tmp_target_buffer,uboot_spare_head.boot_data.storage_type,1);
+
+	if(uboot_spare_head.boot_data.storage_type == 0) /*for nand*/
+	{
+		/*TODO:why this not work for mmc*/
+		work_mode_save = uboot_spare_head.boot_data.work_mode;
+		uboot_spare_head.boot_data.work_mode = WORK_MODE_CMD_UPDATE;
+		sunxi_flash_handle_init(); /* for nand, will call nand_uboot_probe() */
+		sunxi_sprite_download_uboot(tmp_target_buffer,uboot_spare_head.boot_data.storage_type,1);
+		uboot_spare_head.boot_data.work_mode = work_mode_save;
+		sunxi_flash_handle_init();
+	}
+	else
+	{
+		sunxi_sprite_download_uboot(tmp_target_buffer,uboot_spare_head.boot_data.storage_type,1);
+	}
         free(tmp_target_buffer);
         tmp_target_buffer = NULL;
     }

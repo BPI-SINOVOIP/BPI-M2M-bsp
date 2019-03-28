@@ -1599,8 +1599,14 @@ int __cpufreq_driver_target(struct cpufreq_policy *policy,
 	pr_debug("target for CPU %u: %u kHz, relation %u, requested %u kHz\n",
 			policy->cpu, target_freq, relation, old_target_freq);
 
+#ifdef CONFIG_SCHED_SMP_DCMP
+/* we must check the cpufreq of real hardware, or we will get into trouble */
+	if (target_freq == cpufreq_driver->get(policy->cpu))
+		return 0;
+#else
 	if (target_freq == policy->cur)
 		return 0;
+#endif
 
 	if (cpufreq_driver->target)
 		retval = cpufreq_driver->target(policy, target_freq, relation);

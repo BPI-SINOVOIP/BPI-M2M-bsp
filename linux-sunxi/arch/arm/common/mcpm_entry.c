@@ -77,7 +77,7 @@ extern int sun9i_mcpm_cpu_map_init(void);
 #if defined(CONFIG_ARCH_SUN8IW6) || defined(CONFIG_ARCH_SUN8IW9)
 extern int sun8i_mcpm_cpu_map_init(void);
 #endif
-void mcpm_smp_init_cpus(void)
+void __ref mcpm_smp_init_cpus(void)
 {
 	unsigned int i, ncores;
 

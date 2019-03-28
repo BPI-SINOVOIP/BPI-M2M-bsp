@@ -39,6 +39,9 @@ COBJS-$(CONFIG_SUNXI_AXP20)   	+= axp20_supply.o
 COBJS-$(CONFIG_SUNXI_AXP15)     += axp15.o
 COBJS-$(CONFIG_SUNXI_AXP15)     += axp15_supply.o
 
+COBJS-$(CONFIG_SUNXI_AXP259)     += axp259.o
+COBJS-$(CONFIG_SUNXI_AXP259)     += axp259_supply.o
+
 COBJS-$(CONFIG_SUNXI_AXP809)    += axp809.o
 COBJS-$(CONFIG_SUNXI_AXP809)    += axp809_supply.o
 

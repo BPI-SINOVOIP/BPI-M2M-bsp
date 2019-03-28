@@ -4,6 +4,8 @@
 #include "nand_blk.h"
 #include "nand_dev.h"
 
+
+#define NAND_SCHEDULE_TIMEOUT  (HZ >> 1)
 #define NFTL_SCHEDULE_TIMEOUT  (HZ >> 1)
 #define NFTL_FLUSH_DATA_TIME	 1
 #define WEAR_LEVELING 1
@@ -11,6 +13,8 @@
 static int dev_num = 0;
 unsigned long nand_active_time = 0;
 unsigned long nand_write_active_time = 0;
+
+uchar panic_flag = 0;
 
 struct nand_kobject* s_nand_kobj;
 struct _nand_info* p_nand_info = NULL;
@@ -26,16 +30,74 @@ extern int del_nand_blktrans_dev(struct nand_blk_dev *dev);
 extern struct _nand_disk* get_disk_from_phy_partition(struct _nand_phy_partition* phy_partition);
 extern uint16 get_partitionNO(struct _nand_phy_partition* phy_partition);
 extern int nftl_exit(struct _nftl_blk *nftl_blk);
-
+extern struct _nftl_blk* get_nftl_need_read_claim(struct _nftl_blk* start_blk,uint32 utc);
+extern int read_reclaim(struct _nftl_blk *start_blk,
+		struct _nftl_blk *nftl_blk, uchar *buf, uint32 utc);
+extern int write_panic_data(struct _nftl_blk *nftl_blk,
+		uint32 start_sector, uint32 sector_num, uchar *buf);
 
 int _dev_nand_read(struct _nand_dev *nand_dev,__u32 start_sector,__u32 len,unsigned char *buf);
 int _dev_nand_write(struct _nand_dev *nand_dev,__u32 start_sector,__u32 len,unsigned char *buf);
+int _dev_nand_discard(struct _nand_dev *nand_dev,__u32 start_sector,__u32 len);
 int _dev_flush_write_cache(struct _nand_dev *nand_dev,__u32 num);
 int _dev_flush_sector_write_cache(struct _nand_dev *nand_dev, __u32 num);
 int dev_initialize(struct _nand_dev *nand_dev,struct _nftl_blk *nftl_blk,__u32 offset,__u32 size);
 int nand_flush(struct nand_blk_dev *dev);
 int add_nand(struct nand_blk_ops *tr, struct _nand_phy_partition* phy_partition);
 int remove_nand(struct nand_blk_ops *tr);
+unsigned int nand_read_reclaim(struct _nftl_blk *nftl_blk,unsigned char *buf,uint32 utc);
+
+/*****************************************************************************
+*Name         :
+*Description  :
+*Parameter    :
+*Return       :
+*Note         :
+*****************************************************************************/
+int nand_thread(void *arg)
+{
+    unsigned long time,utc,ret,time_val;
+    struct nand_blk_ops* tr = (struct nand_blk_ops*)arg;
+
+    unsigned int start_time = 4800;
+    unsigned char * temp_buf = kmalloc(64*1024, GFP_KERNEL);
+
+    time_val = NAND_SCHEDULE_TIMEOUT;
+
+    while (!kthread_should_stop())
+    {
+        if(start_time != 0)
+        {
+            start_time--;
+            if(start_time < 3)
+            {
+                utc = get_seconds();
+            }
+            goto  nand_thread_exit;
+        }
+
+        time = jiffies;
+        if (time_after(time, nand_active_time + HZ) != 0)
+        {
+            ret = nand_read_reclaim(tr->nftl_blk_head.nftl_blk_next,temp_buf,utc);
+            if(ret == 1)
+            {
+                time_val = HZ << 5;   //32s
+                utc = get_seconds();
+            }
+            else
+            {
+                time_val = NAND_SCHEDULE_TIMEOUT;
+            }
+        }
+
+nand_thread_exit:
+        set_current_state(TASK_INTERRUPTIBLE);
+        schedule_timeout(time_val);
+    }
+
+    return 0;
+}
 
 /*****************************************************************************
 *Name         :
@@ -158,16 +220,16 @@ static int nftl_thread(void *arg)
 		time = jiffies;
 		if (swl_done) {
 			if (time_after(time, swl_time + (HZ << 6))) {
-        		//nand_dbg_err("[ND]swl: over time(64s) after last swl done\n");
-        		need_swl = 1;	/* next static WL is over 64s */
+			/*nand_dbg_err("[ND]swl: over time(64s) after last swl done\n");*/
+			need_swl = 1;	/* next static WL is over 64s */
 			}
 		} else if (time_after(time, (unsigned long)(nftl_blk->ops_time + (HZ << 2)))) {
 			//nand_dbg_err("[ND]swl: nftl ops is idle over 4s\n");
 			need_swl = 1;	/* nftl ops is idle over 4s */
 		} else if (first_miss_swl) {
 			if (time_after(time, swl_time + (HZ << 6))) {
-        		//nand_dbg_err("[ND]swl: over time(64s) after missing swl\n");
-        		need_swl = 1;	/* next static WL is over 64s */
+			/*nand_dbg_err("[ND]swl: over time(64s) after missing swl\n");*/
+			need_swl = 1;	/* next static WL is over 64s */
 			}
         } else {
 			first_miss_swl = 1;
@@ -175,7 +237,7 @@ static int nftl_thread(void *arg)
 			//nand_dbg_err("[ND]swl: miss swl set time\n");
         }
 
-    	if (need_swl) {
+	if (need_swl) {
 			first_miss_swl = 0;
 			need_swl = 0;
 
@@ -185,7 +247,7 @@ static int nftl_thread(void *arg)
 				swl_time = jiffies;
 				//nand_dbg_err("[ND]swl: done swl set time\n");
             } else {
-            	//nand_dbg_err("[ND]swl: nftl_thread swl fail(%i)!\n", swl_done);
+		/*nand_dbg_err("[ND]swl: nftl_thread swl fail(%i)!\n", swl_done);*/
 				swl_done = 0;
             }
         }
@@ -402,7 +464,7 @@ int add_nand_for_dragonboard_test(struct nand_blk_ops *tr)
 
     nand_dev->nbd.size = 1024*4096;
     nand_dev->nbd.priv = (void*)nand_dev;
-	
+
     dev_num = 0;
     nand_dev->nbd.devnum = dev_num;
 	printk("befor add nand blktrans dev\n");
@@ -559,6 +621,7 @@ int dev_initialize(struct _nand_dev *nand_dev,struct _nftl_blk *nftl_blk,__u32 o
 	nand_dev->write_data = _dev_nand_write;
 	nand_dev->flush_write_cache = _dev_flush_write_cache;
 	nand_dev->flush_sector_write_cache = _dev_flush_sector_write_cache;
+	nand_dev->discard = _dev_nand_discard;
 
 	//nand_dbg_err("dev_initialize 0x%x \n",nand_dev->size);
 
@@ -634,6 +697,31 @@ _dev_nand_write_end:
 
     nand_active_time = jiffies;
     nand_write_active_time = jiffies;
+
+    mutex_unlock(nftl_blk->blk_lock);
+
+    return ret;
+}
+
+/*****************************************************************************
+*Name         :
+*Description  :
+*Parameter    :
+*Return       :
+*Note         :
+*****************************************************************************/
+int _dev_nand_discard(struct _nand_dev *nand_dev,__u32 start_sector,__u32 len)
+{
+    __u32 ret = 0;
+    struct _nftl_blk *nftl_blk = nand_dev->nftl_blk;
+
+    mutex_lock(nftl_blk->blk_lock);
+
+    //nand_dbg_err("==========nand_discard========== %d,%d\n",start_sector,len);
+
+    ret = nand_dev->nftl_blk->discard(nand_dev->nftl_blk,start_sector + nand_dev->offset,len);
+
+    nand_active_time = jiffies;
 
     mutex_unlock(nftl_blk->blk_lock);
 
@@ -741,10 +829,14 @@ int _dev_nand_read2(char * name,unsigned int start_sector,unsigned int len,unsig
         return -1;
     }
 
-    //nand_dbg_err("_dev_nand_read2 %s \n",name);
+	/*nand_dbg_err("_dev_nand_read2 %s\n",name);*/
+
+    mutex_lock(nand_dev->nftl_blk->blk_lock);
 
     ret =  nand_dev->nftl_blk->read_data(nand_dev->nftl_blk,start_sector + nand_dev->offset,len,buf);
     nand_active_time = jiffies;
+
+    mutex_unlock(nand_dev->nftl_blk->blk_lock);
 
     return ret;
 }
@@ -774,8 +866,138 @@ int _dev_nand_write2(char * name,unsigned int start_sector,unsigned int len,unsi
 
    //nand_dbg_err("_dev_nand_write2 %s \n",name);
 
+    mutex_lock(nand_dev->nftl_blk->blk_lock);
+
     ret = nand_dev->nftl_blk->write_data(nand_dev->nftl_blk,start_sector + nand_dev->offset,len,buf);
     nand_active_time = jiffies;
 
+    mutex_unlock(nand_dev->nftl_blk->blk_lock);
+
     return ret;
+}
+
+/*****************************************************************************
+*Name         :
+*Description  :
+*Parameter    :
+*Return       :
+*Note         :
+*****************************************************************************/
+uint32 nand_read_reclaim(struct _nftl_blk *start_blk,unsigned char *buf,uint32 utc)
+{
+    uint32 ret = 0;
+    struct _nftl_blk *nftl_blk;
+
+    nftl_blk = get_nftl_need_read_claim(start_blk,utc);
+    if(nftl_blk == NULL)
+    {
+        return 1;
+    }
+
+    mutex_lock(nftl_blk->blk_lock);
+
+    ret = read_reclaim(start_blk,nftl_blk,buf,utc);
+
+    mutex_unlock(nftl_blk->blk_lock);
+
+    return ret;
+}
+
+/*****************************************************************************
+*Name         :
+*Description  :
+*Parameter    :
+*Return       :
+*Note         :
+*****************************************************************************/
+int panic_dev_nand_read(struct _nand_dev *nand_dev, __u32 start_sector, __u32 len,
+   unsigned char *buf)
+{
+	__u32 ret;
+
+	__u32 sector_start;
+	/*__u32 sector_len;*/
+	uchar *ptr_buf;
+
+	/*struct _nftl_blk *nftl_blk = nand_dev->nftl_blk;*/
+
+	panic_flag = 1;
+
+	if (start_sector + len > nand_dev->size) {
+	ret = 0xfffff;
+	nand_dbg_err("_dev_nand_read over size 0x%x 0x%x\n",
+		 start_sector, nand_dev->size);
+		while (--ret)
+			;
+		ret = -1;
+		return ret;
+	}
+
+	sector_start = start_sector + nand_dev->offset;
+	ptr_buf = buf;
+	while (len >= 32*1024) {
+		nand_dev->nftl_blk->read_data(nand_dev->nftl_blk, sector_start, 32*1024, ptr_buf);
+		ptr_buf += 32*1024;
+		len -= 32*1024;
+		sector_start += 32*1024;
+	}
+
+	if (len != 0) {
+		nand_dev->nftl_blk->read_data(nand_dev->nftl_blk, sector_start, len, ptr_buf);
+	}
+
+	return 0;
+}
+
+/*****************************************************************************
+*Name         :
+*Description  :
+*Parameter    :
+*Return       :
+*Note         :
+*****************************************************************************/
+int critical_dev_nand_read(uchar *dev_name,
+		__u32 start_sector, __u32 sector_num, uchar *buf)
+{
+	int ret;
+	struct _nand_dev *nand_dev = _get_nand_dev_by_name(dev_name);
+
+	if (nand_dev == NULL) {
+		nand_dbg_err("partition name not exit!!\n");
+		return 1;
+	} else {
+		nand_dbg_err("partition name %s!!\n", dev_name);
+	}
+
+	ret = panic_dev_nand_read(nand_dev, start_sector, sector_num, buf);
+
+	return ret;
+}
+
+/*****************************************************************************
+*Name         :
+*Description  :
+*Parameter    :
+*Return       :
+*Note         :
+*****************************************************************************/
+int critical_dev_nand_write(uchar *dev_name,
+		__u32 start_sector, __u32 sector_num, uchar *buf)
+{
+	int ret;
+	struct _nand_dev *nand_dev = _get_nand_dev_by_name(dev_name);
+
+	if (nand_dev == NULL) {
+		nand_dbg_err("partition name not exit!!\n");
+		return 1;
+	} else {
+		nand_dbg_err("partition name %s!!\n", dev_name);
+	}
+
+	panic_flag = 1;
+
+	ret = write_panic_data(nand_dev->nftl_blk,
+			start_sector + nand_dev->offset, sector_num, buf);
+
+	return ret;
 }

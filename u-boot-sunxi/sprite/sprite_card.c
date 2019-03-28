@@ -42,7 +42,7 @@
 #include <private_boot0.h>
 #define  SPRITE_CARD_HEAD_BUFF		   (32 * 1024)
 #if defined (CONFIG_SUNXI_SPINOR)
-#define  SPRITE_CARD_ONCE_DATA_DEAL    (2 * 1024 * 1024)
+#define  SPRITE_CARD_ONCE_DATA_DEAL    (64 * 1024)
 #else
 #define  SPRITE_CARD_ONCE_DATA_DEAL    (16 * 1024 * 1024)
 #endif

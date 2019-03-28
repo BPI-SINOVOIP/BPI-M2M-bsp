@@ -10,6 +10,9 @@ menu "Sensor CSI"
 config OV2710_MIPI
 	tristate "ov2710_mipi"
 	default n
+config OV5640
+	tristate "ov5640"
+	default n
 config OV4689
 	tristate "ov4689"
 	default n
@@ -31,6 +34,9 @@ config H22_MIPI
 config NT99231_MIPI
 	tristate "nt99231_mipi"
 	default n	
+config IMX179_2LANE
+	tristate "imx179_2lane"
+	default n		
 endmenu
 
 endif	

@@ -1,17 +1,6 @@
 /*
  * include/linux/backing-dev.h
  *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-/*
- * include/linux/backing-dev.h
- *
  * low-level device information and state which is propagated up through
  * to high-level code.
  */
@@ -105,6 +94,12 @@ struct backing_dev_info {
 
 	unsigned int min_ratio;
 	unsigned int max_ratio, max_prop_frac;
+
+#ifdef CONFIG_FILE_DIRTY_LIMIT
+	unsigned int max_file_dirty;
+	unsigned int reimburse_time;
+	unsigned int writeback_batch;
+#endif
 
 	struct bdi_writeback wb;  /* default writeback info for this bdi */
 	spinlock_t wb_lock;	  /* protects work_list */
@@ -228,6 +223,25 @@ static inline unsigned long bdi_stat_error(struct backing_dev_info *bdi)
 
 int bdi_set_min_ratio(struct backing_dev_info *bdi, unsigned int min_ratio);
 int bdi_set_max_ratio(struct backing_dev_info *bdi, unsigned int max_ratio);
+
+#ifdef CONFIG_FILE_DIRTY_LIMIT
+int bdi_set_max_file_dirty(struct backing_dev_info *bdi,
+			   unsigned int max_file_dirty);
+int bdi_set_reimburse_centisecs(struct backing_dev_info *bdi,
+				unsigned int reimburse_time);
+int bdi_set_writeback_batch_shift(struct backing_dev_info *bdi,
+			    unsigned int writeback_batch_shift);
+
+static inline unsigned long bdi_file_limit(struct backing_dev_info *bdi)
+{
+	unsigned long file_limit;
+
+	file_limit = min(bdi->avg_write_bandwidth * bdi->reimburse_time / 100,
+			(unsigned long)bdi->max_file_dirty);
+	file_limit = max(file_limit, (unsigned long)bdi->writeback_batch << 1);
+	return file_limit;
+}
+#endif
 
 /*
  * Flags in backing_dev_info::capability

@@ -40,6 +40,9 @@
 
 #include "sunxi-iks-cpufreq.h"
 
+static unsigned int sunxi_cpufreq_set_rate(u32 cpu, u32 old_cluster,\
+						u32 new_cluster, u32 rate);
+
 #ifdef CONFIG_DEBUG_FS
 static unsigned long long c0_set_time_usecs = 0;
 static unsigned long long c0_get_time_usecs = 0;
@@ -186,47 +189,101 @@ static int sunxi_cpufreq_getvolt(unsigned int cpu)
     return regulator_get_voltage(cpu_vdd[cur_cluster]) / 1000;
 }
 
-
+/*
+ * we sync the clk between cluster0 and cluster1,
+ * when cluster1 have only one online cpu
+ */
 static unsigned int sunxi_clk_get_cpu_rate(unsigned int cpu)
 {
-    u32 cur_cluster = per_cpu(physical_cluster, cpu), rate;
-#ifdef CONFIG_DEBUG_FS
-    ktime_t calltime = ktime_set(0, 0), delta, rettime;
+	u32 cur_cluster = per_cpu(physical_cluster, cpu), rate;
+
+#ifdef CONFIG_SCHED_SMP_DCMP
+	u32 cpu_id;
+	u32 other_cluster = MAX_CLUSTERS;
+	u32 other_cluster_cpu_num = 0;
+	u32 other_cluster_cpu = nr_cpu_ids;
+	u32 other_cluster_rate;
+	u32 tmp_cluster;
 #endif
 
-    mutex_lock(&cluster_lock[cur_cluster]);
-
 #ifdef CONFIG_DEBUG_FS
-    calltime = ktime_get();
+	ktime_t calltime = ktime_set(0, 0), delta, rettime;
 #endif
 
-    if (cur_cluster == A7_CLUSTER)
-        clk_get_rate(clk_pll1);
-    else if (cur_cluster == A15_CLUSTER)
-        clk_get_rate(clk_pll2);
+#ifdef CONFIG_SCHED_SMP_DCMP
+	for_each_online_cpu(cpu_id) {
+		tmp_cluster = cpu_to_cluster(cpu_id);
+		if (tmp_cluster != cur_cluster) {
+			other_cluster_cpu_num++;
+			if (other_cluster == MAX_CLUSTERS) {
+				other_cluster_cpu = cpu_id;
+				other_cluster = tmp_cluster;
+			}
+		}
+	}
 
-    rate = clk_get_rate(cluster_clk[cur_cluster]) / 1000;
-
-    /* For switcher we use virtual A15 clock rates */
-    if (is_bL_switching_enabled()) {
-        rate = VIRT_FREQ(cur_cluster, rate);
-    }
-
-#ifdef CONFIG_DEBUG_FS
-    rettime = ktime_get();
-    delta = ktime_sub(rettime, calltime);
-    if (cur_cluster == A7_CLUSTER)
-        c0_get_time_usecs = ktime_to_ns(delta) >> 10;
-    else if (cur_cluster == A15_CLUSTER)
-        c1_get_time_usecs = ktime_to_ns(delta) >> 10;
+	if (other_cluster_cpu_num == 1)
+		mutex_lock(&cluster_lock[other_cluster]);
 #endif
 
-    if (unlikely(sunxi_dvfs_debug))
-        CPUFREQ_DBG("cpu:%d, cur_cluster:%d,  cur_freq:%d\n", cpu, cur_cluster, rate);
+	mutex_lock(&cluster_lock[cur_cluster]);
 
-    mutex_unlock(&cluster_lock[cur_cluster]);
+#ifdef CONFIG_DEBUG_FS
+	calltime = ktime_get();
+#endif
 
-    return rate;
+	if (cur_cluster == A7_CLUSTER)
+		clk_get_rate(clk_pll1);
+	else if (cur_cluster == A15_CLUSTER)
+		clk_get_rate(clk_pll2);
+
+	rate = clk_get_rate(cluster_clk[cur_cluster]) / 1000;
+
+	/* For switcher we use virtual A15 clock rates */
+	if (is_bL_switching_enabled())
+		rate = VIRT_FREQ(cur_cluster, rate);
+
+#ifdef CONFIG_SCHED_SMP_DCMP
+	if (other_cluster_cpu_num == 1) {
+		if (other_cluster == A7_CLUSTER)
+			clk_get_rate(clk_pll1);
+		else if (other_cluster == A15_CLUSTER)
+			clk_get_rate(clk_pll2);
+
+		other_cluster_rate = clk_get_rate(cluster_clk[other_cluster]);
+		other_cluster_rate /= 1000;
+		/* For switcher we use virtual A15 clock rates */
+		if (is_bL_switching_enabled())
+			other_cluster_rate = VIRT_FREQ(other_cluster, \
+							other_cluster_rate);
+	}
+#endif
+
+#ifdef CONFIG_DEBUG_FS
+	rettime = ktime_get();
+	delta = ktime_sub(rettime, calltime);
+	if (cur_cluster == A7_CLUSTER)
+		c0_get_time_usecs = ktime_to_ns(delta) >> 10;
+	else if (cur_cluster == A15_CLUSTER)
+		c1_get_time_usecs = ktime_to_ns(delta) >> 10;
+#endif
+
+	if (unlikely(sunxi_dvfs_debug))
+		CPUFREQ_DBG("cpu:%d, cur_cluster:%d, cur_freq:%d\n", \
+				cpu, cur_cluster, rate);
+
+	mutex_unlock(&cluster_lock[cur_cluster]);
+
+#ifdef CONFIG_SCHED_SMP_DCMP
+	if (other_cluster_cpu_num == 1) {
+		mutex_unlock(&cluster_lock[other_cluster]);
+		if (other_cluster_rate != rate)
+			sunxi_cpufreq_set_rate(other_cluster_cpu, \
+					other_cluster, other_cluster, rate);
+	}
+#endif
+
+	return rate;
 }
 
 #ifdef CONFIG_SUNXI_ARISC

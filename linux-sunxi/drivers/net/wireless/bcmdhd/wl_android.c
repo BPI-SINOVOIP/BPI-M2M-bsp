@@ -884,6 +884,10 @@ int wl_android_wifi_on(struct net_device *dev)
 #else
 	int retry = POWERUP_MAX_RETRY;
 #endif /* CONFIG_MACH_UNIVERSAL5433 */
+#ifdef IAPSTA_PREINIT
+	int bytes_written = 0;
+	struct dhd_conf *conf;
+#endif
 
 	if (!dev) {
 		ANDROID_ERROR(("%s: dev is null\n", __FUNCTION__));
@@ -930,6 +934,15 @@ int wl_android_wifi_on(struct net_device *dev)
 			}
 		}
 #endif /* !BCMPCIE */
+
+#ifdef IAPSTA_PREINIT
+		conf = dhd_get_conf(dev);
+		if (conf) {
+			wl_android_ext_priv_cmd(dev, conf->iapsta_init, 0, &bytes_written);
+			wl_android_ext_priv_cmd(dev, conf->iapsta_config, 0, &bytes_written);
+			wl_android_ext_priv_cmd(dev, conf->iapsta_enable, 0, &bytes_written);
+		}
+#endif
 		g_wifi_on = TRUE;
 	}
 

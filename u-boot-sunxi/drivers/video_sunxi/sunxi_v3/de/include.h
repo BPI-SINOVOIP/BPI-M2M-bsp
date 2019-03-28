@@ -1,12 +1,13 @@
 /*
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ * Allwinner SoCs display driver.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2016 Allwinner.
  *
+ * This file is licensed under the terms of the GNU General Public
+ * License version 2.  This program is licensed "as is" without any
+ * warranty of any kind, whether express or implied.
  */
+
 #ifndef _DISP_INCLUDE_H_
 #define _DISP_INCLUDE_H_
 
@@ -110,12 +111,12 @@
 #define __FPGA_DEBUG__
 #endif
 
-#define SETMASK(width, shift)   ((width?((-1U) >> (32-width)):0)  << (shift))
-#define CLRMASK(width, shift)   (~(SETMASK(width, shift)))
-#define GET_BITS(shift, width, reg)     \
-	(((reg) & SETMASK(width, shift)) >> (shift))
-#define SET_BITS(shift, width, reg, val) \
-	(((reg) & CLRMASK(width, shift)) | (val << (shift)))
+/* #define SETMASK(width, shift)   ((width?((-1U) >> (32-width)):0)  << (shift))*/
+/* #define CLRMASK(width, shift)   (~(SETMASK(width, shift))) */
+/* #define GET_BITS(shift, width, reg)     \ */
+/*	(((reg) & SETMASK(width, shift)) >> (shift)) */
+/* #define SET_BITS(shift, width, reg, val) \ */
+/*	(((reg) & CLRMASK(width, shift)) | (val << (shift))) */
 
 #define DISPALIGN(value, align) ((align==0)?value:(((value) + ((align) - 1)) & ~((align) - 1)))
 

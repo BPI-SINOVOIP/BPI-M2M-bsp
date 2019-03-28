@@ -77,7 +77,7 @@ static void sunxi_secure_set_secondary_entry(void *entry)
 }
 #endif
 
-void __cpuinit sunxi_set_cpus_boot_entry(int cpu, void *entry)
+void __ref sunxi_set_cpus_boot_entry(int cpu, void *entry)
 {
 	if(cpu < NR_CPUS) {
 		cpus_boot_entry[cpu] = (void *)(virt_to_phys(entry));
@@ -90,7 +90,7 @@ void __cpuinit sunxi_set_cpus_boot_entry(int cpu, void *entry)
 /*
  * Setup the set of possible CPUs (via set_cpu_possible)
  */
-void __init sunxi_smp_init_cpus(void)
+void __ref sunxi_smp_init_cpus(void)
 {
 	unsigned int i, ncores;
 
@@ -136,7 +136,7 @@ void __init sunxi_smp_init_cpus(void)
 #endif
 }
 
-static void __cpuinit sunxi_smp_prepare_cpus(unsigned int max_cpus)
+static void __ref sunxi_smp_prepare_cpus(unsigned int max_cpus)
 {
 	pr_info("[%s] enter\n", __func__);
 #ifdef CONFIG_SUNXI_TRUSTZONE
@@ -149,7 +149,7 @@ static void __cpuinit sunxi_smp_prepare_cpus(unsigned int max_cpus)
 /*
  * Perform platform specific initialisation of the specified CPU.
  */
-void __cpuinit sunxi_smp_secondary_init(unsigned int cpu)
+void __ref sunxi_smp_secondary_init(unsigned int cpu)
 {
 	/*
 	 * if any interrupts are already enabled for the primary
@@ -169,8 +169,7 @@ void __cpuinit sunxi_smp_secondary_init(unsigned int cpu)
  * Boot a secondary CPU, and assign it the specified idle task.
  * This also gives us the initial stack to use for this CPU.
  */
-int __cpuinit sunxi_smp_boot_secondary(unsigned int cpu,\
-				struct task_struct *idle)
+int __ref sunxi_smp_boot_secondary(unsigned int cpu, struct task_struct *idle)
 {
 	pr_debug("[%s] enter\n", __func__);
 	spin_lock(&boot_lock);

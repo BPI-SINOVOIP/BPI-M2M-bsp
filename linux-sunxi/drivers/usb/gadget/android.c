@@ -50,6 +50,9 @@
 
 #include "f_fs.c"
 #include "f_audio_source.c"
+#ifdef CONFIG_SND_USB_AUDIO
+#include "f_midi.c"
+#endif
 #include "f_mass_storage.c"
 #include "u_serial.c"
 #include "f_acm.c"
@@ -76,7 +79,14 @@ static const char longname[] = "Gadget Android";
 /* Default vendor and product IDs, overridden by userspace */
 #define VENDOR_ID		0x18D1
 #define PRODUCT_ID		0x0001
-#define KEY_CMDLINE_SERIAL          "androidboot.serialno"
+
+#ifdef CONFIG_SND_USB_AUDIO
+/* f_midi configuration */
+#define MIDI_INPUT_PORTS    1
+#define MIDI_OUTPUT_PORTS   1
+#define MIDI_BUFFER_SIZE    256
+#define MIDI_QUEUE_LENGTH   32
+#endif
 
 struct android_usb_function {
 	char *name;
@@ -176,35 +186,6 @@ static struct usb_configuration android_config_driver = {
 	.bmAttributes	= USB_CONFIG_ATT_ONE | USB_CONFIG_ATT_SELFPOWER,
 	.bMaxPower	= 0x70, /* modify 500ma to 224ma support levono win7 mass_storage in usb3.0 by wangjx 2014-3-20 */
 };
-
-static int get_para_from_cmdline(const char *cmdline, const char *name, char *value, int maxsize)
-{
-    char *p = (char *)cmdline;
-    char *value_p = value;
-    int size= 0;
-
-    if(!cmdline || !name || !value) {
-        return -1;
-    }
-
-    for(; *p != 0;){
-        if(*p++ == ' '){
-            if(0 == strncmp(p, name, strlen(name))) {
-                p += strlen(name);
-                if(*p++ != '=') {
-                    continue;
-                }
-                while((*p != 0) && (*p != ' ') && (++size < maxsize)) {
-                    *value_p++ = *p++;
-                }
-                *value_p = '\0';
-                return value_p - value;
-            }
-        }
-    }
-
-    return 0;
-}
 
 static void android_work(struct work_struct *data)
 {
@@ -844,6 +825,21 @@ struct mass_storage_function_config {
 	struct fsg_common *common;
 };
 
+int fsg_post_eject(struct fsg_common *common,
+                       struct fsg_lun *lun, int num)
+{
+       struct android_dev *dev = _android_dev;
+       char *post_eject[2] = { "USB_MASS_STORAGE=EJECTED", NULL };
+
+       kobject_uevent_env(&dev->dev->kobj, KOBJ_CHANGE, post_eject);
+       return 1;
+}
+
+struct fsg_operations fsg_ops = {
+       .post_eject = fsg_post_eject,
+};
+
+
 static int mass_storage_function_init(struct android_usb_function *f,
 					struct usb_composite_dev *cdev)
 {
@@ -860,6 +856,7 @@ static int mass_storage_function_init(struct android_usb_function *f,
 	config->fsg.nluns = 1;
 	config->fsg.luns[0].removable = 1;
 #else
+	config->fsg.ops = &fsg_ops;
     if(g_android_usb_config.luns <= FSG_MAX_LUNS){
         config->fsg.nluns = g_android_usb_config.luns;
      }else{
@@ -1062,6 +1059,64 @@ static struct android_usb_function audio_source_function = {
 	.attributes	= audio_source_function_attributes,
 };
 
+#ifdef CONFIG_SND_USB_AUDIO
+static int midi_function_init(struct android_usb_function *f,
+					struct usb_composite_dev *cdev)
+{
+	struct midi_alsa_config *config;
+
+	config = kzalloc(sizeof(struct midi_alsa_config), GFP_KERNEL);
+	f->config = config;
+	if (!config)
+		return -ENOMEM;
+
+	config->card = -1;
+	config->device = -1;
+	return 0;
+}
+
+static void midi_function_cleanup(struct android_usb_function *f)
+{
+	kfree(f->config);
+}
+
+static int midi_function_bind_config(struct android_usb_function *f,
+						struct usb_configuration *c)
+{
+	struct midi_alsa_config *config = f->config;
+
+	return f_midi_bind_config(c, SNDRV_DEFAULT_IDX1, SNDRV_DEFAULT_STR1,
+			MIDI_INPUT_PORTS, MIDI_OUTPUT_PORTS, MIDI_BUFFER_SIZE,
+			MIDI_QUEUE_LENGTH, config);
+}
+
+static ssize_t midi_alsa_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct android_usb_function *f = dev_get_drvdata(dev);
+	struct midi_alsa_config *config = f->config;
+
+	/* print ALSA card and device numbers */
+	return sprintf(buf, "%d %d\n", config->card, config->device);
+}
+
+static DEVICE_ATTR(alsa, S_IRUGO, midi_alsa_show, NULL);
+
+static struct device_attribute *midi_function_attributes[] = {
+	&dev_attr_alsa,
+	NULL
+};
+
+static struct android_usb_function midi_function = {
+	.name		= "midi",
+	.init		= midi_function_init,
+	.cleanup	= midi_function_cleanup,
+	.bind_config	= midi_function_bind_config,
+	.attributes	= midi_function_attributes,
+
+};
+#endif
+
 #ifdef CONFIG_USB_SUNXI_G_WEBCAM
 static int webcam_function_init(struct android_usb_function *f,
 			struct usb_composite_dev *cdev)
@@ -1097,6 +1152,9 @@ static struct android_usb_function *supported_functions[] = {
 	&mass_storage_function,
 	&accessory_function,
 	&audio_source_function,
+#ifdef CONFIG_SND_USB_AUDIO
+	&midi_function,
+#endif
 #ifdef CONFIG_USB_SUNXI_G_WEBCAM
 	&webcam_function,
 #endif
@@ -1514,22 +1572,18 @@ static int android_bind(struct usb_composite_dev *cdev)
 
 	pr_debug("%s, serial_unique = %d\n", __func__, usb_config.serial_unique);
 
-    /* get usb serial number from boot command line*/
-    ret = get_para_from_cmdline(saved_command_line, KEY_CMDLINE_SERIAL, serial_string, sizeof(serial_string));
-    if (1 == usb_config.serial_unique && ret > 0) {
-        printk("get usb_serial_number success from boot command line");
-    } else {
-        if(usb_config.serial_unique){
-            u32 serial[4];
+	if(usb_config.serial_unique){
+		u32 serial[4];
 
-            memset(serial, 0, sizeof(serial));
-            sunxi_get_serial((u8 *)serial);
-            memset(serial_string, 0, 256);
-            sprintf(serial_string, "%04x%08x%08x", serial[2], serial[1], serial[0]);
-        }else{
-            strncpy(serial_string, usb_config.usb_serial_number, sizeof(serial_string) - 1);
-        }
-    }
+		memset(serial, 0, sizeof(serial));
+		sunxi_get_serial((u8 *)serial);
+		memset(serial_string, 0, 256);
+		sprintf(serial_string, "%04x%08x%08x", serial[2], serial[1], serial[0]);
+	}else{
+		strncpy(serial_string, usb_config.usb_serial_number, sizeof(serial_string) - 1);
+	}
+
+	rndis_wceis = usb_config.rndis_wceis;
 }
 #endif
 

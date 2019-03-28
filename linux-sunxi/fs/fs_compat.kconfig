@@ -28,3 +28,31 @@ config SYNC_FOR_BLKDEV
 	  The function is modified in fs layer.
 	  /fs/sync.c
 	  /fs/block_dev.c
+
+config MMAP_FOR_FUSE
+	bool "Providing mmap feature for fuse"
+	depends on FS_BLOCK_COMPAT && FUSE_FS
+	default n
+	help
+	  The function is modified in fs layer.
+	  /fs/fuse/file.c
+	  /fs/fuse/dev.c
+	  /fs/fuse/inode.c
+	  /fs/fuse/fuse_i.h
+
+config FILE_DIRTY_LIMIT
+	bool "Enable file dirty limit to reduce dirty caches"
+	depends on FS_BLOCK_COMPAT
+	default n
+	help
+	  The function is modified in:
+	  include/linux/fs.h
+	  include/linux/writeback.h
+	  include/linux/backing-dev.h
+	  mm/page-writeback.c
+	  mm/backing-dev.c
+	  mm/filemap.c
+	  mm/truncate.c
+	  fs/fs-writeback.c
+	  fs/ext4/inode.c
+	  kernel/sysctl.c

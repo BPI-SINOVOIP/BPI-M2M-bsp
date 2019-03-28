@@ -45,7 +45,10 @@
 #include "sdio_ops.h"
 
 void sunxi_dump_reg(struct mmc_host *mmc);
-#define SUNXI_TIMEOUT_INT_MS  (60*1000)
+#define SUNXI_TIMEOUT_INT_MS  (60*1000U)
+/**unit of them is SUNXI_TIMEOUT_INT_MS**/
+#define SUNXI_MAX_TO_UET_MIN  (2)
+#define SUNXI_MAX_TO_DATW_MIN  (10)
 
 static struct workqueue_struct *workqueue;
 
@@ -283,6 +286,8 @@ static void mmc_wait_for_req_done(struct mmc_host *host,
 		{1, 0}, {0, 1}, {1, 2}, {0, 2} };
 	int retry_ph_set = 0;
 	int ret = 0;
+	int wcnt = 0;
+	char *mmc_sunxi_event[] = { "mmc_sunxi_event=mmc_core_busy_too_long", NULL };
 
 	while (1) {
 		/*If core wait cmd over 1min,we will dump host register. and then wait again*/
@@ -290,18 +295,36 @@ static void mmc_wait_for_req_done(struct mmc_host *host,
 		do {
 			ret = wait_for_completion_timeout(&mrq->completion, msecs_to_jiffies(SUNXI_TIMEOUT_INT_MS));
 			if (ret == 0) {
-				pr_err("*%s:req timout (CMD%u): err %d, retry*\n",
+				pr_err("*%s:data req timeout (CMD%u): err %d rewait*\n",
 					mmc_hostname(host),
 					cmd->opcode, cmd->error);
 				sunxi_dump_reg(host);
 			} else if (ret > 0) {
 				break;
-			} else {
-				pr_err("*%s:unknow req err (CMD%u): err %d, ret %x retry*\n",
+			} else if (ret == -ERESTARTSYS) {
+				pr_err("*%s: data req interrupted by signal (CMD%u): err %d*\n",
 					mmc_hostname(host),
-					cmd->opcode , cmd->error , ret);
+					mrq->cmd->opcode, mrq->cmd->error);
+				break;
+			} else {
+				pr_err("*%s: data req unknow err (CMD%u): %d ret err %d *\n",
+					mmc_hostname(host),
+					mrq->cmd->opcode, mrq->cmd->error, ret);
+				break;
 			}
-		} while (1);
+			wcnt++;
+			if (wcnt == SUNXI_MAX_TO_UET_MIN) {
+				pr_err("*%s: has wait %d min long (CMD%u): err %d*\n",
+				mmc_hostname(host), SUNXI_MAX_TO_UET_MIN,
+				mrq->cmd->opcode, mrq->cmd->error);
+				kobject_uevent_env(&mmc_dev(host)->kobj, KOBJ_CHANGE, mmc_sunxi_event);
+			}
+		} while (wcnt < SUNXI_MAX_TO_DATW_MIN);
+		if (wcnt >= SUNXI_MAX_TO_DATW_MIN) {
+				pr_err("%s: has wait %d min long (CMD%u): err %d,we give up wait*\n",
+					mmc_hostname(host), SUNXI_MAX_TO_DATW_MIN,
+					mrq->cmd->opcode, mrq->cmd->error);
+		}
 
 		if (!cmd->error || !cmd->retries ||
 		    mmc_card_removed(host->card)) {
@@ -2218,11 +2241,16 @@ void mmc_rescan(struct work_struct *work)
 	mmc_claim_host(host);
 	for (i = 0; i < ARRAY_SIZE(freqs); i++) {
 		if (!mmc_rescan_try_freq(host, max(freqs[i], host->f_min))) {
+			char *mmc_sunxi_event[] = { "mmc_sunxi_event=mmc_core_init_ok", NULL };
+			kobject_uevent_env(&mmc_dev(host)->kobj, KOBJ_CHANGE, mmc_sunxi_event);
 			extend_wakelock = true;
 			break;
 		}
-		if (freqs[i] <= host->f_min)
+		if (freqs[i] <= host->f_min) {
+			char *mmc_sunxi_event[] = { "mmc_sunxi_event=mmc_core_init_failed", NULL };
+			kobject_uevent_env(&mmc_dev(host)->kobj, KOBJ_CHANGE, mmc_sunxi_event);
 			break;
+		}
 	}
 	mmc_release_host(host);
 

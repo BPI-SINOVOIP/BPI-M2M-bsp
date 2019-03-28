@@ -26,12 +26,12 @@ static void dumphex32(char* name, char* base, int len)
 	for (i=0; i<len; i+=4)
 	{
 		if (!(i&0xf))
-			mmcmsg("\n%x : ", base + i);
+			mmcmsg("\n%x : ", (u32) (base + i));
 		mmcmsg("%x ", readl(base + i));
 	}
 	mmcmsg("\n");
 }
-
+/*
 static void dumpmmcreg(struct sunxi_mmc *reg)
 {
 	mmcmsg("gctrl     0x%x\n", reg->gctrl     );
@@ -57,6 +57,7 @@ static void dumpmmcreg(struct sunxi_mmc *reg)
 	mmcmsg("idst      0x%x\n", reg->idst      );
 	mmcmsg("idie      0x%x\n", reg->idie      );
 }
+*/
 #else
 //#define MMCDBG(fmt...)
 #define dumpmmcreg(fmt...)
@@ -128,7 +129,7 @@ static int mmc_clk_io_onoff(int sdc_no, int onoff, const normal_gpio_cfg *gpio_i
 	}
 	else // if(sdc_no == 2)
 	{
-		boot_set_gpio((void *)(gpio_info + offset), 10, 1);
+		boot_set_gpio((void *)(gpio_info + offset), 11, 1);
 	}
 	/* config ahb clock */
 	rval = readl(mmchost->hclkbase);

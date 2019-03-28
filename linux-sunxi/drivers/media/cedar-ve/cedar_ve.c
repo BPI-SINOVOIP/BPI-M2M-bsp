@@ -627,7 +627,7 @@ long cedardev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
         case IOCTL_WAIT_VE_DE:            
             ve_timeout = (int)arg;
             cedar_devp->de_irq_value = 0;
-            
+
             spin_lock_irqsave(&cedar_spin_lock, flags);
             if(cedar_devp->de_irq_flag)
             	cedar_devp->de_irq_value = 1;
@@ -1067,7 +1067,7 @@ static int cedardev_init(void)
 	}
 	
 #elif defined CONFIG_ARCH_SUN8IW6P1
-
+	
 	/*VE_SRAM mapping to AC320*/
 	val = sunxi_smc_readl((void __iomem *)0xf1c00000);
 	val &= 0x80000000;

@@ -1,14 +1,4 @@
 /*
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-/*
  * A V4L2 driver for ov4689 cameras.
  *
  */
@@ -1894,6 +1884,7 @@ static int sensor_enum_size(struct v4l2_subdev *sd,
   fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
   fsize->discrete.width = sensor_win_sizes[fsize->index].width;
   fsize->discrete.height = sensor_win_sizes[fsize->index].height;
+	fsize->reserved[0] = sensor_win_sizes[fsize->index].fps_fixed;
   
   return 0;
 }

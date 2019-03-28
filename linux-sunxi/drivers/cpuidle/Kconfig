@@ -28,6 +28,17 @@ config CPU_IDLE_GOV_LADDER
 config CPU_IDLE_GOV_MENU
 	bool "Menu governor (for tickless system)"
 	default y
+
+config CPU_IDLE_USE_SUNXI_MENU_GOVERNOR
+	bool "use allwinner sunxi governor based on menu governor."
+	depends on CPU_IDLE_GOV_MENU
+	default y
+	help
+	 Allwinner menu governor, a kind of menu governor which is compatible
+	 with allwinner's soc which without perfect interrupts alignment ability,
+	 will not use correction factor because the factor is not accurate for
+	 predicting next interrupts.
+
 menu "ARM CPU Idle Drivers"
 depends on ARM
 source "drivers/cpuidle/Kconfig.arm"

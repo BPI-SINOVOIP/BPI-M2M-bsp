@@ -2,6 +2,7 @@
 # Makefile for sensor chip drivers.
 #
 
+obj-$(CONFIG_UAV_SENSORS_ICM20689)	+= icm20689.o
 obj-$(CONFIG_UAV_SENSORS_MPU6050)	+= mpu6050.o
 obj-$(CONFIG_UAV_SENSORS_FBM320)	+= fbm320.o
 obj-$(CONFIG_UAV_SENSORS_KS103)		+= ks103.o

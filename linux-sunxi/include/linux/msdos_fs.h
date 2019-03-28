@@ -1,14 +1,3 @@
-/*
- * include/linux/msdos_fs.h
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #ifndef _LINUX_MSDOS_FS_H
 #define _LINUX_MSDOS_FS_H
 
@@ -54,6 +43,7 @@
 #define ATTR_EXT	(ATTR_RO | ATTR_HIDDEN | ATTR_SYS | ATTR_VOLUME)
 
 #define CASE_LOWER_BASE	8	/* base is lower case */
+#define CASE_LOWER_PREA 1	/* proalloc */
 #define CASE_LOWER_EXT	16	/* extension is lower case */
 
 #define DELETED_FLAG	0xe5	/* marks file as deleted when in name[0] */

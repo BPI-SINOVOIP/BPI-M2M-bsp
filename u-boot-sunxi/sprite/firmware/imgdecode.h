@@ -33,10 +33,10 @@
 #define PLUGIN_COPYRIGHT		"scottyu"
 
 //------------------------------------------------------------------------------------------------------------
-//插件的通用接口
+//鎻掍欢鐨勯�氱敤鎺ュ彛
 //------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------
-// image 解析接口
+// image 瑙ｆ瀽鎺ュ彛
 //------------------------------------------------------------------------------------------------------------
 typedef void * 		HIMAGE;
 
@@ -57,6 +57,10 @@ extern   uint 			Img_ReadItem	(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, ui
 extern   int 			Img_CloseItem	(HIMAGE hImage, HIMAGEITEM hItem);
 
 extern   void 	 		Img_Close		(HIMAGE hImage);
+extern   uint 			Img_GetItemOffset(HIMAGE hImage, HIMAGEITEM hItem);
+extern   HIMAGE 		Img_Fat_Open(char * ImageFile);
+extern   uint 			Img_Fat_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, char * ImageFile, void *buffer, uint buffer_size);
+
 
 //------------------------------------------------------------------------------------------------------------
 // THE END !

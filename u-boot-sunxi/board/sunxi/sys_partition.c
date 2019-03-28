@@ -84,6 +84,19 @@ uint sunxi_partition_get_size(int part_index)
 	return mbr->array[part_index].lenlo;
 }
 
+uint sunxi_partition_set_size(int part_index, int size)
+{
+	sunxi_mbr_t        *mbr  = (sunxi_mbr_t*)mbr_buf;
+
+	if((!mbr_status) || (part_index >= mbr->PartCount))
+	{
+		return 0;
+	}
+
+	mbr->array[part_index].lenlo = size;
+	return 0;
+}
+
 uint sunxi_partition_get_offset_byname(const char *part_name)
 {
 	sunxi_mbr_t        *mbr  = (sunxi_mbr_t*)mbr_buf;
@@ -122,6 +135,27 @@ int sunxi_partition_get_partno_byname(const char *part_name)
 	}
 
 	return -1;
+}
+
+uint sunxi_partition_set_size_byname(const char *part_name, int size)
+{
+	sunxi_mbr_t        *mbr  = (sunxi_mbr_t*)mbr_buf;
+	int			i;
+
+	if(!mbr_status)
+	{
+		return 0;
+	}
+	for(i=0;i<mbr->PartCount;i++)
+	{
+		if(!strcmp(part_name, (const char *)mbr->array[i].name))
+		{
+			mbr->array[i].lenlo = size;
+			return 0;
+		}
+	}
+
+	return 0;
 }
 
 

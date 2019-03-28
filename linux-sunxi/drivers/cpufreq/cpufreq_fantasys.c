@@ -380,7 +380,8 @@ static ssize_t show_max_power(struct kobject *kobj, struct attribute *attr, char
     return sprintf(buf, "%d\n", atomic_read(&g_max_power_flag));
 }
 
-static ssize_t show_pulse(struct kobject *kobj, struct attribute *attr, char *buf)
+static ssize_t __ref show_pulse(struct kobject *kobj,
+				struct attribute *attr, char *buf)
 {
     int nr_up, cpu, hotplug_lock;
     struct cpu_dbs_info_s *dbs_info;
@@ -554,7 +555,7 @@ static ssize_t store_cpu_state_debug(struct kobject *a, struct attribute *b,
     return count;
 }
 
-static ssize_t store_max_power(struct kobject *a, struct attribute *b,
+static ssize_t __ref store_max_power(struct kobject *a, struct attribute *b,
                 const char *buf, size_t count)
 {
     unsigned int input;
@@ -636,7 +637,7 @@ static struct attribute_group dbs_attr_group = {
 /*
  * cpu hotplug, just plug in 2 cpu
  */
-static void cpu_up_work(struct work_struct *work)
+static void __ref cpu_up_work(struct work_struct *work)
 {
     int cpu, nr_up, online, hotplug_lock;
     struct cpu_dbs_info_s *dbs_info;
@@ -1342,7 +1343,7 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy, unsigned int even
 }
 
 #ifdef CONFIG_SW_POWERNOW
-static int start_powernow(unsigned long mode)
+static int __ref start_powernow(unsigned long mode)
 {
     int retval = 0, nr_up = 0, cpu = 0;
     struct cpu_dbs_info_s *this_dbs_info;

@@ -1,24 +1,13 @@
 /*
- * drivers/input/sw-device.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-/*
  *  sw_device.c - Linux kernel modules for  Detection i2c device.
  */
 
 #include "sw-device.h"
 
-static int ctp_mask = 0x1;
+static int ctp_mask = 0x0;
 static u32 debug_mask = 0;
-#define dprintk(level_mask, fmt, arg...)	/*if (unlikely(debug_mask & level_mask))*/ \
-	printk(KERN_INFO fmt , ## arg)
+#define dprintk(level_mask, fmt, arg...)	if (unlikely(debug_mask & level_mask)) \
+	printk(KERN_DEBUG fmt , ## arg)
 
 module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
 module_param_named(ctp_mask, ctp_mask, int , S_IRUGO | S_IWUSR | S_IWGRP);

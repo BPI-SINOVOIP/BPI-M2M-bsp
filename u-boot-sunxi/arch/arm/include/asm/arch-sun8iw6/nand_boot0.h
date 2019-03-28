@@ -32,7 +32,7 @@
 #define  __basic_nf_func_h
 
 #define BOOT0_START_BLK_NUM             0
-#define BLKS_FOR_BOOT0                  2
+#define BLKS_FOR_BOOT0                  4
 #define BOOT1_START_BLK_NUM             BLKS_FOR_BOOT0
 
 #define BLKS_FOR_BOOT1_IN_16K_BLK_NF    32
@@ -51,6 +51,7 @@ extern __u32 NF_PAGE_SIZE;
 extern __u32 NF_PG_SZ_WIDTH;
 extern __u32 BOOT1_LAST_BLK_NUM;
 extern __u32 page_with_bad_block;
+extern __u32 BOOT1_START_BLK;
 
 
 #define NF_SECTOR_SIZE                  512U
@@ -106,10 +107,24 @@ extern __s32  NF_erase( __u32 blk_num );
 extern __s32  NF_read_status ( __u32 blk_num );
 extern __s32  NF_mark_bad_block( __u32 blk_num );
 extern __s32  NF_verify_block( __u32 blk_num );
+
+struct boot_physical_param;
+//struct boot_flash_info_t;
+
+extern __u32 NAND_Getlsbpage_type(void);
+extern __u32 NAND_GetLsbblksize(void);
+extern __s32 NFB_PhyInit(void);
+extern __s32 NFB_PhyExit(void);
+extern __s32 NFB_PhyRead (struct boot_physical_param *readop);
+//extern __s32 NFB_GetFlashInfo(boot_flash_info_t *param);
+extern __u32 Nand_Is_lsb_page(__u32 page);
+extern __u8  *get_page_buf( void );
+extern __s32 check_magic( __u32 *mem_base, const char *magic );
 extern __u32 load_uboot_in_one_block_judge(__u32 length);
 
-
-
+extern int verify_addsum( void *mem_base, __u32 size );
+extern __u32 g_mod( __u32 dividend, __u32 divisor, __u32 *quot_p );
+extern __s32 check_sum( __u32 *mem_base, __u32 size );
 
 #endif     //  ifndef __basic_nf_func_h
 

@@ -196,10 +196,12 @@ static DEFINE_PER_CPU(struct menu_device, menu_devices);
 static void menu_update(struct cpuidle_driver *drv, struct cpuidle_device *dev);
 
 /* This implements DIV_ROUND_CLOSEST but avoids 64 bit division */
+#if !(CONFIG_CPU_IDLE_USE_SUNXI_MENU_GOVERNOR)
 static u64 div_round64(u64 dividend, u32 divisor)
 {
 	return div_u64(dividend + (divisor / 2), divisor);
 }
+#endif
 
 /*
  * Try detecting repeating patterns by keeping track of the last 8
@@ -280,9 +282,13 @@ static int menu_select(struct cpuidle_driver *drv, struct cpuidle_device *dev)
 	if (data->correction_factor[data->bucket] == 0)
 		data->correction_factor[data->bucket] = RESOLUTION * DECAY;
 
+#if !(CONFIG_CPU_IDLE_USE_SUNXI_MENU_GOVERNOR)
 	/* Make sure to round up for half microseconds */
 	data->predicted_us = div_round64(data->expected_us * data->correction_factor[data->bucket],
 					 RESOLUTION * DECAY);
+#else
+	data->predicted_us = data->expected_us;
+#endif
 
 	/*
 	 * Ignore repeating patterns when we're

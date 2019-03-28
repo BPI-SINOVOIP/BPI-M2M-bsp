@@ -1,10 +1,12 @@
 obj-$(CONFIG_DISP2_SUNXI) += disp.o
 
+CFLAGS_disp_rotation_neon.o := -Wa,-march=armv7-a -mfpu=neon -mfloat-abi=softfp
 disp-objs :=  dev_disp.o dev_fb.o dev_disp_debugfs.o
 disp-objs	+= disp_sys_intf.o dev_composer.o
 disp-objs	+= de/disp_display.o de/disp_features.o de/disp_device.o de/disp_lcd.o de/disp_manager.o de/disp_private.o \
-							de/disp_smart_backlight.o de/disp_enhance.o de/disp_capture.o de/disp_hdmi.o de/disp_tv.o de/disp_vdevice.o
-disp-objs += lcd/panels.o lcd/lcd_source.o lcd/default_panel.o lcd/lt070me05000.o lcd/wtq05027d01.o lcd/sl006p.o lcd/t27p06.o lcd/st7789s.o lcd/tft720x1280.o lcd/ibt_panel.o
+							de/disp_smart_backlight.o de/disp_enhance.o de/disp_capture.o de/disp_hdmi.o de/disp_tv.o de/disp_vdevice.o \
+							de/disp_rotation_sw.o
+disp-objs += lcd/panels.o lcd/lcd_source.o lcd/default_panel.o lcd/lt070me05000.o lcd/wtq05027d01.o lcd/hp784bl0292.o lcd/sl006p.o lcd/t27p06.o lcd/st7789s.o lcd/tft720x1280.o lcd/ibt_panel.o lcd/v920tvv01a.o
 disp-$(CONFIG_ARCH_SUN8IW6) += de/lowlevel_sun8iw6/de_fcc.o de/lowlevel_sun8iw6/de_gsu.o de/lowlevel_sun8iw6/de_hal.o de/lowlevel_sun8iw6/disp_al.o \
 						de/lowlevel_sun8iw6/de_peak.o de/lowlevel_sun8iw6/de_rtmx.o de/lowlevel_sun8iw6/de_scaler_table.o\
 						de/lowlevel_sun8iw6/de_vep_table.o de/lowlevel_sun8iw6/de_vsu.o de/lowlevel_sun8iw6/de_feat.o \
@@ -33,3 +35,4 @@ disp-$(CONFIG_ARCH_SUN8IW9) += de/lowlevel_sun8iw9/de_fcc.o de/lowlevel_sun8iw9/
 						de/lowlevel_sun8iw9/de_ase.o de/lowlevel_sun8iw9/de_bws.o de/lowlevel_sun8iw9/de_enhance.o \
 						de/lowlevel_sun8iw9/de_smbl.o de/lowlevel_sun8iw9/de_ccsc.o de/lowlevel_sun8iw9/de_dcsc.o \
 						de/lowlevel_sun8iw9/de_wb.o de/lowlevel_sun8iw9/de_clock.o de/lowlevel_sun8iw9/de_dsi.o
+disp-$(CONFIG_DISP2_SUNXI_NEON_ROTATION) += de/disp_rotation_neon.o

@@ -970,15 +970,13 @@ static unsigned long shrink_page_list(struct list_head *page_list,
 			if (!sc->may_writepage)
 				goto keep_locked;
 
-#ifdef CONFIG_CMA
 			/* donot swap cma page when alloc is not for CMA */
 			if (IS_ENABLED(CONFIG_CMA)) {
 				mt = allocflags_to_migratetype(sc->gfp_mask);
 				if (mt == MIGRATE_UNMOVABLE)
-					if (get_pageblock_migratetype(page) == MIGRATE_CMA)
+					if (is_migrate_cma(get_pageblock_migratetype(page)))
 						goto keep_locked;
 			}
-#endif
 
 			/* Page is dirty, try to write it out here */
 			switch (pageout(page, mapping, sc)) {

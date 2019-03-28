@@ -1,14 +1,4 @@
 /*
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-/*
  * A V4L2 driver for IMX291 Raw cameras.
  *
  */
@@ -124,6 +114,8 @@ static struct regval_list sensor_default_regs[] =
 };
 
 static struct regval_list sensor_1080p30_regs[] = {
+	{0x3003, 0x01},
+	{REG_DLY, 0x10}, /* delay */
 	{0x3000, 0x01},
 	{0x3002, 0x00},
 	{0x3005, 0x01},
@@ -221,6 +213,8 @@ static struct regval_list sensor_1080p30_regs[] = {
 };
 
 static struct regval_list sensor_1080p60_regs[] = {
+	{0x3003, 0x01},
+	{REG_DLY, 0x10}, /* delay */
 	{0x3000, 0x01},
 	{0x3002, 0x00},
 	{0x3005, 0x01},

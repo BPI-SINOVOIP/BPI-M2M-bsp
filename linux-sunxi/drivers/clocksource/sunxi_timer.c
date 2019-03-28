@@ -45,7 +45,6 @@
 
 static void __iomem *timer_base;
 static spinlock_t timer0_spin_lock;
-
 #ifdef CONFIG_GENERIC_CLOCKEVENTS_BROADCAST
 extern void smp_timer_broadcast(const struct cpumask *mask);
 #else
@@ -158,6 +157,7 @@ void __init sunxi_timer_init(void)
 	int ret, irq;
 	u32 val;
 
+	spin_lock_init(&timer0_spin_lock);
 #ifdef CONFIG_OF
 	node = of_find_matching_node(NULL, sunxi_timer_dt_ids);
 	if (!node)

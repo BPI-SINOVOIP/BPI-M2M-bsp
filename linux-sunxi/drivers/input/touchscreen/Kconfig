@@ -851,6 +851,7 @@ config TOUCHSCREEN_TPS6507X
 	  To compile this driver as a module, choose M here: the
 	  module will be called tps6507x_ts.
 
+
 config  TOUCHSCREEN_GT82X
        tristate  "gt82x touchscreen driver"
        default m
@@ -873,6 +874,7 @@ source "drivers/input/touchscreen/aw5x06/Kconfig"
 source "drivers/input/touchscreen/gt818/Kconfig"
 source "drivers/input/touchscreen/bcd/Kconfig"
 source "drivers/input/touchscreen/icn83xx/Kconfig"
+source "drivers/input/touchscreen/icn85xx/Kconfig"
 source "drivers/input/touchscreen/gt911/Kconfig"
 
 endif

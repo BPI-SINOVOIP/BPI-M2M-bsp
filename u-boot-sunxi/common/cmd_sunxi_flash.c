@@ -74,6 +74,9 @@ int do_sunxi_flash(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	ulong addr;
 	char *cmd;
 	char *part_name;
+	u32 start_block;
+	u32 rblock;
+	int readall_flag = 0;
 
 	/* at least four arguments please */
 	if ((argc != 4) && (argc != 5))
@@ -81,17 +84,9 @@ int do_sunxi_flash(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 
 	cmd = argv[1];
 	part_name = argv[3];
-/*
-************************************************
-*************  read only   *********************
-************************************************
-*/
 
 	if (strncmp(cmd, "read", 4) == 0)
 	{
-		u32 start_block;
-		u32 rblock;
-		int readall_flag = 0;
 
 		addr = (ulong)simple_strtoul(argv[2], NULL, 16);
 
@@ -134,8 +129,6 @@ int do_sunxi_flash(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	}
 	else if(strncmp(cmd, "log_read", strlen("log_read")) == 0)
 	{
-		u32 start_block;
-		u32 rblock;
 
         printf("read logical\n");
 
@@ -152,8 +145,6 @@ int do_sunxi_flash(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 	}
 	else if(strncmp(cmd, "phy_read", strlen("phy_read")) == 0)
 	{
-		u32 start_block;
-		u32 rblock;
 
         printf("read physical\n");
 
@@ -165,6 +156,30 @@ int do_sunxi_flash(cmd_tbl_t * cmdtp, int flag, int argc, char * const argv[])
 
 		tick_printf("sunxi flash phy_read :offset %x, %d sectors %s\n", start_block, rblock,
 		       ret ? "OK" : "ERROR");
+
+		return ret == 0 ? 1 : 0;
+	}
+	else if (strncmp(cmd, "write", 4) == 0)
+	{
+		addr = (ulong)simple_strtoul(argv[2], NULL, 16);
+		/* write size: indecated on partemeter 1 */
+		if (argc == 4) {
+			start_block = sunxi_partition_get_offset_byname((const char *)part_name);
+			rblock = sunxi_partition_get_size_byname((const char *)part_name);
+		} else {
+			/* write size: partemeter 2 */
+			start_block = (u32)simple_strtoul(argv[3], NULL, 16)/512;
+			rblock = (u32)simple_strtoul(argv[4], NULL, 16)/512;
+		}
+#if DEBUG
+		printf("part name   = %s\n", part_name);
+		printf("start block = %x\n", start_block);
+		printf("     nblock = %x\n", rblock);
+#endif
+		ret = sunxi_flash_write(start_block, rblock, (void *)addr);
+
+		tick_printf("sunxi flash write :offset %x, %d bytes %s\n", start_block<<9, rblock<<9,
+		            ret ? "OK" : "ERROR");
 
 		return ret == 0 ? 1 : 0;
 	}
@@ -182,4 +197,10 @@ U_BOOT_CMD(
 	"[parmeters 2] : the number of bytes to be load(hex only)\n"
 	"if [parmeters 2] not exist, the number of bytes to be load "
 	"is the size of the part indecated on partemeter 1"
+        "\nwrite command parmeters : \n"
+        "parmeters 0 : addr to save(hex only)\n"
+        "parmeters 1 : the name of the part to be write or the flash offset\n"
+        "[parmeters 2] : the number of bytes to be write(hex only)\n"
+        "if [parmeters 2] not exist, the number of bytes to be write "
+        "is the size of the part indecated on partemeter 1"
 );

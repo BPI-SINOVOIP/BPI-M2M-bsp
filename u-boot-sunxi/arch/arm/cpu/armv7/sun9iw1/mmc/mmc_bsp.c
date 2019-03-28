@@ -147,8 +147,22 @@ static int mmc_clk_io_onoff(int sdc_no, int onoff, const normal_gpio_cfg *gpio_i
 	}
 	else // if(sdc_no == 2)
 	{
-		boot_set_gpio((void *)(gpio_info + offset), 10, 1);
+		boot_set_gpio((void *)(gpio_info + offset), 11, 1);
 	}
+
+	/* clean ahb clock */
+	rval = readl(mmchost->commreg);
+	rval &= ~((1<<16)|(1<<18));
+	writel(rval, mmchost->commreg);
+
+	rval = readl(mmchost->hclkrst);
+	rval &= ~(1 << 8);
+	writel(rval, mmchost->hclkrst);
+
+	rval = readl(mmchost->hclkbase);
+	rval &= ~(1 << 8);
+	writel(rval, mmchost->hclkbase);
+
 	/* config ahb clock */
 	rval = readl(mmchost->hclkbase);
 	rval |= (1 << 8);

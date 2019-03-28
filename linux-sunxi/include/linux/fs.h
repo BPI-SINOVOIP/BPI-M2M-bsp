@@ -1,14 +1,3 @@
-/*
- * include/linux/fs.h
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #ifndef _LINUX_FS_H
 #define _LINUX_FS_H
 
@@ -670,6 +659,10 @@ struct address_space {
 	struct mutex		i_mmap_mutex;	/* protect tree, count, list */
 	/* Protected by tree_lock together with the radix tree */
 	unsigned long		nrpages;	/* number of total pages */
+#ifdef CONFIG_FILE_DIRTY_LIMIT
+	unsigned long		nrdirty;	/* number of dirty pages */
+	unsigned long		nrwriteback;	/* number of writeback pages */
+#endif
 	pgoff_t			writeback_index;/* writeback starts here */
 	const struct address_space_operations *a_ops;	/* methods */
 	unsigned long		flags;		/* error bits/gfp mask */

@@ -28,12 +28,14 @@
 #include "imgdecode.h"
 #include "imagefile_new.h"
 #include "../sprite_card.h"
+#include "../sprite_auto_update.h"
 
-#define HEAD_ID				0		//Í·¼ÓÃÜ½Ó¿ÚË÷Òı
-#define TABLE_ID			1		//±í¼ÓÃÜ½Ó¿ÚË÷Òı
-#define DATA_ID				2		//Êı¾İ¼ÓÃÜ½Ó¿ÚË÷Òı
-#define IF_CNT				3		//¼ÓÃÜ½Ó¿Ú¸öÊı	ÏÖÔÚÖ»ÓĞÍ·¼ÓÃÜ£¬±í¼ÓÃÜ£¬Êı¾İ¼ÓÃÜ3ÖÖ
-#define	MAX_KEY_SIZE 		32		//ÃÜÂë³¤¶È
+
+#define HEAD_ID				0		//å¤´åŠ å¯†æ¥å£ç´¢å¼•
+#define TABLE_ID			1		//è¡¨åŠ å¯†æ¥å£ç´¢å¼•
+#define DATA_ID				2		//æ•°æ®åŠ å¯†æ¥å£ç´¢å¼•
+#define IF_CNT				3		//åŠ å¯†æ¥å£ä¸ªæ•°	ç°åœ¨åªæœ‰å¤´åŠ å¯†ï¼Œè¡¨åŠ å¯†ï¼Œæ•°æ®åŠ å¯†3ç§
+#define	MAX_KEY_SIZE 		32		//å¯†ç é•¿åº¦
 
 #pragma pack(push, 1)
 typedef struct tag_IMAGE_HANDLE
@@ -41,51 +43,51 @@ typedef struct tag_IMAGE_HANDLE
 
 //	HANDLE  fp;			//
 
-	ImageHead_t  ImageHead;		//imgÍ·ĞÅÏ¢
+	ImageHead_t  ImageHead;		//imgå¤´ä¿¡æ¯
 
-	ImageItem_t *ItemTable;		//itemĞÅÏ¢±í
+	ImageItem_t *ItemTable;		//itemä¿¡æ¯è¡¨
 
-//	RC_ENDECODE_IF_t rc_if_decode[IF_CNT];//½âÃÜ½Ó¿Ú
+//	RC_ENDECODE_IF_t rc_if_decode[IF_CNT];//è§£å¯†æ¥å£
 
-//	BOOL			bWithEncpy; // ÊÇ·ñ¼ÓÃÜ
+//	BOOL			bWithEncpy; // æ˜¯å¦åŠ å¯†
 }IMAGE_HANDLE;
 
 #define INVALID_INDEX		0xFFFFFFFF
 
 
 typedef struct tag_ITEM_HANDLE{
-	uint	index;					//ÔÚItemTableÖĞµÄË÷Òı
+	uint	index;					//åœ¨ItemTableä¸­çš„ç´¢å¼•
 	uint    reserved[3];
 //	long long pos;
 }ITEM_HANDLE;
 
 #define ITEM_PHOENIX_TOOLS 	  "PXTOOLS "
 
-uint img_file_start;			//¹Ì¼şµÄÆğÊ¼Î»ÖÃ
+uint img_file_start;			//å›ºä»¶çš„èµ·å§‹ä½ç½®
 //------------------------------------------------------------------------------------------------------------
-//image½âÎö²å¼şµÄ½Ó¿Ú
+//imageè§£ææ’ä»¶çš„æ¥å£
 //------------------------------------------------------------------------------------------------------------
 
 
 //------------------------------------------------------------------------------------------------------------
 //
-// º¯ÊıËµÃ÷
+// å‡½æ•°è¯´æ˜
 //
 //
-// ²ÎÊıËµÃ÷
+// å‚æ•°è¯´æ˜
 //
 //
-// ·µ»ØÖµ
+// è¿”å›å€¼
 //
 //
-// ÆäËû
-//    ÎŞ
+// å…¶ä»–
+//    æ— 
 //
 //------------------------------------------------------------------------------------------------------------
 HIMAGE 	Img_Open	(char * ImageFile)
 {
 	IMAGE_HANDLE * pImage = NULL;
-	uint ItemTableSize;					//¹Ì¼şË÷Òı±íµÄ´óĞ¡
+	uint ItemTableSize;					//å›ºä»¶ç´¢å¼•è¡¨çš„å¤§å°
 
 	img_file_start = sprite_card_firmware_start();
 	if(!img_file_start)
@@ -104,7 +106,7 @@ HIMAGE 	Img_Open	(char * ImageFile)
 	}
 	memset(pImage, 0, sizeof(IMAGE_HANDLE));
 	//------------------------------------------------
-	//¶ÁimgÍ·
+	//è¯»imgå¤´
 	//------------------------------------------------
 	//debug("try to read mmc start %d\n", img_file_start);
 	if(!sunxi_flash_read(img_file_start, IMAGE_HEAD_SIZE/512, &pImage->ImageHead))
@@ -115,7 +117,7 @@ HIMAGE 	Img_Open	(char * ImageFile)
 	}
 	debug("read mmc ok\n");
 	//------------------------------------------------
-	//±È½Ïmagic
+	//æ¯”è¾ƒmagic
 	//------------------------------------------------
 	if (memcmp(pImage->ImageHead.magic, IMAGE_MAGIC, 8) != 0)
 	{
@@ -124,7 +126,7 @@ HIMAGE 	Img_Open	(char * ImageFile)
 		goto _img_open_fail_;
 	}
 	//------------------------------------------------
-	//ÎªË÷Òı±í¿ª±Ù¿Õ¼ä
+	//ä¸ºç´¢å¼•è¡¨å¼€è¾Ÿç©ºé—´
 	//------------------------------------------------
 	ItemTableSize = pImage->ImageHead.itemcount * sizeof(ImageItem_t);
 	pImage->ItemTable = (ImageItem_t*)malloc(ItemTableSize);
@@ -135,7 +137,7 @@ HIMAGE 	Img_Open	(char * ImageFile)
 		goto _img_open_fail_;
 	}
 	//------------------------------------------------
-	//¶Á³öË÷Òı±í
+	//è¯»å‡ºç´¢å¼•è¡¨
 	//------------------------------------------------
 	if(!sunxi_flash_read(img_file_start + (IMAGE_HEAD_SIZE/512), ItemTableSize/512, pImage->ItemTable))
 	{
@@ -160,19 +162,83 @@ _img_open_fail_:
 }
 
 
+HIMAGE Img_Fat_Open(char * ImageFile)
+{
+	IMAGE_HANDLE * pImage = NULL;
+	uint ItemTableSize = 0;
+
+	pImage = (IMAGE_HANDLE *)malloc(sizeof(IMAGE_HANDLE));
+	if (NULL == pImage)
+	{
+		printf("sunxi sprite error: fail to malloc memory for img head\n");
+
+		return NULL;
+	}
+	memset(pImage, 0, sizeof(IMAGE_HANDLE));
+
+	/* read img head*/
+	if (fat_fs_read(ImageFile,(void *)&pImage->ImageHead, 0, IMAGE_HEAD_SIZE) <= 0)
+	{
+		printf("sunxi sprite error: read iamge head fail\n");
+
+		goto _img_fs_open_fail_;
+	}
+
+	/* check magic*/
+	if (memcmp(pImage->ImageHead.magic, IMAGE_MAGIC, 8) != 0)
+	{
+		printf("sunxi sprite error: iamge magic is bad\n");
+
+		goto _img_fs_open_fail_;
+	}
+
+	ItemTableSize = pImage->ImageHead.itemcount * sizeof(ImageItem_t);
+	pImage->ItemTable = (ImageItem_t*)malloc(ItemTableSize);
+	if (NULL == pImage->ItemTable)
+	{
+		printf("sunxi sprite error: fail to malloc memory for item table\n");
+
+		goto _img_fs_open_fail_;
+	}
+
+	/* read itemtable*/
+	if (fat_fs_read(ImageFile,(void *)pImage->ItemTable, IMAGE_HEAD_SIZE, ItemTableSize) <= 0)
+	{
+		printf("sunxi sprite error: read iamge item table fail\n");
+
+		goto _img_fs_open_fail_;
+	}
+
+	return pImage;
+
+_img_fs_open_fail_:
+	if(pImage->ItemTable)
+	{
+		free(pImage->ItemTable);
+	}
+	if(pImage)
+	{
+		free(pImage);
+	}
+
+	return NULL;
+}
+
+
+
 //------------------------------------------------------------------------------------------------------------
 //
-// º¯ÊıËµÃ÷
+// å‡½æ•°è¯´æ˜
 //
 //
-// ²ÎÊıËµÃ÷
+// å‚æ•°è¯´æ˜
 //
 //
-// ·µ»ØÖµ
+// è¿”å›å€¼
 //
 //
-// ÆäËû
-//    ÎŞ
+// å…¶ä»–
+//    æ— 
 //
 //------------------------------------------------------------------------------------------------------------
 long long Img_GetSize	(HIMAGE hImage)
@@ -195,17 +261,17 @@ long long Img_GetSize	(HIMAGE hImage)
 }
 //------------------------------------------------------------------------------------------------------------
 //
-// º¯ÊıËµÃ÷
+// å‡½æ•°è¯´æ˜
 //
 //
-// ²ÎÊıËµÃ÷
+// å‚æ•°è¯´æ˜
 //
 //
-// ·µ»ØÖµ
+// è¿”å›å€¼
 //
 //
-// ÆäËû
-//    ÎŞ
+// å…¶ä»–
+//    æ— 
 //
 //------------------------------------------------------------------------------------------------------------
 HIMAGEITEM 	Img_OpenItem	(HIMAGE hImage, char * MainType, char * subType)
@@ -276,17 +342,17 @@ HIMAGEITEM 	Img_OpenItem	(HIMAGE hImage, char * MainType, char * subType)
 
 //------------------------------------------------------------------------------------------------------------
 //
-// º¯ÊıËµÃ÷
+// å‡½æ•°è¯´æ˜
 //
 //
-// ²ÎÊıËµÃ÷
+// å‚æ•°è¯´æ˜
 //
 //
-// ·µ»ØÖµ
+// è¿”å›å€¼
 //
 //
-// ÆäËû
-//    ÎŞ
+// å…¶ä»–
+//    æ— 
 //
 //------------------------------------------------------------------------------------------------------------
 long long Img_GetItemSize	(HIMAGE hImage, HIMAGEITEM hItem)
@@ -311,17 +377,17 @@ long long Img_GetItemSize	(HIMAGE hImage, HIMAGEITEM hItem)
 
 //------------------------------------------------------------------------------------------------------------
 //
-// º¯ÊıËµÃ÷
+// å‡½æ•°è¯´æ˜
 //
 //
-// ²ÎÊıËµÃ÷
+// å‚æ•°è¯´æ˜
 //
 //
-// ·µ»ØÖµ
+// è¿”å›å€¼
 //
 //
-// ÆäËû
-//    ÎŞ
+// å…¶ä»–
+//    æ— 
 //
 //------------------------------------------------------------------------------------------------------------
 uint Img_GetItemStart	(HIMAGE hImage, HIMAGEITEM hItem)
@@ -344,19 +410,44 @@ uint Img_GetItemStart	(HIMAGE hImage, HIMAGEITEM hItem)
 
 	return ((uint)start + img_file_start);
 }
+
+
+uint Img_GetItemOffset(HIMAGE hImage, HIMAGEITEM hItem)
+{
+	IMAGE_HANDLE* pImage = (IMAGE_HANDLE *)hImage;
+	ITEM_HANDLE * pItem  = (ITEM_HANDLE  *)hItem;
+	long long offset;
+
+	if (NULL == pItem)
+	{
+		printf("sunxi sprite error : item is NULL\n");
+
+		return 0;
+	}
+
+	offset = pImage->ItemTable[pItem->index].offsetHi;
+	offset <<= 32;
+	offset |= pImage->ItemTable[pItem->index].offsetLo;
+
+	return ((uint)offset);
+}
+
+
+
+
 //------------------------------------------------------------------------------------------------------------
 //
-// º¯ÊıËµÃ÷
+// å‡½æ•°è¯´æ˜
 //
 //
-// ²ÎÊıËµÃ÷
+// å‚æ•°è¯´æ˜
 //
 //
-// ·µ»ØÖµ
-//     ·µ»ØÊµ¼Ê¶ÁÈ¡Êı¾İµÄ³¤¶È
+// è¿”å›å€¼
+//     è¿”å›å®é™…è¯»å–æ•°æ®çš„é•¿åº¦
 //
-// ÆäËû
-//    ÎŞ
+// å…¶ä»–
+//    æ— 
 //
 //------------------------------------------------------------------------------------------------------------
 #if 0
@@ -466,27 +557,75 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 	return file_size;
 }
 #endif
+
+
+uint Img_Fat_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, char * ImageFile, void *buffer, uint buffer_size)
+{
+	IMAGE_HANDLE* pImage = (IMAGE_HANDLE *)hImage;
+	ITEM_HANDLE * pItem  = (ITEM_HANDLE  *)hItem;
+	long long	  offset;
+	uint	      file_size;
+
+	if (NULL == pItem)
+	{
+		printf("sunxi sprite error : item is NULL\n");
+
+		return 0;
+	}
+	if(pImage->ItemTable[pItem->index].filelenHi)
+	{
+		printf("sunxi sprite error : the item too big\n");
+
+		return 0;
+	}
+	file_size = pImage->ItemTable[pItem->index].filelenLo;
+	file_size = (file_size + 1023) & (~(1024 - 1));
+	debug("file size=%d, buffer size=%d\n", file_size, buffer_size);
+	if(file_size > buffer_size)
+	{
+		printf("sunxi sprite error : buffer is smaller than data size\n");
+
+		return 0;
+	}
+	offset = pImage->ItemTable[pItem->index].offsetHi;
+	offset <<= 32;
+	offset |= pImage->ItemTable[pItem->index].offsetLo;
+
+	if (fat_fs_read(ImageFile,buffer, offset, file_size) <= 0)
+	{
+		printf("sunxi sprite error : read item data failed\n");
+
+		return 0;
+	}
+
+	return file_size;
+}
+
+
+
+
+
 //------------------------------------------------------------------------------------------------------------
 //
-// º¯ÊıËµÃ÷
+// å‡½æ•°è¯´æ˜
 //
 //
-// ²ÎÊıËµÃ÷
+// å‚æ•°è¯´æ˜
 //
 //
-// ·µ»ØÖµ
-//     ·µ»ØÊµ¼Ê¶ÁÈ¡Êı¾İµÄ³¤¶È
+// è¿”å›å€¼
+//     è¿”å›å®é™…è¯»å–æ•°æ®çš„é•¿åº¦
 //
-// ÆäËû
-//    ÎŞ
+// å…¶ä»–
+//    æ— 
 //
 //------------------------------------------------------------------------------------------------------------
 
 //static __int64 __Img_ReadItemData(HIMAGE hImage, HIMAGEITEM hItem, void * buffer, __int64 Length);
 //
-//// ¸ù¾İ·Ö×é½øĞĞ¼ÓËÙ´¦ÀíµÄ°æ±¾ scott 2009-06-22 10:37:17
+//// æ ¹æ®åˆ†ç»„è¿›è¡ŒåŠ é€Ÿå¤„ç†çš„ç‰ˆæœ¬ scott 2009-06-22 10:37:17
 ////////////////////////////////////////////////////////////////////////////
-////Ã¿´Î¶ÁÈ¡µÄ´óĞ¡À©Õ¹µ½10M
+////æ¯æ¬¡è¯»å–çš„å¤§å°æ‰©å±•åˆ°10M
 //
 //__int64 Img_ReadItemData(HIMAGE hImage, HIMAGEITEM hItem, void * buffer, __int64 Length)
 //{
@@ -501,7 +640,7 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 //	__int64 pos = 0;
 //	pEnDecode pfDecode = pImage->rc_if_decode[DATA_ID].EnDecode;
 //
-//	//ÎªÁËËÙ¶È²»½øĞĞ²ÎÊıµÄ¼ì²â¹¤×÷ scott 2009-06-22
+//	//ä¸ºäº†é€Ÿåº¦ä¸è¿›è¡Œå‚æ•°çš„æ£€æµ‹å·¥ä½œ scott 2009-06-22
 //	//Msg("Img_ReadItemData:Length=%x datalen=%x pos=%x",
 //	//	Length, pImage->ItemTable[pItem->index].datalen, pItem->pos); //debug
 //
@@ -514,15 +653,15 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 //		goto readEnd;
 //	}
 //	//------------------------------------------------
-//	//Ô¼ÊøÊı¾İ²»»á³¬³ö¼ÓÃÜÊı¾İµÄ·¶Î§
+//	//çº¦æŸæ•°æ®ä¸ä¼šè¶…å‡ºåŠ å¯†æ•°æ®çš„èŒƒå›´
 //	//------------------------------------------------
 //	nLenTmp = Get64bitLen(pImage->ItemTable[pItem->index].datalenLo, pImage->ItemTable[pItem->index].datalenHi);
 //	Length = min(Length, nLenTmp - pItem->pos);
 //	//Msg("Length_min=%x", Length);
 //	//------------------------------------------------
-//	//¼ÓÃÜºóµÄÊı¾İÒÔ16byte½øĞĞ·Ö×é£¬ĞèÒª´¦Àí¿ç±ß½çµÄÇé¿ö
+//	//åŠ å¯†åçš„æ•°æ®ä»¥16byteè¿›è¡Œåˆ†ç»„ï¼Œéœ€è¦å¤„ç†è·¨è¾¹ç•Œçš„æƒ…å†µ
 //	//------------------------------------------------
-//	if ((pItem->pos % ENCODE_LEN) == 0)	//posÕıºÃÊÇ·Ö×éµÄ±ß½çµÄÇé¿ö
+//	if ((pItem->pos % ENCODE_LEN) == 0)	//posæ­£å¥½æ˜¯åˆ†ç»„çš„è¾¹ç•Œçš„æƒ…å†µ
 //	{
 //		nLenTmp = Get64bitLen(pImage->ItemTable[pItem->index].offsetLo , pImage->ItemTable[pItem->index].offsetHi);
 //		pos = nLenTmp + pItem->pos;
@@ -532,13 +671,13 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 //		while(readlen < Length)
 //		{
 //			//------------------------------------------------
-//			//Ã¿´Î¶ÁÈ¡n¸ö·Ö×é
+//			//æ¯æ¬¡è¯»å–nä¸ªåˆ†ç»„
 //			//------------------------------------------------
 //			this_read = min(SIZE_10M, (Length - readlen));
 //			u32 n = (this_read + ENCODE_LEN - 1) / ENCODE_LEN;	//
 //			memset(buffer_encode, 0, n * ENCODE_LEN);
-//			//fread(buffer_encode, this_read, 1, pImage->fp);		//Ò»´Î¶Án¸ö·Ö×é,ËÙ¶È¸ü¿ì note has bug
-//			//fread(buffer_encode, n * ENCODE_LEN, 1, pImage->fp);	//OK ²âÊÔÍ¨¹ı£¬±ØĞë¶ÁÈ¡Õû¸öµÄ·Ö×é
+//			//fread(buffer_encode, this_read, 1, pImage->fp);		//ä¸€æ¬¡è¯»nä¸ªåˆ†ç»„,é€Ÿåº¦æ›´å¿« note has bug
+//			//fread(buffer_encode, n * ENCODE_LEN, 1, pImage->fp);	//OK æµ‹è¯•é€šè¿‡ï¼Œå¿…é¡»è¯»å–æ•´ä¸ªçš„åˆ†ç»„
 //			u32 nReadAlian =  n * ENCODE_LEN;
 //			if(pImage->bWithEncpy == FALSE)
 //			{
@@ -546,21 +685,21 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 //			}
 ////			else
 ////			{
-////				ReadFile(pImage->fp, buffer_encode, nReadAlian/*n * ENCODE_LEN*/, &dwLen, NULL);	//OK ²âÊÔÍ¨¹ı£¬±ØĞë¶ÁÈ¡Õû¸öµÄ·Ö×é
+////				ReadFile(pImage->fp, buffer_encode, nReadAlian/*n * ENCODE_LEN*/, &dwLen, NULL);	//OK æµ‹è¯•é€šè¿‡ï¼Œå¿…é¡»è¯»å–æ•´ä¸ªçš„åˆ†ç»„
 ////
 ////				//fseek(pImage->fp, 0, SEEK_CUR);
 ////				//Msg("this_read=%x", this_read);
 ////				//------------------------------------------------
-////				//·Ö×éÊı¾İ½âÃÜ
+////				//åˆ†ç»„æ•°æ®è§£å¯†
 ////				//------------------------------------------------
 ////				u8 * pin = buffer_encode;
 ////				u8 * pout= (u8 *)buffer;
-////				pout     = pout + readlen;	//Êµ¼ÊÊä³öÊı¾İµÄÆ«ÒÆÁ¿
+////				pout     = pout + readlen;	//å®é™…è¾“å‡ºæ•°æ®çš„åç§»é‡
 ////
-////				for (u32 i = 0; i < n; i++)	//Öğ¸ö·Ö×é½øĞĞ½âÃÜ
+////				for (u32 i = 0; i < n; i++)	//é€ä¸ªåˆ†ç»„è¿›è¡Œè§£å¯†
 ////				{
 ////					//------------------------------------------------
-////					//Ã¿´Î½âÃÜÒ»¸ö·Ö×é
+////					//æ¯æ¬¡è§£å¯†ä¸€ä¸ªåˆ†ç»„
 ////					//------------------------------------------------
 ////					if (OK !=  pfDecode(pImage->rc_if_decode[DATA_ID].handle, pin , pout))
 ////						return 0;
@@ -580,7 +719,7 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 ////
 ////			}
 //			//------------------------------------------------
-//			//¼ÆËãÊµ¼ÊÓĞĞ§Êı¾İ³¤¶È
+//			//è®¡ç®—å®é™…æœ‰æ•ˆæ•°æ®é•¿åº¦
 //			//------------------------------------------------
 //			readlen += this_read;
 //		}
@@ -599,14 +738,14 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 //	else
 //	{
 //		//------------------------------------------------
-//		//ÕâÀïÇ¿ÖÆÖ»´¦Àí·Ö×é¶ÔÆëµÄÇé¿ö£¬¶ÔÓÚÒÔÇ°µÄÒ»Ğ©¹Ì¼ş°ü¿ÉÄÜ»áÒıÆğ²»¼æÈİµÄÎÊÌâ£¬
-//		//ÄÇÖÖÇé¿öÏÂÖ»ºÃÆôÓÃÔ­Ê¼°æ±¾À´´¦ÀíÁË
+//		//è¿™é‡Œå¼ºåˆ¶åªå¤„ç†åˆ†ç»„å¯¹é½çš„æƒ…å†µï¼Œå¯¹äºä»¥å‰çš„ä¸€äº›å›ºä»¶åŒ…å¯èƒ½ä¼šå¼•èµ·ä¸å…¼å®¹çš„é—®é¢˜ï¼Œ
+//		//é‚£ç§æƒ…å†µä¸‹åªå¥½å¯ç”¨åŸå§‹ç‰ˆæœ¬æ¥å¤„ç†äº†
 //		//------------------------------------------------
 //
-//		//MessageBox(NULL, "Çë°´ÕÕ¶ÔÆë¹æÔòÀ´´¦Àí£¡", "¾¯¸æ", MB_OK);
+//		//MessageBox(NULL, "è¯·æŒ‰ç…§å¯¹é½è§„åˆ™æ¥å¤„ç†ï¼", "è­¦å‘Š", MB_OK);
 //		//return 0;
 //
-//		Msg("Çë°´ÕÕ¶ÔÆë¹æÔòÀ´´¦Àí£¡");
+//		Msg("è¯·æŒ‰ç…§å¯¹é½è§„åˆ™æ¥å¤„ç†ï¼");
 //		nRet =   __Img_ReadItemData(hImage, hItem,  buffer, Length);
 //	}
 //
@@ -618,7 +757,7 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 //}
 //
 //
-////Ô­Ê¼µÄ°æ±¾£¬¿ÉÒÔÔËĞĞ£¬²»¹ıÃ¿´Î¶ÁimgÎÄ¼şÊÇ16byte£¬ËÙ¶È²»¸ß£¬ĞèÒª½øĞĞÌáËÙ
+////åŸå§‹çš„ç‰ˆæœ¬ï¼Œå¯ä»¥è¿è¡Œï¼Œä¸è¿‡æ¯æ¬¡è¯»imgæ–‡ä»¶æ˜¯16byteï¼Œé€Ÿåº¦ä¸é«˜ï¼Œéœ€è¦è¿›è¡Œæé€Ÿ
 //__int64 __Img_ReadItemData(HIMAGE hImage, HIMAGEITEM hItem, void * buffer, __int64 Length)
 //{
 //	__int64 readlen = 0;
@@ -640,7 +779,7 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 //		return 0;
 //	}
 //	//------------------------------------------------
-//	//Ô¼ÊøÊı¾İ²»»á³¬³ö¼ÓÃÜÊı¾İµÄ·¶Î§
+//	//çº¦æŸæ•°æ®ä¸ä¼šè¶…å‡ºåŠ å¯†æ•°æ®çš„èŒƒå›´
 //	//------------------------------------------------
 //	__int64 nTmp = Get64bitLen(pImage->ItemTable[pItem->index].datalenLo, pImage->ItemTable[pItem->index].datalenHi);
 //	Length = min(Length, nTmp - pItem->pos);
@@ -657,9 +796,9 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 //	}
 //
 //	//------------------------------------------------
-//	//¼ÓÃÜºóµÄÊı¾İÒÔ16byte½øĞĞ·Ö×é£¬ĞèÒª´¦Àí¿ç±ß½çµÄÇé¿ö
+//	//åŠ å¯†åçš„æ•°æ®ä»¥16byteè¿›è¡Œåˆ†ç»„ï¼Œéœ€è¦å¤„ç†è·¨è¾¹ç•Œçš„æƒ…å†µ
 //	//------------------------------------------------
-//	if ((pItem->pos % ENCODE_LEN) == 0)	//posÕıºÃÊÇ·Ö×éµÄ±ß½çµÄÇé¿ö
+//	if ((pItem->pos % ENCODE_LEN) == 0)	//posæ­£å¥½æ˜¯åˆ†ç»„çš„è¾¹ç•Œçš„æƒ…å†µ
 //	{
 //		nTmp = Get64bitLen(pImage->ItemTable[pItem->index].offsetLo, pImage->ItemTable[pItem->index].offsetHi);
 //		pos = nTmp + pItem->pos;
@@ -668,48 +807,48 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 //
 //		while(readlen < Length)
 //		{
-//			//Ã¿´Î¶ÁÈ¡Ò»¸ö·Ö×é
+//			//æ¯æ¬¡è¯»å–ä¸€ä¸ªåˆ†ç»„
 //			memset(buffer_encode, 0, ENCODE_LEN);
 //		//	fread(buffer_encode, ENCODE_LEN, 1, pImage->fp);
 //		//	fseek(pImage->fp, 0, SEEK_CUR);
 //			ReadFile(pImage->fp, buffer_encode, ENCODE_LEN, &dwLen, NULL);
-//			//·Ö×éÊı¾İ½âÃÜ
+//			//åˆ†ç»„æ•°æ®è§£å¯†
 //			u8 * pin = buffer_encode;
 //			u8 * pout= (u8 *)buffer;
 //			pout     = pout + readlen;
 //			if (OK != pfDecode(pImage->rc_if_decode[DATA_ID].handle, pin , pout))
 //				return 0;
-//			//¼ÆËãÊµ¼ÊÓĞĞ§Êı¾İ³¤¶È
+//			//è®¡ç®—å®é™…æœ‰æ•ˆæ•°æ®é•¿åº¦
 //			readlen += min(Length- readlen, ENCODE_LEN);
 //		}
 //		pItem->pos += readlen;
 //		return readlen;
 //	}
-//	else //pos²»ÔÚ±ß½ç
+//	else //posä¸åœ¨è¾¹ç•Œ
 //	{
-//		//pos²»ÔÚ±ß½ç£¬ÏòÍ··½Ïòseek
+//		//posä¸åœ¨è¾¹ç•Œï¼Œå‘å¤´æ–¹å‘seek
 //		pos = pImage->ItemTable[pItem->index].offsetLo +
 //				  pItem->pos - (pItem->pos % ENCODE_LEN);
 //		//fseek(pImage->fp, pos, SEEK_SET);
 //		FsSeek(pImage->fp, pos, SEEK_SET);
 //
 //		//-----------------------------------
-//		//**********************OOOOOOOOOOOOO     *±íÊ¾ÒÑ¾­¶ÁÈ¡µÃÊı¾İ O±íÊ¾Î´¶ÁÈ¡µÃÊı¾İ
+//		//**********************OOOOOOOOOOOOO     *è¡¨ç¤ºå·²ç»è¯»å–å¾—æ•°æ® Oè¡¨ç¤ºæœªè¯»å–å¾—æ•°æ®
 //		//-----------------------------------
-//		if ((0 < Length) && (Length < ENCODE_LEN)) //¶ÁÈ¡µÄÊı¾İ²»×ãÒ»¸ö·Ö×é³¤¶È
+//		if ((0 < Length) && (Length < ENCODE_LEN)) //è¯»å–çš„æ•°æ®ä¸è¶³ä¸€ä¸ªåˆ†ç»„é•¿åº¦
 //		{
-//			u32 read = ENCODE_LEN - (pItem->pos % ENCODE_LEN); //·Ö×éÖĞÎ´¶ÁÈ¡µÄÊı¾İ³¤¶È
-//			if (Length <= read)	//ĞèÒª¶ÁÈ¡µÃÊı¾İĞ¡ÓÚµÈÓÚ·Ö×éÖĞÎ´¶ÁÈ¡µÄÊı¾İ³¤¶È Ö»ÓÃ¶ÁÒ»¸ö·Ö×é¼´¿É
+//			u32 read = ENCODE_LEN - (pItem->pos % ENCODE_LEN); //åˆ†ç»„ä¸­æœªè¯»å–çš„æ•°æ®é•¿åº¦
+//			if (Length <= read)	//éœ€è¦è¯»å–å¾—æ•°æ®å°äºç­‰äºåˆ†ç»„ä¸­æœªè¯»å–çš„æ•°æ®é•¿åº¦ åªç”¨è¯»ä¸€ä¸ªåˆ†ç»„å³å¯
 //			{
 //				//-----------------------------------
-//				//**********************OOOOOOOOOOOOO     *±íÊ¾ÒÑ¾­¶ÁÈ¡µÃÊı¾İ O±íÊ¾Î´¶ÁÈ¡µÃÊı¾İ
+//				//**********************OOOOOOOOOOOOO     *è¡¨ç¤ºå·²ç»è¯»å–å¾—æ•°æ® Oè¡¨ç¤ºæœªè¯»å–å¾—æ•°æ®
 //				//-----------------------------------
 //				u32 read = ENCODE_LEN - pItem->pos % ENCODE_LEN;
 //				memset(buffer_encode, 0, ENCODE_LEN);
 //				//fread(buffer_encode, ENCODE_LEN, 1, pImage->fp);
 //				ReadFile(pImage->fp, buffer_encode, ENCODE_LEN, &dwLen, NULL);
 //
-//				//·Ö×éÊı¾İ½âÃÜ
+//				//åˆ†ç»„æ•°æ®è§£å¯†
 //				u8 * pin = buffer_encode;
 //				u8 * pout= (u8 *)buffer;
 //				pout     = pout + readlen;
@@ -720,17 +859,17 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 //				pItem->pos += readlen;
 //				return readlen;
 //			}
-//			else //ĞèÒª¶ÁÁ½¸ö·Ö×éµÄÊı¾İ
+//			else //éœ€è¦è¯»ä¸¤ä¸ªåˆ†ç»„çš„æ•°æ®
 //			{
 //				//----------------------------------- //-----------------------------------
 //				//**********************OOOOOOOOOOOOO //OOOOOOOOOO
 //				//----------------------------------- //-----------------------------------
-//				//µÚÒ»¸ö·Ö×é
+//				//ç¬¬ä¸€ä¸ªåˆ†ç»„
 //				u32 read = ENCODE_LEN - pItem->pos % ENCODE_LEN;
 //				memset(buffer_encode, 0, ENCODE_LEN);
 //				//fread(buffer_encode, ENCODE_LEN, 1, pImage->fp);
 //				ReadFile(pImage->fp, buffer_encode, ENCODE_LEN, &dwLen, NULL);
-//				//·Ö×éÊı¾İ½âÃÜ
+//				//åˆ†ç»„æ•°æ®è§£å¯†
 //				u8 * pin = buffer_encode;
 //				u8 * pout= (u8 *)buffer;
 //				pout     = pout + readlen;
@@ -739,13 +878,13 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 //
 //				readlen += read;
 //
-//				//µÚ¶ş¸ö·Ö×é
-//				__int64 Left_Length = Length - read;			//Ê£ÓàµÄÊı¾İ
+//				//ç¬¬äºŒä¸ªåˆ†ç»„
+//				__int64 Left_Length = Length - read;			//å‰©ä½™çš„æ•°æ®
 //				memset(buffer_encode, 0, ENCODE_LEN);
 //				//fread(buffer_encode, ENCODE_LEN, 1, pImage->fp);
 //				//fseek(pImage->fp, 0, SEEK_CUR);
 //				ReadFile(pImage->fp, buffer_encode, ENCODE_LEN, &dwLen, NULL);
-//				//·Ö×éÊı¾İ½âÃÜ
+//				//åˆ†ç»„æ•°æ®è§£å¯†
 //				pin = buffer_encode;
 //				pout= (u8 *)buffer;
 //				pout     = pout + readlen;
@@ -757,10 +896,10 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 //				return readlen;
 //			}
 //		}
-//		else if (Length >= ENCODE_LEN) //¶ÁÈ¡µÄÊı¾İ²»ÉÙÓÚÒ»¸ö·Ö×é³¤¶È
+//		else if (Length >= ENCODE_LEN) //è¯»å–çš„æ•°æ®ä¸å°‘äºä¸€ä¸ªåˆ†ç»„é•¿åº¦
 //		{
 //			//-----------------------------------
-//			//**********************OOOOOOOOOOOOO     *±íÊ¾ÒÑ¾­¶ÁÈ¡µÃÊı¾İ O±íÊ¾Î´¶ÁÈ¡µÃÊı¾İ
+//			//**********************OOOOOOOOOOOOO     *è¡¨ç¤ºå·²ç»è¯»å–å¾—æ•°æ® Oè¡¨ç¤ºæœªè¯»å–å¾—æ•°æ®
 //			//-----------------------------------
 //			u32 read = ENCODE_LEN - pItem->pos % ENCODE_LEN;
 //			memset(buffer_encode, 0, ENCODE_LEN);
@@ -768,7 +907,7 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 //		//	fread(pImage->fp, buffer_encode, ENCODE_LEN, &dwLen,NULL);
 //			ReadFile(pImage->fp, buffer_encode, ENCODE_LEN, &dwLen,NULL);
 //
-//			//·Ö×éÊı¾İ½âÃÜ
+//			//åˆ†ç»„æ•°æ®è§£å¯†
 //			u8 * pin = buffer_encode;
 //			u8 * pout= (u8 *)buffer;
 //			pout     = pout + readlen;
@@ -778,24 +917,24 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 //			readlen += read;
 //
 //			//------------------------------------------------
-//			//Ê£ÓàµÄÊı¾İ°´ÕÕ·Ö×é½øĞĞ´¦Àí
+//			//å‰©ä½™çš„æ•°æ®æŒ‰ç…§åˆ†ç»„è¿›è¡Œå¤„ç†
 //			//------------------------------------------------
 //			u32 Left_Length = Length - read;
 //			u32 Left_readlen= 0;
 //			while(Left_readlen < Left_Length)
 //			{
-//				//Ã¿´Î¶ÁÈ¡Ò»¸ö·Ö×é
+//				//æ¯æ¬¡è¯»å–ä¸€ä¸ªåˆ†ç»„
 //				memset(buffer_encode, 0, ENCODE_LEN);
 //			//	fread(buffer_encode, ENCODE_LEN, 1, pImage->fp);
 //			//	fseek(pImage->fp, 0, SEEK_CUR);
 //				ReadFile(pImage->fp, buffer_encode, ENCODE_LEN, &dwLen, NULL);
-//				//·Ö×éÊı¾İ½âÃÜ
+//				//åˆ†ç»„æ•°æ®è§£å¯†
 //				u8 * pin = buffer_encode;
 //				u8 * pout= (u8 *)buffer;
 //				pout     = pout + readlen;
 //				if (OK != pfDecode(pImage->rc_if_decode[DATA_ID].handle, pin , pout))
 //					return 0;
-//				//¼ÆËãÊµ¼ÊÓĞĞ§Êı¾İ³¤¶È
+//				//è®¡ç®—å®é™…æœ‰æ•ˆæ•°æ®é•¿åº¦
 //				Left_readlen += min(Left_Length - Left_readlen, ENCODE_LEN);
 //			}
 //
@@ -813,17 +952,17 @@ uint Img_ReadItem(HIMAGE hImage, HIMAGEITEM hItem, void *buffer, uint buffer_siz
 
 //------------------------------------------------------------------------------------------------------------
 //
-// º¯ÊıËµÃ÷
+// å‡½æ•°è¯´æ˜
 //
 //
-// ²ÎÊıËµÃ÷
+// å‚æ•°è¯´æ˜
 //
 //
-// ·µ»ØÖµ
+// è¿”å›å€¼
 //
 //
-// ÆäËû
-//    ÎŞ
+// å…¶ä»–
+//    æ— 
 //
 //------------------------------------------------------------------------------------------------------------
 int Img_CloseItem	(HIMAGE hImage, HIMAGEITEM hItem)
@@ -846,17 +985,17 @@ int Img_CloseItem	(HIMAGE hImage, HIMAGEITEM hItem)
 
 //------------------------------------------------------------------------------------------------------------
 //
-// º¯ÊıËµÃ÷
+// å‡½æ•°è¯´æ˜
 //
 //
-// ²ÎÊıËµÃ÷
+// å‚æ•°è¯´æ˜
 //
 //
-// ·µ»ØÖµ
+// è¿”å›å€¼
 //
 //
-// ÆäËû
-//    ÎŞ
+// å…¶ä»–
+//    æ— 
 //
 //------------------------------------------------------------------------------------------------------------
 void  Img_Close	(HIMAGE hImage)

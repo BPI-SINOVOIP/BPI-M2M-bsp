@@ -77,6 +77,8 @@ static u32 fullimg_size = 0;
 extern u32 total_write_bytes ;
 #endif
 
+extern int sunxi_sprite_store_private_data(void);
+extern int spinor_erase_all_blocks(int erase);
 
 int  efex_suspend_flag = 0;
 
@@ -1404,7 +1406,7 @@ static void dram_data_recv_finish(uint data_type)
 	else if(data_type == SUNXI_EFEX_ERASE_TAG)
 	{
         uint erase_flag;
-
+        int sys_config_erase_flag;
 		printf("SUNXI_EFEX_ERASE_TAG\n");
         erase_flag = *(uint *)trans_data.base_recv_buffer;
 		if(erase_flag)
@@ -1412,7 +1414,9 @@ static void dram_data_recv_finish(uint data_type)
 		    erase_flag = 1;
 		}
 		printf("erase_flag = 0x%x\n", erase_flag);
-		script_parser_patch("platform", "eraseflag", &erase_flag , 1);
+        script_parser_fetch("platform", "eraseflag", &sys_config_erase_flag , 1);
+        if(sys_config_erase_flag == 0 || sys_config_erase_flag == 1)
+		    script_parser_patch("platform", "eraseflag", &erase_flag , 1);
 	}
 	else if(data_type == SUNXI_EFEX_PMU_SET)
 	{
@@ -1449,8 +1453,28 @@ static void dram_data_recv_finish(uint data_type)
 		printf("algin 512 byte  fullimg_size %d \n",fullimg_size);   //add by young
 		if(!fullimg_size)
 			trans_data.last_err = -1;
-		else
+		else {
+			int need_erase_flag = 0;
+			script_parser_fetch("platform", "eraseflag", &need_erase_flag, 1);
+			if(need_erase_flag != 0x11)
+				/* not force erase, need to store private data */
+				sunxi_sprite_store_private_data();
+#ifndef CONFIG_SMALL_MEMSIZE
+			/*
+			 * for fix spinor_datafinish. if not define CONFIG_SMALL_MEMSIZE,
+			 * spinor_datafinish will use __spinor_sector_write to write spinor
+			 * and we need to erase flash before call __spinor_sector_write.
+			 * if erase flash in spinor_datafinish, we may erase the flash twice.
+			 * so we erase here.
+			 * TODO:use spinor_write in spinor_datafinish, then remove this code
+			 */
+			need_erase_flag = 1;
+#endif
+			if(need_erase_flag)
+				spinor_erase_all_blocks(1);
+
 			trans_data.last_err = 0;
+		}
 	}
 #endif
 

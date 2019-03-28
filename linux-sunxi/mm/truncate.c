@@ -79,6 +79,11 @@ void cancel_dirty_page(struct page *page, unsigned int account_size)
 			dec_zone_page_state(page, NR_FILE_DIRTY);
 			dec_bdi_stat(mapping->backing_dev_info,
 					BDI_RECLAIMABLE);
+#ifdef CONFIG_FILE_DIRTY_LIMIT
+			spin_lock(&mapping->tree_lock);
+			mapping->nrdirty--;
+			spin_unlock(&mapping->tree_lock);
+#endif
 			if (account_size)
 				task_io_account_cancelled_write(account_size);
 		}

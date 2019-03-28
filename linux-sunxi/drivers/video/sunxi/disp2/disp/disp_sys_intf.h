@@ -1,14 +1,3 @@
-/*
- * drivers/video/sunxi/disp2/disp/disp_sys_intf.h
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #ifndef _DISP_SYS_INTF_
 #define _DISP_SYS_INTF_
 #include "asm/cacheflush.h"
@@ -89,5 +78,6 @@ unsigned long disp_sys_clk_get_rate(const char *id);
 int disp_sys_clk_set_parent(const char *id, const char *parent);
 int disp_sys_clk_enable(const char *id);
 int disp_sys_clk_disable(const char *id);
+unsigned long disp_sys_clk_round_rate(const char *id, unsigned long rate);
 
 #endif

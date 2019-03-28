@@ -46,7 +46,7 @@
 *
 ************************************************************************************************************
 */
-static void __dump_dlmap(sunxi_download_info *dl_info)
+void __dump_dlmap(sunxi_download_info *dl_info)
 {
 	dl_one_part_info		*part_info;
 	u32 i;
@@ -75,7 +75,7 @@ static void __dump_dlmap(sunxi_download_info *dl_info)
 }
 
 
-static void __dump_mbr(sunxi_mbr_t *mbr_info)
+void __dump_mbr(sunxi_mbr_t *mbr_info)
 {
 	sunxi_partition  		*part_info;
 	u32 i;

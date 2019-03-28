@@ -419,6 +419,9 @@ enum {
 	OPT_ALLOW_OTHER,
 	OPT_MAX_READ,
 	OPT_BLKSIZE,
+#ifdef FUSE_MMAP_
+	OPT_FOR_NTFS,
+#endif
 	OPT_ERR
 };
 
@@ -431,6 +434,9 @@ static const match_table_t tokens = {
 	{OPT_ALLOW_OTHER,		"allow_other"},
 	{OPT_MAX_READ,			"max_read=%u"},
 	{OPT_BLKSIZE,			"blksize=%u"},
+#ifdef FUSE_MMAP_
+	{OPT_FOR_NTFS,			"for_ntfs"},
+#endif
 	{OPT_ERR,			NULL}
 };
 
@@ -500,7 +506,17 @@ static int parse_fuse_opt(char *opt, struct fuse_mount_data *d, int is_bdev)
 			d->blksize = value;
 			break;
 
+#ifdef FUSE_MMAP_
+		case OPT_FOR_NTFS:
+			d->flags |= FUSE_FOR_NTFS;
+			DBG_ERR_INFO("fuse for ntfs");
+			break;
+#endif
+
 		default:
+#ifdef FUSE_MMAP_
+			DBG_ERR_INFO("invalid opts, token = %i", token);
+#endif
 			return 0;
 		}
 	}
@@ -940,6 +956,10 @@ static int fuse_fill_super(struct super_block *sb, void *data, int silent)
 	int err;
 	int is_bdev = sb->s_bdev != NULL;
 
+#ifdef FUSE_MMAP_
+	DBG_ERR_INFO("fuse version: !> %s on %s <!", __TIME__, __DATE__);
+#endif
+
 	err = -EINVAL;
 	if (sb->s_flags & MS_MANDLOCK)
 		goto err;
@@ -1043,6 +1063,10 @@ static int fuse_fill_super(struct super_block *sb, void *data, int silent)
 
 	fuse_send_init(fc, init_req);
 
+#ifdef FUSE_MMAP_
+	DBG_ERR_INFO("ok");
+#endif
+
 	return 0;
 
  err_unlock:
@@ -1057,6 +1081,11 @@ static int fuse_fill_super(struct super_block *sb, void *data, int silent)
  err_fput:
 	fput(file);
  err:
+
+#ifdef FUSE_MMAP_
+	DBG_ERR_INFO("fail, err = %i", err);
+#endif
+
 	return err;
 }
 
@@ -1221,6 +1250,10 @@ static int __init fuse_init(void)
 	printk(KERN_INFO "fuse init (API version %i.%i)\n",
 	       FUSE_KERNEL_VERSION, FUSE_KERNEL_MINOR_VERSION);
 
+#ifdef FUSE_MMAP_
+	DBG_ERR_INFO("fuse version: !> %s on %s <!", __TIME__, __DATE__);
+#endif
+
 	INIT_LIST_HEAD(&fuse_conn_list);
 	res = fuse_fs_init();
 	if (res)
@@ -1256,6 +1289,10 @@ static int __init fuse_init(void)
 static void __exit fuse_exit(void)
 {
 	printk(KERN_DEBUG "fuse exit\n");
+
+#ifdef FUSE_MMAP_
+	DBG_ERR_INFO("fuse version: !> %s on %s <!", __TIME__, __DATE__);
+#endif
 
 	fuse_ctl_cleanup();
 	fuse_sysfs_cleanup();

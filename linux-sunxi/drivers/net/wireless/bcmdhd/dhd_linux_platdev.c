@@ -443,6 +443,8 @@ static int wifi_ctrlfunc_register_drv(void)
 		resource = &dhd_wlan_resources;
 #ifdef CUSTOMER_HW
 		wifi_plat_dev_probe_ret = dhd_wlan_init_plat_data();
+		if (wifi_plat_dev_probe_ret)
+			return wifi_plat_dev_probe_ret;
 #endif
 		adapter->irq_num = resource->start;
 		adapter->intr_flags = resource->flags & IRQF_TRIGGER_MASK;

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * codec tas5707 driver
  *
  * Copyright(c) 2015-2018 Allwinnertech Co., Ltd.

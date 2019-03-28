@@ -148,6 +148,7 @@ int _sst_user_open(char *filename )
     fd = filp_open(filename, O_RDONLY, 0);
 
     if(IS_ERR(fd)){
+		derr(" -file open fail\n");
 		set_fs(old_fs);
         return -1;
     }   

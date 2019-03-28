@@ -471,6 +471,32 @@ static int fuse_fsync(struct file *file, loff_t start, loff_t end,
 	return fuse_fsync_common(file, start, end, datasync, 0);
 }
 
+#ifdef FUSE_MMAP_
+/*
+ * Return value:
+ * 1: Physical address of userpages is contiguous
+ * 0: not contiguous
+ */
+static int check_userpage_phyaddr(struct fuse_req *req)
+{
+	BUG_ON((req->num_pages < 1) || (req->num_pages > FUSE_MAX_PAGES_PER_REQ));
+	if (1 == req->num_pages) {
+		return 1;
+	} else {
+		int i;
+		unsigned long pfn;
+		unsigned long prev_pfn = page_to_pfn(req->pages[0]);
+		for (i = 1; i<req->num_pages; i++) {
+			pfn = page_to_pfn(req->pages[i]);
+			if (++prev_pfn != pfn) {
+				return 0;
+			}
+		}
+		return 1;
+	}
+}
+#endif
+
 void fuse_read_fill(struct fuse_req *req, struct file *file, loff_t pos,
 		    size_t count, int opcode)
 {
@@ -489,6 +515,31 @@ void fuse_read_fill(struct fuse_req *req, struct file *file, loff_t pos,
 	req->out.argvar = 1;
 	req->out.numargs = 1;
 	req->out.args[0].size = count;
+
+#ifdef FUSE_MMAP_
+	if (is_for_ntfs(ff->fc)) {
+		BUG_ON(req->num_pages & (1 << 15));
+		if (check_userpage_phyaddr(req)) {
+			req->single_mmap_flag = 1;
+			DBG_INFO("read userpage is conseq num_pages = %i", req->num_pages);
+		}
+
+		inarg->padding = (((short)(req->page_offset)) & 0x0000ffff);
+		inarg->padding |= (((short)(req->num_pages)) << 16);
+		if (req->single_mmap_flag) {
+			inarg->padding |= (1 << 31);
+		}
+	}
+
+	DBG_INFO("num_pages = %i, page_offset= %i, padding = 0x%X",
+			req->num_pages, req->page_offset, inarg->padding);
+	DBG_INFO("nodeid = 0x%llx, opcode = 0x%X",
+			req->in.h.nodeid, req->in.h.opcode);
+	DBG_INFO("numargs = %i, req->in.args[0].size = 0x%X",
+			req->in.numargs, req->in.args[0].size);
+	DBG_INFO("inarg->offset = 0x%llx, inarg->size = 0x%X",
+			inarg->offset, inarg->size);
+#endif
 }
 
 static size_t fuse_send_read(struct fuse_req *req, struct file *file,
@@ -775,6 +826,35 @@ static void fuse_write_fill(struct fuse_req *req, struct fuse_file *ff,
 	req->out.numargs = 1;
 	req->out.args[0].size = sizeof(struct fuse_write_out);
 	req->out.args[0].value = outarg;
+
+#ifdef FUSE_MMAP_
+	if (is_for_ntfs(ff->fc)) {
+		BUG_ON(req->num_pages & (1 << 15));
+		req->single_mmap_flag = 1;
+		/*
+		if (check_userpage_phyaddr(req)) {
+			req->single_mmap_flag = 1;
+			DBG_INFO("write userpage is conseq num_pages = %i", req->num_pages);
+		}
+		*/
+
+		req->in.args[0].size = sizeof(struct fuse_write_in);
+		inarg->padding = (((short)(req->page_offset)) & 0x0000ffff);
+		inarg->padding |= (((short)(req->num_pages)) << 16);
+		if (req->single_mmap_flag) {
+			inarg->padding |= (1 << 31);
+		}
+	}
+
+	DBG_INFO("num_pages = 0x%X, page_offset= %i, padding = 0x%X",
+			req->num_pages, req->page_offset, inarg->padding);
+	DBG_INFO("nodeid = 0x%llx, opcode = 0x%X",
+			req->in.h.nodeid, req->in.h.opcode);
+	DBG_INFO("numargs = %i, minor = %i, req->in.args[0].size = 0x%X",
+			req->in.numargs, ff->fc->minor, req->in.args[0].size);
+	DBG_INFO("inarg->offset = 0x%llx, inarg->size = 0x%X, req->in.args[1].size = 0x%X",
+			inarg->offset, inarg->size, req->in.args[1].size);
+#endif
 }
 
 static size_t fuse_send_write(struct fuse_req *req, struct file *file,
@@ -784,13 +864,24 @@ static size_t fuse_send_write(struct fuse_req *req, struct file *file,
 	struct fuse_conn *fc = ff->fc;
 	struct fuse_write_in *inarg = &req->misc.write.in;
 
+#ifdef FUSE_MMAP_
+	DBG_INFO("start");
+#endif
+
 	fuse_write_fill(req, ff, pos, count);
 	inarg->flags = file->f_flags;
 	if (owner != NULL) {
 		inarg->write_flags |= FUSE_WRITE_LOCKOWNER;
 		inarg->lock_owner = fuse_lock_owner_id(fc, owner);
 	}
+
 	fuse_request_send(fc, req);
+
+#ifdef FUSE_MMAP_
+	DBG_INFO("ok");
+	DBG_INFO("req->misc.write.out.size = %i", req->misc.write.out.size);
+#endif
+
 	return req->misc.write.out.size;
 }
 
@@ -934,7 +1025,6 @@ static ssize_t fuse_perform_write(struct file *file,
 			err = count;
 		} else {
 			size_t num_written;
-
 			num_written = fuse_send_write_pages(req, file, inode,
 							    pos, count);
 			err = req->out.h.error;
@@ -947,6 +1037,7 @@ static ssize_t fuse_perform_write(struct file *file,
 					err = -EIO;
 			}
 		}
+
 		fuse_put_request(fc, req);
 	} while (!err && iov_iter_count(ii));
 
@@ -971,6 +1062,11 @@ static ssize_t fuse_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
 	ssize_t err;
 	struct iov_iter i;
 	loff_t endbyte = 0;
+
+#ifdef FUSE_MMAP_
+	unsigned int f_flags_tmp;
+	DBG_INFO("start");
+#endif
 
 	WARN_ON(iocb->ki_pos != pos);
 
@@ -1002,10 +1098,23 @@ static ssize_t fuse_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
 	if (err)
 		goto out;
 
+#ifdef FUSE_MMAP_
+	/* using direct io for mmap */
+	if (is_for_ntfs(get_fuse_conn(inode))) {
+		f_flags_tmp = file->f_flags;
+		file->f_flags |= O_DIRECT;
+	}
+#endif
+
 	if (file->f_flags & O_DIRECT) {
+#ifdef FUSE_MMAP_
+		DBG_INFO("direct io");
+#endif
+
 		written = generic_file_direct_write(iocb, iov, &nr_segs,
 						    pos, &iocb->ki_pos,
 						    count, ocount);
+
 		if (written < 0 || written == count)
 			goto out;
 
@@ -1032,6 +1141,10 @@ static ssize_t fuse_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
 		written += written_buffered;
 		iocb->ki_pos = pos + written_buffered;
 	} else {
+#ifdef FUSE_MMAP_
+		DBG_INFO("fuse_perform_write");
+#endif
+
 		iov_iter_init(&i, iov, nr_segs, count, 0);
 		written = fuse_perform_write(file, mapping, &i, pos);
 		if (written >= 0)
@@ -1040,6 +1153,14 @@ static ssize_t fuse_file_aio_write(struct kiocb *iocb, const struct iovec *iov,
 out:
 	current->backing_dev_info = NULL;
 	mutex_unlock(&inode->i_mutex);
+
+#ifdef FUSE_MMAP_
+	if (is_for_ntfs(get_fuse_conn(inode))) {
+		file->f_flags = f_flags_tmp;
+	}
+
+	DBG_INFO("ok");
+#endif
 
 	return written ? written : err;
 }
@@ -1050,6 +1171,9 @@ static void fuse_release_user_pages(struct fuse_req *req, int write)
 
 	for (i = 0; i < req->num_pages; i++) {
 		struct page *page = req->pages[i];
+#ifdef FUSE_MMAP_
+		/* ClearPageReserved(page); */
+#endif
 		if (write)
 			set_page_dirty_lock(page);
 		put_page(page);
@@ -1105,6 +1229,15 @@ ssize_t fuse_direct_io(struct file *file, const char __user *buf,
 	ssize_t res = 0;
 	struct fuse_req *req;
 
+#ifdef FUSE_MMAP_
+	DBG_INFO("start");
+	DBG_INFO("fc->max_write = %i", fc->max_write);
+	DBG_INFO("file_cnt = %i", count);
+	if (is_for_ntfs(fc)) {
+		fc->max_write = REQ_MAX_PAGE_MUN * PAGE_SIZE;
+	}
+#endif
+
 	req = fuse_get_req(fc);
 	if (IS_ERR(req))
 		return PTR_ERR(req);
@@ -1119,18 +1252,33 @@ ssize_t fuse_direct_io(struct file *file, const char __user *buf,
 			break;
 		}
 
+#ifdef FUSE_MMAP_
+		DBG_INFO("fuse_get_user_pages ok");
+#endif
+
 		if (write)
 			nres = fuse_send_write(req, file, pos, nbytes, owner);
 		else
 			nres = fuse_send_read(req, file, pos, nbytes, owner);
 
 		fuse_release_user_pages(req, !write);
+
+#ifdef FUSE_MMAP_
+		DBG_INFO("nres = %i, nbytes = %i", nres, nbytes);
+#endif
+
 		if (req->out.h.error) {
 			if (!res)
 				res = req->out.h.error;
+#ifdef FUSE_MMAP_
+				DBG_INFO("req->out.h.error = %i", req->out.h.error);
+#endif
 			break;
 		} else if (nres > nbytes) {
 			res = -EIO;
+#ifdef FUSE_MMAP_
+			DBG_INFO("nres = %i, nbytes = %i", nres, nbytes);
+#endif
 			break;
 		}
 		count -= nres;
@@ -1150,6 +1298,10 @@ ssize_t fuse_direct_io(struct file *file, const char __user *buf,
 		fuse_put_request(fc, req);
 	if (res > 0)
 		*ppos = pos;
+
+#ifdef FUSE_MMAP_
+	DBG_INFO("ok");
+#endif
 
 	return res;
 }
@@ -2204,7 +2356,15 @@ fuse_direct_IO(int rw, struct kiocb *iocb, const struct iovec *iov,
 	file = iocb->ki_filp;
 	pos = offset;
 
+#ifdef FUSE_MMAP_
+	DBG_INFO("start");
+#endif
+
 	ret = fuse_loop_dio(file, iov, nr_segs, &pos, rw);
+
+#ifdef FUSE_MMAP_
+	DBG_INFO("ok");
+#endif
 
 	return ret;
 }

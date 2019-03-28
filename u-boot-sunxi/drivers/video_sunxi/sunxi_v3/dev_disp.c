@@ -1,7 +1,6 @@
 /* linux/drivers/video/sunxi/disp/dev_disp.c
  *
  * Copyright (c) 2013 Allwinnertech Co., Ltd.
- * Author: Tyle <tyle@allwinnertech.com>
  *
  * Display driver for sunxi platform
  *
@@ -19,103 +18,99 @@
 static disp_drv_info g_disp_drv;
 static u32 init_flag;
 
-#define MY_BYTE_ALIGN(x) ( ( (x + (4*1024-1)) >> 12) << 12)             /* alloc based on 4K byte */
+/* alloc based on 4K byte */
+#define MY_BYTE_ALIGN(x) (((x + (4*1024-1)) >> 12) << 12)
 
-//static u32 suspend_output_type[3] = {0,0,0};
-static u32 suspend_status = 0;//0:normal; suspend_status&1 != 0:in early_suspend; suspend_status&2 != 0:in suspend;
-//static u32 suspend_prestep = 0; //0:after early suspend; 1:after suspend; 2:after resume; 3 :after late resume
+/* static u32 suspend_output_type[3] = {0,0,0}; */
+/* 0:normal; suspend_status&1 != 0:
+ * in early_suspend; suspend_status&2 != 0:in suspend;
+ */
+static u32 suspend_status;
+/* static u32 suspend_prestep = 0; */
+/*0:after early suspend; 1:after suspend; 2:after resume; 3:after late resume */
 
-//uboot plat
+/* uboot plat */
 static u32    lcd_flow_cnt[2] = {0};
 static s8   lcd_op_finished[2] = {0};
 static struct timer_list lcd_timer[2];
 static s8   lcd_op_start[2] = {0};
 
-#if defined (CONFIG_ARCH_SUN9IW1P1)
+#if defined(CONFIG_ARCH_SUN9IW1P1)
 static unsigned int gbuffer[4096];
 #endif
-//static struct info_mm  g_disp_mm[10];
-//static int g_disp_mm_sel = 0;
+/* static struct info_mm  g_disp_mm[10]; */
+/* static int g_disp_mm_sel = 0; */
 
-//static struct cdev *my_cdev;
-//static dev_t devid ;
-//static struct class *disp_class;
-//struct device *display_dev;
+/* static struct cdev *my_cdev; */
+/* static dev_t devid ; */
+/* static struct class *disp_class; */
+/* struct device *display_dev; */
 
-//static u32 disp_print_cmd_level = 0;
-static u32 disp_cmd_print = 0xffff;   //print cmd which eq disp_cmd_print
+/* static u32 disp_print_cmd_level = 0; */
+static u32 disp_cmd_print = 0xffff;   /* print cmd which eq disp_cmd_print */
 
 static u32 g_output_type = DISP_OUTPUT_TYPE_LCD;
 
-static s32 copy_from_user(void *dest, void* src, u32 size)
+static s32 copy_from_user(void *dest, void *src, u32 size)
 {
-    memcpy(dest, src, size);
+	memcpy(dest, src, size);
 	return 0;
 }
 
-static s32 copy_to_user(void *src, void* dest, u32 size)
+static s32 copy_to_user(void *src, void *dest, u32 size)
 {
-    memcpy(dest, src, size);
+	memcpy(dest, src, size);
 	return 0;
 }
 
 static void drv_lcd_open_callback(void *parg)
 {
-    disp_lcd_flow *flow;
-    u32 sel = (u32)parg;
-    s32 i = lcd_flow_cnt[sel]++;
+	disp_lcd_flow *flow;
+	u32 sel = (u32)parg;
+	s32 i = lcd_flow_cnt[sel]++;
 
-    flow = bsp_disp_lcd_get_open_flow(sel);
+	flow = bsp_disp_lcd_get_open_flow(sel);
 
-	if(i < flow->func_num)
-    {
-    	flow->func[i].func(sel);
-        if(flow->func[i].delay == 0)
-        {
-            drv_lcd_open_callback((void*)sel);
-        }
-        else
-        {
-        	lcd_timer[sel].data = sel;
+	if (i < flow->func_num) {
+		flow->func[i].func(sel);
+		if (flow->func[i].delay == 0)
+			drv_lcd_open_callback((void *)sel);
+		else {
+			lcd_timer[sel].data = sel;
 			lcd_timer[sel].expires = flow->func[i].delay;
 			lcd_timer[sel].function = drv_lcd_open_callback;
 			add_timer(&lcd_timer[sel]);
-    	}
-    }
-    else if(i >= flow->func_num)
-    {
-        lcd_op_finished[sel] = 1;
-    }
+		}
+	} else if (i >= flow->func_num)
+		lcd_op_finished[sel] = 1;
 }
 
 
 static s32 drv_lcd_enable(u32 sel)
 {
-	//if(bsp_disp_lcd_is_used(sel)) {
-	//FIXME
-	if(1) {
+	/* if(bsp_disp_lcd_is_used(sel)) { */
+	/* FIXME */
+	if (1) {
 		lcd_flow_cnt[sel] = 0;
 		lcd_op_finished[sel] = 0;
 		lcd_op_start[sel] = 1;
 
 		init_timer(&lcd_timer[sel]);
 
-		drv_lcd_open_callback((void*)sel);
+		drv_lcd_open_callback((void *)sel);
 	}
     return 0;
 }
 
 static s8 drv_lcd_check_open_finished(u32 sel)
 {
-	//if(bsp_disp_lcd_is_used(sel) && (lcd_op_start[sel] == 1))
-	//FIXME
-	if((lcd_op_start[sel] == 1))
-	{
-	    if(lcd_op_finished[sel])
-	    {
-	        del_timer(&lcd_timer[sel]);
-            lcd_op_start[sel] = 0;
-	    }
+	/* if(bsp_disp_lcd_is_used(sel) && (lcd_op_start[sel] == 1)) */
+	/* FIXME */
+	if ((lcd_op_start[sel] == 1)) {
+		if (lcd_op_finished[sel]) {
+			del_timer(&lcd_timer[sel]);
+			lcd_op_start[sel] = 0;
+		}
 		return lcd_op_finished[sel];
 	}
 
@@ -124,76 +119,66 @@ static s8 drv_lcd_check_open_finished(u32 sel)
 
 static void drv_lcd_close_callback(void *parg)
 {
-    disp_lcd_flow *flow;
-    u32 sel = (__u32)parg;
-    s32 i = lcd_flow_cnt[sel]++;
+	disp_lcd_flow *flow;
+	u32 sel = (__u32)parg;
+	s32 i = lcd_flow_cnt[sel]++;
 
-    flow = bsp_disp_lcd_get_close_flow(sel);
+	flow = bsp_disp_lcd_get_close_flow(sel);
 
-    if(i < flow->func_num)
-    {
-    	flow->func[i].func(sel);
-        if(flow->func[i].delay == 0)
-        {
-            drv_lcd_close_callback((void*)sel);
-        }
-        else
-        {
-            lcd_timer[sel].data = sel;
+	if (i < flow->func_num) {
+		flow->func[i].func(sel);
+		if (flow->func[i].delay == 0)
+			drv_lcd_close_callback((void *)sel);
+		else {
+			lcd_timer[sel].data = sel;
 			lcd_timer[sel].expires = flow->func[i].delay;
 			lcd_timer[sel].function = drv_lcd_close_callback;
 			add_timer(&lcd_timer[sel]);
-        }
-    }
-    else if(i == flow->func_num)
-    {
-        lcd_op_finished[sel] = 1;
-    }
+		}
+	} else if (i == flow->func_num)
+		lcd_op_finished[sel] = 1;
 }
 
 static s32 drv_lcd_disable(u32 sel)
 {
-    //if(bsp_disp_lcd_is_used(sel))
-    //FIXME
-    if(1)
-    {
-        lcd_flow_cnt[sel] = 0;
-        lcd_op_finished[sel] = 0;
-        lcd_op_start[sel] = 1;
+	/* if(bsp_disp_lcd_is_used(sel)) */
+	/* FIXME */
+	if (1) {
+		lcd_flow_cnt[sel] = 0;
+		lcd_op_finished[sel] = 0;
+		lcd_op_start[sel] = 1;
 
-        init_timer(&lcd_timer[sel]);
+		init_timer(&lcd_timer[sel]);
 
-        drv_lcd_close_callback((void*)sel);
-    }
+		drv_lcd_close_callback((void *)sel);
+	}
 
-    return 0;
+	return 0;
 }
 
 static s8 drv_lcd_check_close_finished(u32 sel)
 {
-    //if(bsp_disp_lcd_is_used(sel) && (lcd_op_start[sel] == 1))
-    //FIXME
-    if((lcd_op_start[sel] == 1))
-    {
-        if(lcd_op_finished[sel])
-        {
-            del_timer(&lcd_timer[sel]);
-            lcd_op_start[sel] = 0;
-        }
-        return lcd_op_finished[sel];
-    }
-    return 1;
+	/* if(bsp_disp_lcd_is_used(sel) && (lcd_op_start[sel] == 1)) */
+	/* FIXME */
+	if ((lcd_op_start[sel] == 1)) {
+		if (lcd_op_finished[sel]) {
+			del_timer(&lcd_timer[sel]);
+			lcd_op_start[sel] = 0;
+		}
+		return lcd_op_finished[sel];
+	}
+	return 1;
 }
 
 #if defined(SUPPORT_HDMI)
-s32 disp_set_hdmi_func(disp_hdmi_func * func)
+s32 disp_set_hdmi_func(disp_hdmi_func *func)
 {
 	return bsp_disp_set_hdmi_func(func);
 }
 #endif
 
 #if defined(SUPPORT_TV)
-s32 disp_set_tv_func(disp_tv_func * func)
+s32 disp_set_tv_func(disp_tv_func *func)
 {
 	return bsp_disp_set_tv_func(func);
 }
@@ -221,28 +206,22 @@ s32 drv_disp_check_spec(void)
 	limit_h = 1536;
 #endif
 	ret = disp_sys_script_get_item("lcd0_para", "lcd_used", &value, 1);
-	if(ret == 1)
-	{
-	  lcd_used = value;
-	}
+	if (ret == 1)
+		lcd_used = value;
 
-	if(1 == lcd_used) {
+	if (lcd_used == 1) {
 		ret = disp_sys_script_get_item("lcd0_para", "lcd_x", &value, 1);
-	  if(ret == 1)
-	  {
-	      lcd_x = value;
-	  }
+		if (ret == 1)
+			lcd_x = value;
 
-	  ret = disp_sys_script_get_item("lcd0_para", "lcd_y", &value, 1);
-	  if(ret == 1)
-	  {
-	      lcd_y = value;
-	  }
+		ret = disp_sys_script_get_item("lcd0_para", "lcd_y", &value, 1);
+		if (ret == 1)
+			lcd_y = value;
 
-		if(((lcd_x > limit_w) && (lcd_y > limit_h))
-			|| ((lcd_x > limit_h) && (lcd_y > limit_w))) {
+		if (((lcd_x > limit_w) && (lcd_y > limit_h))
+				|| ((lcd_x > limit_h) && (lcd_y > limit_w))) {
 			printf("fatal err: cannot support lcd with resolution(%d*%d) larger than %d*%d, the system will shut down!\n",
-				lcd_x, lcd_y,limit_w,limit_h);
+					lcd_x, lcd_y, limit_w, limit_h);
 			sunxi_board_shutdown();
 		}
 
@@ -252,16 +231,20 @@ s32 drv_disp_check_spec(void)
 }
 
 extern int tv_ac200_init(void);
-
-
+#if defined(CONFIG_ARCH_SUN8IW6P1) || defined(CONFIG_ARCH_SUN8IW7P1)
+extern void  clk_init(void);
+#endif
 s32 drv_disp_init(void)
 {
 #ifdef CONFIG_FPGA
-    return 0;
+	return 0;
 #else
-  disp_bsp_init_para para;
-  int disp, num_screens;
+	disp_bsp_init_para para;
+	int disp, num_screens;
 
+#if defined(CONFIG_ARCH_SUN8IW6P1) || defined(CONFIG_ARCH_SUN8IW7P1)
+	clk_init();
+#endif
 	drv_disp_check_spec();
 	sunxi_pwm_init();
 	disp_sys_clk_init();
@@ -303,9 +286,8 @@ s32 drv_disp_init(void)
 
 	bsp_disp_init(&para);
 	num_screens = bsp_disp_feat_get_num_screens();
-	for(disp=0; disp<num_screens; disp++) {
+	for (disp = 0; disp < num_screens; disp++)
 		g_disp_drv.mgr[disp] = disp_get_layer_manager(disp);
-	}
 #if defined(SUPPORT_HDMI)
 	Hdmi_init();
 #endif
@@ -320,7 +302,7 @@ s32 drv_disp_init(void)
 	bsp_disp_open();
 
 	lcd_init();
-	//gm7121_module_init();
+	/* gm7121_module_init(); */
 
 	init_flag = 1;
 
@@ -332,7 +314,7 @@ s32 drv_disp_init(void)
 s32 drv_disp_exit(void)
 {
 	printf("%s\n", __func__);
-	if(init_flag == 1) {
+	if (init_flag == 1) {
 		init_flag = 0;
 		bsp_disp_close();
 		bsp_disp_exit(g_disp_drv.exit_mode);
@@ -378,67 +360,70 @@ long disp_ioctl(void *hd, unsigned int cmd, void *arg)
 
 	num_screens = bsp_disp_feat_get_num_screens();
 
-	if (copy_from_user((void*)karg,(void*)arg, 4*sizeof(unsigned long))) {
+	if (copy_from_user((void *)karg, (void *)arg,
+					4*sizeof(unsigned long))) {
 		__wrn("copy_from_user fail\n");
 		return -1;
 	}
 
-	ubuffer[0] = *(unsigned long*)karg;
-	ubuffer[1] = (*(unsigned long*)(karg+1));
-	ubuffer[2] = (*(unsigned long*)(karg+2));
-	ubuffer[3] = (*(unsigned long*)(karg+3));
+	ubuffer[0] = *(unsigned long *)karg;
+	ubuffer[1] = (*(unsigned long *)(karg+1));
+	ubuffer[2] = (*(unsigned long *)(karg+2));
+	ubuffer[3] = (*(unsigned long *)(karg+3));
 
-	if(ubuffer[0] < num_screens)
+	if (ubuffer[0] < num_screens)
 		mgr = g_disp_drv.mgr[ubuffer[0]];
-	if(mgr) {
+	if (mgr) {
 		dispdev = mgr->device;
 		enhance = mgr->enhance;
 		smbl = mgr->smbl;
 		cptr = mgr->cptr;
 	}
 
-	if(cmd < DISP_FB_REQUEST)	{
-		if(ubuffer[0] >= num_screens) {
+	if (cmd < DISP_FB_REQUEST)	{
+		if (ubuffer[0] >= num_screens) {
 			__wrn("para err in disp_ioctl, cmd = 0x%x,screen id = %d\n", cmd, (int)ubuffer[0]);
 			return -1;
 		}
 	}
-	if(DISPLAY_DEEP_SLEEP == suspend_status) {
+	if (suspend_status == DISPLAY_DEEP_SLEEP) {
 		__wrn("ioctl:%x fail when in suspend!\n", cmd);
 		return -1;
 	}
 
-	if(cmd == disp_cmd_print) {
-		//__wrn("cmd:0x%x,%ld,%ld\n",cmd, ubuffer[0], ubuffer[1]);
-	}
+	if (cmd == disp_cmd_print)
+		/* __wrn("cmd:0x%x,%ld,%ld\n",cmd, ubuffer[0], ubuffer[1]); */
 
-	switch(cmd)	{
-	//----disp global----
+	switch (cmd)	{
+	/* ----disp global---- */
 	case DISP_SET_BKCOLOR:
 	{
 		disp_color para;
 
-		if(copy_from_user(&para, (void*)ubuffer[1],sizeof(disp_color)))	{
+		if (copy_from_user(&para, (void *)ubuffer[1],
+					sizeof(disp_color))) {
 			__wrn("copy_from_user fail\n");
 			return  -1;
 		}
-		if(mgr && (mgr->set_back_color != NULL))
+		if (mgr && (mgr->set_back_color != NULL))
 			ret = mgr->set_back_color(mgr, &para);
 		break;
 	}
 
 	case DISP_GET_OUTPUT_TYPE:
 	{
-		if(mgr && mgr->device)
+		if (mgr && mgr->device)
 			ret = mgr->device->type;
 		break;
 	}
 
 	case DISP_GET_SCN_WIDTH:
 	{
-		unsigned int width = 0,height = 0;
-		if(mgr && mgr->device && mgr->device->get_resolution) {
-			mgr->device->get_resolution(mgr->device, &width, &height);
+		unsigned int width = 0, height = 0;
+
+		if (mgr && mgr->device && mgr->device->get_resolution) {
+			mgr->device->get_resolution(mgr->device,
+						&width, &height);
 		}
 		ret = width;
 		break;
@@ -446,9 +431,11 @@ long disp_ioctl(void *hd, unsigned int cmd, void *arg)
 
 	case DISP_GET_SCN_HEIGHT:
 	{
-		unsigned int width = 0,height = 0;
-		if(mgr && mgr->device && mgr->device->get_resolution) {
-			mgr->device->get_resolution(mgr->device, &width, &height);
+		unsigned int width = 0, height = 0;
+
+		if (mgr && mgr->device && mgr->device->get_resolution) {
+			mgr->device->get_resolution(mgr->device,
+							&width, &height);
 		}
 		ret = height;
 		break;
@@ -468,11 +455,11 @@ long disp_ioctl(void *hd, unsigned int cmd, void *arg)
 
 	case DISP_BLANK:
 	{
-		if(ubuffer[1]) {
-			if(dispdev && dispdev->disable)
+		if (ubuffer[1]) {
+			if (dispdev && dispdev->disable)
 				ret = dispdev->disable(dispdev);
 		} else {
-			if(dispdev && dispdev->enable)
+			if (dispdev && dispdev->enable)
 				ret = dispdev->enable(dispdev);
 		}
 		break;
@@ -480,23 +467,26 @@ long disp_ioctl(void *hd, unsigned int cmd, void *arg)
 
 	case DISP_DEVICE_SWITCH:
 	{
-		if(ubuffer[1] == (unsigned long)DISP_OUTPUT_TYPE_LCD)
+		if (ubuffer[1] == (unsigned long)DISP_OUTPUT_TYPE_LCD)
 			ret = drv_lcd_enable(ubuffer[0]);
 		else
-			ret = bsp_disp_device_switch(ubuffer[0], (disp_output_type)ubuffer[1], (disp_tv_mode)ubuffer[2]);
+			ret = bsp_disp_device_switch(ubuffer[0],
+					(disp_output_type)ubuffer[1],
+					(disp_tv_mode)ubuffer[2]);
 		break;
 	}
 
-	//----layer----
+	/* ----layer---- */
 	case DISP_LAYER_SET_CONFIG:
 	{
 		disp_layer_config para;
 
-		if(copy_from_user(&para, (void *)ubuffer[1],sizeof(disp_layer_config)))	{
+		if (copy_from_user(&para, (void *)ubuffer[1],
+						sizeof(disp_layer_config))) {
 			__wrn("copy_from_user fail\n");
 			return  -1;
 		}
-		if(mgr && mgr->set_layer_config)
+		if (mgr && mgr->set_layer_config)
 			ret = mgr->set_layer_config(mgr, &para, ubuffer[2]);
 		break;
 	}
@@ -505,23 +495,25 @@ long disp_ioctl(void *hd, unsigned int cmd, void *arg)
 	{
 		disp_layer_config para;
 
-		if(copy_from_user(&para, (void *)ubuffer[1],sizeof(disp_layer_config)))	{
+		if (copy_from_user(&para, (void *)ubuffer[1],
+					sizeof(disp_layer_config))) {
 			__wrn("copy_from_user fail\n");
 			return  -1;
 		}
-		if(mgr && mgr->get_layer_config)
+		if (mgr && mgr->get_layer_config)
 			ret = mgr->get_layer_config(mgr, &para, ubuffer[2]);
-		if(copy_to_user(&para, (void *)ubuffer[1], sizeof(disp_layer_config)))	{
+		if (copy_to_user(&para, (void *)ubuffer[1],
+					sizeof(disp_layer_config))) {
 			__wrn("copy_to_user fail\n");
 			return  -1;
 		}
 		break;
 	}
 
-	//----lcd----
+	/* ----lcd---- */
 	case DISP_LCD_SET_BRIGHTNESS:
 	{
-		if(dispdev && (DISP_OUTPUT_TYPE_LCD == dispdev->type)) {
+		if (dispdev && (dispdev->type == DISP_OUTPUT_TYPE_LCD)) {
 			ret = dispdev->set_bright(dispdev, ubuffer[1]);
 		}
 		break;
@@ -529,7 +521,7 @@ long disp_ioctl(void *hd, unsigned int cmd, void *arg)
 
 	case DISP_LCD_GET_BRIGHTNESS:
 	{
-		if(dispdev && (DISP_OUTPUT_TYPE_LCD == dispdev->type)) {
+		if (dispdev && (dispdev->type == DISP_OUTPUT_TYPE_LCD)) {
 			ret = dispdev->get_bright(dispdev);
 		}
 		break;
@@ -537,37 +529,37 @@ long disp_ioctl(void *hd, unsigned int cmd, void *arg)
 
 
 	case DISP_HDMI_GET_HPD_STATUS:
-		if(DISPLAY_NORMAL == suspend_status) {
+		if (suspend_status == DISPLAY_NORMAL)
 			ret = bsp_disp_hdmi_get_hpd_status(ubuffer[0]);
-		}	else {
+		else
 			ret = 0;
-		}
 		break;
 
 	case DISP_HDMI_SUPPORT_MODE:
 		ret = bsp_disp_hdmi_check_support_mode(ubuffer[0], ubuffer[1]);
 		break;
-#if defined (CONFIG_ARCH_SUN8IW7) || defined (CONFIG_USE_AC200)
+#if defined(CONFIG_ARCH_SUN8IW7) || defined(CONFIG_USE_AC200)
 	case DISP_TV_GET_HPD_STATUS:
-	if(DISPLAY_NORMAL == suspend_status) {
+	if (suspend_status == DISPLAY_NORMAL)
 		ret = bsp_disp_tv_get_hpd_status(ubuffer[0]);
-	}	else {
+	else
 		ret = 0;
-	}
 	break;
 #endif
 
 #if 0
 	case DISP_CMD_HDMI_SET_SRC:
-		ret = bsp_disp_hdmi_set_src(ubuffer[0], (disp_lcd_src)ubuffer[1]);
+		ret = bsp_disp_hdmi_set_src(ubuffer[0],
+				(disp_lcd_src)ubuffer[1]);
 		break;
 
-	//----framebuffer----
+	/* ----framebuffer---- */
 	case DISP_CMD_FB_REQUEST:
 	{
 		disp_fb_create_info para;
 
-		if(copy_from_user(&para, (void *)ubuffer[1],sizeof(disp_fb_create_info))) {
+		if (copy_from_user(&para, (void *)ubuffer[1],
+					sizeof(disp_fb_create_info))) {
 			__wrn("copy_from_user fail\n");
 			return  -1;
 		}
@@ -584,7 +576,8 @@ long disp_ioctl(void *hd, unsigned int cmd, void *arg)
 		disp_fb_create_info para;
 
 		ret = Display_Fb_get_para(ubuffer[0], &para);
-		if(copy_to_user((void *)ubuffer[1],&para, sizeof(disp_fb_create_info))) {
+		if (copy_to_user((void *)ubuffer[1], &para,
+					sizeof(disp_fb_create_info))) {
 			__wrn("copy_to_user fail\n");
 			return  -1;
 		}
@@ -596,7 +589,8 @@ long disp_ioctl(void *hd, unsigned int cmd, void *arg)
 		disp_init_para para;
 
 		ret = Display_get_disp_init_para(&para);
-		if(copy_to_user((void *)ubuffer[0],&para, sizeof(disp_init_para)))	{
+		if (copy_to_user((void *)ubuffer[0], &para,
+					sizeof(disp_init_para))) {
 			__wrn("copy_to_user fail\n");
 			return  -1;
 		}
@@ -604,32 +598,32 @@ long disp_ioctl(void *hd, unsigned int cmd, void *arg)
 	}
 
 #endif
-		//----enhance----
+		/* ----enhance---- */
 	case DISP_ENHANCE_ENABLE:
 	{
-		if(enhance && enhance->enable)
+		if (enhance && enhance->enable)
 			ret = enhance->enable(enhance);
 		break;
 	}
 
 	case DISP_ENHANCE_DISABLE:
 	{
-		if(enhance && enhance->disable)
+		if (enhance && enhance->disable)
 			ret = enhance->disable(enhance);
 		break;
 	}
 
-	//---smart backlight --
+	/* ---smart backlight -- */
 	case DISP_SMBL_ENABLE:
 	{
-		if(smbl && smbl->enable)
+		if (smbl && smbl->enable)
 			ret = smbl->enable(smbl);
 		break;
 	}
 
 	case DISP_SMBL_DISABLE:
 	{
-		if(smbl && smbl->disable)
+		if (smbl && smbl->disable)
 			ret = smbl->disable(smbl);
 		break;
 	}
@@ -638,26 +632,27 @@ long disp_ioctl(void *hd, unsigned int cmd, void *arg)
 	{
 		disp_rect rect;
 
-		if(copy_from_user(&rect, (void *)ubuffer[1],sizeof(disp_rect)))	{
+		if (copy_from_user(&rect, (void *)ubuffer[1],
+						sizeof(disp_rect))) {
 			__wrn("copy_from_user fail\n");
 			return  -1;
 		}
-		if(smbl && smbl->set_window)
+		if (smbl && smbl->set_window)
 			ret = smbl->set_window(smbl, &rect);
 		break;
 	}
 
-	//---capture --
+	/* ---capture -- */
 	case DISP_CAPTURE_START:
 	{
-		if(cptr && cptr->start)
+		if (cptr && cptr->start)
 			ret = cptr->start(cptr);
 		break;
 	}
 
 	case DISP_CAPTURE_STOP:
 	{
-		if(cptr && cptr->stop)
+		if (cptr && cptr->stop)
 			ret = cptr->stop(cptr);
 		break;
 	}
@@ -666,11 +661,12 @@ long disp_ioctl(void *hd, unsigned int cmd, void *arg)
 	{
 		disp_capture_info info;
 
-		if(copy_from_user(&info, (void *)ubuffer[1],sizeof(disp_capture_info)))	{
+		if (copy_from_user(&info, (void *)ubuffer[1],
+					sizeof(disp_capture_info))) {
 			__wrn("copy_from_user fail\n");
 			return  -1;
 		}
-		if(cptr && cptr->commmit)
+		if (cptr && cptr->commmit)
 			ret = cptr->commmit(cptr, &info);
 		break;
 	}
@@ -678,9 +674,9 @@ long disp_ioctl(void *hd, unsigned int cmd, void *arg)
 #if defined(CONFIG_ARCH_SUN9IW1P1)
 
 #if 0
-	//----for test----
+	/* ----for test---- */
 	case DISP_CMD_MEM_REQUEST:
-		ret =  disp_mem_request(ubuffer[0],ubuffer[1]);
+		ret =  disp_mem_request(ubuffer[0], ubuffer[1]);
 		break;
 
 	case DISP_CMD_MEM_RELEASE:
@@ -695,14 +691,14 @@ long disp_ioctl(void *hd, unsigned int cmd, void *arg)
 		ret = g_disp_mm[ubuffer[0]].mem_start;
 		break;
 
-//	case DISP_CMD_PRINT_REG:
-//		ret = bsp_disp_print_reg(1, ubuffer[0], 0);
-//		break;
+/* case DISP_CMD_PRINT_REG: */
+/* ret = bsp_disp_print_reg(1, ubuffer[0], 0); */
+/* break; */
 #endif
 #endif
 
 	case DISP_SET_EXIT_MODE:
-        ret = g_disp_drv.exit_mode = ubuffer[0];
+	ret = g_disp_drv.exit_mode = ubuffer[0];
 		break;
 
 	case DISP_LCD_CHECK_OPEN_FINISH:
@@ -728,66 +724,40 @@ s32 drv_disp_standby(u32 cmd, void *pArg)
 	s32 timedly = 5000;
 	s32 check_time = timedly/DELAY_ONCE_TIME;
 
-	if(cmd == BOOT_MOD_ENTER_STANDBY)
-	{
-	    if(g_output_type == DISP_OUTPUT_TYPE_HDMI)
-	    {
+	if (cmd == BOOT_MOD_ENTER_STANDBY) {
+		if (g_output_type == DISP_OUTPUT_TYPE_HDMI) {
 		}
 		else
-        {
-            drv_lcd_disable(0);
-		}
-		do
-		{
+			drv_lcd_disable(0);
+		do {
 			ret = drv_lcd_check_close_finished(0);
-			if(ret == 1)
-			{
+			if (ret == 1)
 				break;
-			}
-			else if(ret == -1)
-			{
+			else if (ret == -1)
 				return -1;
-			}
 			__msdelay(DELAY_ONCE_TIME);
-			check_time --;
-			if(check_time <= 0)
-			{
+			check_time--;
+			if (check_time <= 0)
 				return -1;
-			}
-		}
-		while(1);
+		} while (1);
 
 		return 0;
-	}
-	else if(cmd == BOOT_MOD_EXIT_STANDBY)
-	{
-		if(g_output_type == DISP_OUTPUT_TYPE_HDMI)
-		{
+	} else if (cmd == BOOT_MOD_EXIT_STANDBY) {
+		if (g_output_type == DISP_OUTPUT_TYPE_HDMI) {
 		}
 		else
-		{
 			drv_lcd_enable(0);
-        }
-
-		do
-		{
+		do {
 			ret = drv_lcd_check_open_finished(0);
-			if(ret == 1)
-			{
+			if (ret == 1)
 				break;
-			}
-			else if(ret == -1)
-			{
+			else if (ret == -1)
 				return -1;
-			}
 			__msdelay(DELAY_ONCE_TIME);
-			check_time --;
-			if(check_time <= 0)
-			{
+			check_time--;
+			if (check_time <= 0)
 				return -1;
-			}
-		}
-		while(1);
+		} while (1);
 
 		return 0;
 	}

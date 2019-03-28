@@ -1,17 +1,7 @@
-/*
- * drivers/video/sunxi/disp2/disp/de/lowlevel_sun8iw8/de_feat.h
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #ifndef _DE_FEAT_H_
 #define _DE_FEAT_H_
 
+#define DE_NUM 1
 #define DEVICE_NUM	1
 #define CHN_NUM		3
 #define VI_CHN_NUM	2
@@ -37,6 +27,7 @@
 #define DE_CORE_CLK_RATE 300000000
 
 struct de_feat {
+	const int num_screens;
 	const int num_devices;
 	const int *num_chns;
 	const int *num_vi_chns;
@@ -46,6 +37,8 @@ struct de_feat {
 	const int *is_support_wb;
 	const int *supported_output_types;
 	const int *is_support_scale;
+	const int *scale_line_buffer_rgb;
+	const int *scale_line_buffer_yuv;
 };
 
 int de_feat_init(void);
@@ -62,6 +55,9 @@ int de_feat_is_supported_output_types(unsigned int  disp, unsigned int output_ty
 int de_feat_is_support_wb(unsigned int disp);
 int de_feat_is_support_scale(unsigned int disp);
 int de_feat_is_support_scale_by_chn(unsigned int disp, unsigned int chn);
+
+int de_feat_get_scale_linebuf_for_yuv(unsigned int disp, unsigned int chn);
+int de_feat_get_scale_linebuf_for_rgb(unsigned int disp, unsigned int chn);
 
 #endif
 

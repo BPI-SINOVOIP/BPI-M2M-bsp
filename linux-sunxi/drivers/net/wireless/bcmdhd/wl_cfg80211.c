@@ -1378,10 +1378,10 @@ wl_cfg80211_add_virtual_iface(struct wiphy *wiphy,
 	struct net_device *primary_ndev;
 	struct net_device *new_ndev;
 	struct ether_addr primary_mac;
+	dhd_pub_t *dhd;
 #ifdef PROP_TXSTATUS_VSDB
 #if defined(BCMSDIO)
 	s32 up = 1;
-	dhd_pub_t *dhd;
 	bool enabled;
 #endif 
 #endif /* PROP_TXSTATUS_VSDB */
@@ -1392,11 +1392,7 @@ wl_cfg80211_add_virtual_iface(struct wiphy *wiphy,
 	if (!cfg)
 		return ERR_PTR(-EINVAL);
 
-#ifdef PROP_TXSTATUS_VSDB
-#if defined(BCMSDIO)
 	dhd = (dhd_pub_t *)(cfg->pub);
-#endif 
-#endif /* PROP_TXSTATUS_VSDB */
 #if defined(SUPPORT_AP_POWERSAVE)
 	dhd = (dhd_pub_t *)(cfg->pub);
 #endif
@@ -1465,12 +1461,8 @@ wl_cfg80211_add_virtual_iface(struct wiphy *wiphy,
 	if (cfg->p2p_supported && (wlif_type != -1)) {
 		ASSERT(cfg->p2p); /* ensure expectation of p2p initialization */
 
-#ifdef PROP_TXSTATUS_VSDB
-#if defined(BCMSDIO)
 		if (!dhd)
 			return ERR_PTR(-ENODEV);
-#endif 
-#endif /* PROP_TXSTATUS_VSDB */
 		if (!cfg->p2p)
 			return ERR_PTR(-ENODEV);
 
@@ -1567,6 +1559,7 @@ wl_cfg80211_add_virtual_iface(struct wiphy *wiphy,
 			val = 1;
 			/* Disable firmware roaming for P2P interface  */
 			wldev_iovar_setint(new_ndev, "roam_off", val);
+			wldev_iovar_setint(new_ndev, "bcn_timeout", dhd->conf->bcn_timeout);
 
 			if (mode != WL_MODE_AP)
 				wldev_iovar_setint(new_ndev, "buf_key_b4_m4", 1);
@@ -1630,7 +1623,7 @@ wl_cfg80211_add_virtual_iface(struct wiphy *wiphy,
 #if defined(BCMSDIO)
 			dhd_wlfc_get_enable(dhd, &enabled);
 		if (enabled && cfg->wlfc_on && dhd->op_mode != DHD_FLAG_HOSTAP_MODE &&
-			dhd->op_mode != DHD_FLAG_IBSS_MODE) {
+			dhd->op_mode != DHD_FLAG_IBSS_MODE && dhd->conf->disable_proptx!=0) {
 			dhd_wlfc_deinit(dhd);
 			cfg->wlfc_on = false;
 		}
@@ -2040,7 +2033,7 @@ static s32 wl_cfg80211_handle_ifdel(struct bcm_cfg80211 *cfg, wl_if_event_info *
 #if defined(BCMSDIO)
 		dhd_wlfc_get_enable(dhd, &enabled);
 		if (enabled && cfg->wlfc_on && dhd->op_mode != DHD_FLAG_HOSTAP_MODE &&
-			dhd->op_mode != DHD_FLAG_IBSS_MODE) {
+			dhd->op_mode != DHD_FLAG_IBSS_MODE && dhd->conf->disable_proptx!=0) {
 			dhd_wlfc_deinit(dhd);
 			cfg->wlfc_on = false;
 		}
@@ -2207,7 +2200,7 @@ static void wl_scan_prep(struct wl_scan_params *params, struct cfg80211_scan_req
 		ptr = (char*)params + offset;
 		for (i = 0; i < n_ssids; i++) {
 			memset(&ssid, 0, sizeof(wlc_ssid_t));
-			ssid.SSID_len = request->ssids[i].ssid_len;
+			ssid.SSID_len = MIN(request->ssids[i].ssid_len, DOT11_MAX_SSID_LEN);
 			memcpy(ssid.SSID, request->ssids[i].ssid, ssid.SSID_len);
 			if (!ssid.SSID_len)
 				WL_SCAN(("%d: Broadcast scan\n", i));
@@ -2618,6 +2611,8 @@ __wl_cfg80211_scan(struct wiphy *wiphy, struct net_device *ndev,
 		wl_cfg80211_pause_sdo(ndev, cfg);
 	}
 #endif
+
+	dhd_conf_set_btc_mgmt(dhd);
 
 	/* Arm scan timeout timer */
 	mod_timer(&cfg->scan_timeout, jiffies + msecs_to_jiffies(WL_SCAN_TIMER_INTERVAL_MS));
@@ -3500,7 +3495,8 @@ wl_cfg80211_join_ibss(struct wiphy *wiphy, struct net_device *dev,
 	WL_TRACE(("In\n"));
 	RETURN_EIO_IF_NOT_UP(cfg);
 	WL_INFORM(("JOIN BSSID:" MACDBG "\n", MAC2STRDBG(params->bssid)));
-	if (!params->ssid || params->ssid_len <= 0) {
+	if (!params->ssid || params->ssid_len <= 0 ||
+		params->ssid_len > DOT11_MAX_SSID_LEN) {
 		WL_ERR(("Invalid parameter\n"));
 		return -EINVAL;
 	}
@@ -4264,6 +4260,8 @@ wl_cfg80211_connect(struct wiphy *wiphy, struct net_device *dev,
 	int ret;
 	int wait_cnt;
 
+	dhd_pub_t *dhd = (dhd_pub_t *)(cfg->pub);
+
 	WL_DBG(("In\n"));
 
 	if (unlikely(!sme->ssid)) {
@@ -4508,6 +4506,10 @@ wl_cfg80211_connect(struct wiphy *wiphy, struct net_device *dev,
 		kfree(ext_join_params);
 		return BCME_ERROR;
 	}
+#ifdef WL_EXT_IAPSTA
+	wl_android_ext_iapsta_disconnect_sta(dev, cfg->channel);
+#endif
+	dhd_conf_set_btc_mgmt(dhd);
 	err = wldev_iovar_setbuf_bsscfg(dev, "join", ext_join_params, join_params_size,
 		cfg->ioctl_buf, WLC_IOCTL_MAXLEN, bssidx, &cfg->ioctl_buf_sync);
 
@@ -6301,6 +6303,11 @@ wl_cfg80211_mgmt_tx(struct wiphy *wiphy, bcm_struct_cfgdev *cfgdev,
 
 	WL_DBG(("Enter \n"));
 
+	if (len > ACTION_FRAME_SIZE) {
+		WL_ERR(("bad length:%zu\n", len));
+		return BCME_BADLEN;
+	}
+
 	dev = cfgdev_to_wlc_ndev(cfgdev, cfg);
 
 	if (!dev) {
@@ -7446,16 +7453,16 @@ static s32 wl_cfg80211_bcn_set_params(
 	}
 
 	if ((info->ssid) && (info->ssid_len > 0) &&
-		(info->ssid_len <= 32)) {
+		(info->ssid_len <= DOT11_MAX_SSID_LEN)) {
 		WL_DBG(("SSID (%s) len:%zd \n", info->ssid, info->ssid_len));
 		if (dev_role == NL80211_IFTYPE_AP) {
 			/* Store the hostapd SSID */
-			memset(cfg->hostapd_ssid.SSID, 0x00, 32);
+			memset(cfg->hostapd_ssid.SSID, 0x00, DOT11_MAX_SSID_LEN);
 			memcpy(cfg->hostapd_ssid.SSID, info->ssid, info->ssid_len);
 			cfg->hostapd_ssid.SSID_len = info->ssid_len;
 		} else {
-				/* P2P GO */
-			memset(cfg->p2p->ssid.SSID, 0x00, 32);
+			/* P2P GO */
+			memset(cfg->p2p->ssid.SSID, 0x00, DOT11_MAX_SSID_LEN);
 			memcpy(cfg->p2p->ssid.SSID, info->ssid, info->ssid_len);
 			cfg->p2p->ssid.SSID_len = info->ssid_len;
 		}
@@ -7577,6 +7584,7 @@ wl_cfg80211_bcn_bringup_ap(
 			goto exit;
 		}
 #endif /* DISABLE_11H_SOFTAP */
+		dhd_conf_set_wme(cfg->pub, 1);
 
 		err = wldev_ioctl(dev, WLC_UP, &ap, sizeof(s32), true);
 		if (unlikely(err)) {
@@ -7587,9 +7595,11 @@ wl_cfg80211_bcn_bringup_ap(
 		memset(&join_params, 0, sizeof(join_params));
 		/* join parameters starts with ssid */
 		join_params_size = sizeof(join_params.ssid);
+		join_params.ssid.SSID_len = MIN(cfg->hostapd_ssid.SSID_len,
+			(uint32)DOT11_MAX_SSID_LEN);
 		memcpy(join_params.ssid.SSID, cfg->hostapd_ssid.SSID,
-			cfg->hostapd_ssid.SSID_len);
-		join_params.ssid.SSID_len = htod32(cfg->hostapd_ssid.SSID_len);
+			join_params.ssid.SSID_len);
+		join_params.ssid.SSID_len = htod32(join_params.ssid.SSID_len);
 
 		/* create softap */
 		if ((err = wldev_ioctl(dev, WLC_SET_SSID, &join_params,
@@ -8250,14 +8260,16 @@ wl_cfg80211_add_set_beacon(struct wiphy *wiphy, struct net_device *dev,
 		DOT11_MNG_SSID_ID)) != NULL) {
 		if (dev_role == NL80211_IFTYPE_AP) {
 			/* Store the hostapd SSID */
-			memset(&cfg->hostapd_ssid.SSID[0], 0x00, 32);
-			memcpy(&cfg->hostapd_ssid.SSID[0], ssid_ie->data, ssid_ie->len);
-			cfg->hostapd_ssid.SSID_len = ssid_ie->len;
+			memset(&cfg->hostapd_ssid.SSID[0], 0x00, DOT11_MAX_SSID_LEN);
+			cfg->hostapd_ssid.SSID_len = MIN(ssid_ie->len, DOT11_MAX_SSID_LEN);
+			memcpy(&cfg->hostapd_ssid.SSID[0], ssid_ie->data,
+				cfg->hostapd_ssid.SSID_len);
 		} else {
-				/* P2P GO */
-			memset(&cfg->p2p->ssid.SSID[0], 0x00, 32);
-			memcpy(cfg->p2p->ssid.SSID, ssid_ie->data, ssid_ie->len);
-			cfg->p2p->ssid.SSID_len = ssid_ie->len;
+			/* P2P GO */
+			memset(&cfg->p2p->ssid.SSID[0], 0x00, DOT11_MAX_SSID_LEN);
+			cfg->p2p->ssid.SSID_len = MIN(ssid_ie->len, DOT11_MAX_SSID_LEN);
+			memcpy(cfg->p2p->ssid.SSID, ssid_ie->data,
+				cfg->p2p->ssid.SSID_len);
 		}
 	}
 
@@ -8382,10 +8394,15 @@ wl_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	if (request->n_match_sets > 0) {
 		for (i = 0; i < request->n_match_sets; i++) {
 			ssid = &request->match_sets[i].ssid;
-			memcpy(ssids_local[i].SSID, ssid->ssid, ssid->ssid_len);
-			ssids_local[i].SSID_len = ssid->ssid_len;
-			WL_PNO((">>> PNO filter set for ssid (%s) \n", ssid->ssid));
-			ssid_count++;
+			/* No need to include null ssid */
+			if (ssid->ssid_len) {
+				ssids_local[ssid_count].SSID_len = MIN(ssid->ssid_len,
+					(u8)DOT11_MAX_SSID_LEN);
+				memcpy(ssids_local[ssid_count].SSID, ssid->ssid,
+					ssids_local[ssid_count].SSID_len);
+				WL_PNO((">>> PNO filter set for ssid (%s) \n", ssid->ssid));
+				ssid_count++;
+			}
 		}
 	}
 
@@ -9590,14 +9607,14 @@ wl_notify_connect_status(struct bcm_cfg80211 *cfg, bcm_struct_cfgdev *cfgdev,
 					printf("wl_bss_connect_done succeeded with " MACDBG "\n",
 						MAC2STRDBG((u8*)(&e->addr)));
 					wl_bss_connect_done(cfg, ndev, e, data, true);
-					dhd_conf_set_fw_string_cmd(cfg->pub, "phy_oclscdenable", cfg->pub->conf->phy_oclscdenable, 0, FALSE);
+					dhd_conf_set_intiovar(cfg->pub, WLC_SET_VAR, "phy_oclscdenable", cfg->pub->conf->phy_oclscdenable, 0, FALSE);
 					WL_DBG(("joined in BSS network \"%s\"\n",
 					((struct wlc_ssid *)
 					 wl_read_prof(cfg, ndev, WL_PROF_SSID))->SSID));
 				}
 			wl_update_prof(cfg, ndev, e, &act, WL_PROF_ACT);
 			wl_update_prof(cfg, ndev, NULL, (void *)&e->addr, WL_PROF_BSSID);
-			dhd_conf_set_wme(cfg->pub);
+			dhd_conf_set_wme(cfg->pub, 0);
 
 		} else if (wl_is_linkdown(cfg, e)) {
 #ifdef P2PLISTEN_AP_SAMECHN
@@ -9634,6 +9651,11 @@ wl_notify_connect_status(struct bcm_cfg80211 *cfg, bcm_struct_cfgdev *cfgdev,
 					// terence 20130703: Fix for wrong group_capab (timing issue)
 					cfg->p2p_disconnected = 1;
 				}
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
+				if (wl_get_drv_status(cfg, DISCONNECTING, ndev)) {
+					CFG80211_DISCONNECTED(ndev, reason, NULL, 0, false, GFP_KERNEL);
+				}
+#endif
 				memcpy(&cfg->disconnected_bssid, curbssid, ETHER_ADDR_LEN);
 				wl_clr_drv_status(cfg, CONNECTED, ndev);
 				if (! wl_get_drv_status(cfg, DISCONNECTING, ndev)) {
@@ -9777,7 +9799,7 @@ wl_notify_roaming_status(struct bcm_cfg80211 *cfg, bcm_struct_cfgdev *cfgdev,
 		act = true;
 		wl_update_prof(cfg, ndev, e, &act, WL_PROF_ACT);
 		wl_update_prof(cfg, ndev, NULL, (void *)&e->addr, WL_PROF_BSSID);
-		dhd_conf_set_wme(cfg->pub);
+		dhd_conf_set_wme(cfg->pub, 0);
 	}
 	return err;
 }
@@ -10037,7 +10059,7 @@ wl_bss_roaming_done(struct bcm_cfg80211 *cfg, struct net_device *ndev,
 #endif /* WLFBT */
 	printf("wl_bss_roaming_done succeeded to " MACDBG "\n",
 		MAC2STRDBG((u8*)(&e->addr)));
-	dhd_conf_set_wme(cfg->pub);
+	dhd_conf_set_wme(cfg->pub, 0);
 
 	cfg80211_roamed(ndev,
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 39)) || defined(WL_COMPAT_WIRELESS)
@@ -10130,7 +10152,7 @@ wl_bss_connect_done(struct bcm_cfg80211 *cfg, struct net_device *ndev,
 			GFP_KERNEL);
 		if (completed) {
 			WL_INFORM(("Report connect result - connection succeeded\n"));
-			dhd_conf_set_wme(cfg->pub);
+			dhd_conf_set_wme(cfg->pub, 0);
 		} else
 			WL_ERR(("Report connect result - connection failed\n"));
 	}
@@ -12926,7 +12948,7 @@ static s32 __wl_cfg80211_down(struct bcm_cfg80211 *cfg)
 			bool enabled = false;
 			dhd_wlfc_get_enable(dhd, &enabled);
 			if (enabled && cfg->wlfc_on && dhd->op_mode != DHD_FLAG_HOSTAP_MODE &&
-				dhd->op_mode != DHD_FLAG_IBSS_MODE) {
+				dhd->op_mode != DHD_FLAG_IBSS_MODE && dhd->conf->disable_proptx!=0) {
 				dhd_wlfc_deinit(dhd);
 				cfg->wlfc_on = false;
 			}
@@ -13161,8 +13183,8 @@ wl_update_prof(struct bcm_cfg80211 *cfg, struct net_device *ndev,
 		ssid = (wlc_ssid_t *) data;
 		memset(profile->ssid.SSID, 0,
 			sizeof(profile->ssid.SSID));
-		memcpy(profile->ssid.SSID, ssid->SSID, ssid->SSID_len);
-		profile->ssid.SSID_len = ssid->SSID_len;
+		profile->ssid.SSID_len = MIN(ssid->SSID_len, DOT11_MAX_SSID_LEN);
+		memcpy(profile->ssid.SSID, ssid->SSID, profile->ssid.SSID_len);
 		break;
 	case WL_PROF_BSSID:
 		if (data)
@@ -13245,27 +13267,44 @@ static __used s32 wl_add_ie(struct bcm_cfg80211 *cfg, u8 t, u8 l, u8 *v)
 static void wl_update_hidden_ap_ie(struct wl_bss_info *bi, u8 *ie_stream, u32 *ie_size, bool roam)
 {
 	u8 *ssidie;
+	int32 ssid_len = MIN(bi->SSID_len, DOT11_MAX_SSID_LEN);
+	int32 remaining_ie_buf_len, available_buffer_len;
+
 	ssidie = (u8 *)cfg80211_find_ie(WLAN_EID_SSID, ie_stream, *ie_size);
+
+	/* ERROR out if
+	 * 1. No ssid IE is FOUND or
+	 * 2. New ssid length is > what was allocated for existing ssid (as
+	 * we do not want to overwrite the rest of the IEs) or
+	 * 3. If in case of erroneous buffer input where ssid length doesnt match the space
+	 * allocated to it.
+	 */
 	if (!ssidie)
 		return;
-	if (ssidie[1] != bi->SSID_len) {
+	available_buffer_len = ((int)(*ie_size)) - (ssidie + 2 - ie_stream);
+	remaining_ie_buf_len = available_buffer_len - (int)ssidie[1];
+	if ((ssid_len > ssidie[1]) ||
+		(ssidie[1] > available_buffer_len)) {
+ 		return;
+	}
+	if (ssidie[1] != ssid_len) {
 		if (ssidie[1]) {
 			WL_ERR(("%s: Wrong SSID len: %d != %d\n",
 				__FUNCTION__, ssidie[1], bi->SSID_len));
 		}
 		if (roam) {
 			WL_ERR(("Changing the SSID Info.\n"));
-			memmove(ssidie + bi->SSID_len + 2,
+			memmove(ssidie + ssid_len + 2,
 				(ssidie + 2) + ssidie[1],
-				*ie_size - (ssidie + 2 + ssidie[1] - ie_stream));
-			memcpy(ssidie + 2, bi->SSID, bi->SSID_len);
-			*ie_size = *ie_size + bi->SSID_len - ssidie[1];
-			ssidie[1] = bi->SSID_len;
+				remaining_ie_buf_len);
+			memcpy(ssidie + 2, bi->SSID, ssid_len);
+			*ie_size = *ie_size + ssid_len - ssidie[1];
+			ssidie[1] = ssid_len;
 		}
 		return;
 	}
 	if (*(ssidie + 2) == '\0')
-		 memcpy(ssidie + 2, bi->SSID, bi->SSID_len);
+		 memcpy(ssidie + 2, bi->SSID, ssid_len);
 	return;
 }
 
@@ -14563,27 +14602,25 @@ done:
 }
 
 static bool
-wl_cfg80211_valid_chanspec_p2p(chanspec_t chanspec)
+wl_cfg80211_valid_channel_p2p(int channel)
 {
 	bool valid = false;
-	char chanbuf[CHANSPEC_STR_LEN];
 
 	/* channel 1 to 14 */
-	if ((chanspec >= 0x2b01) && (chanspec <= 0x2b0e)) {
+	if ((channel >= 1) && (channel <= 14)) {
 		valid = true;
 	}
 	/* channel 36 to 48 */
-	else if ((chanspec >= 0x1b24) && (chanspec <= 0x1b30)) {
+	else if ((channel >= 36) && (channel <= 48)) {
 		valid = true;
 	}
 	/* channel 149 to 161 */
-	else if ((chanspec >= 0x1b95) && (chanspec <= 0x1ba1)) {
+	else if ((channel >= 149) && (channel <= 161)) {
 		valid = true;
 	}
 	else {
 		valid = false;
-		WL_INFORM(("invalid P2P chanspec, chanspec = %s\n",
-			wf_chspec_ntoa_ex(chanspec, chanbuf)));
+		WL_INFORM(("invalid P2P chanspec, channel = %d\n", channel));
 	}
 
 	return valid;
@@ -14658,7 +14695,7 @@ wl_cfg80211_get_chanspecs_5g(struct net_device *ndev, void *buf, s32 buflen)
 		}
 
 		if (CHANNEL_IS_RADAR(channel) ||
-			!(wl_cfg80211_valid_chanspec_p2p(chanspec))) {
+			!(wl_cfg80211_valid_channel_p2p(CHSPEC_CHANNEL(chanspec)))) {
 			continue;
 		} else {
 			list->element[j] = list->element[i];
@@ -14785,76 +14822,75 @@ wl_cfg80211_get_best_channels(struct net_device *dev, char* cmd, int total_len)
 		goto done;
 	}
 
-	/* Best channel selection in 2.4GHz band. */
-	ret = wl_cfg80211_get_chanspecs_2g(ndev, (void *)buf, CHANSPEC_BUF_SIZE);
-	if (ret < 0) {
-		WL_ERR(("can't get chanspecs in 2.4GHz, error = %d\n", ret));
-		goto done;
-	}
-
-	ret = wl_cfg80211_get_best_channel(ndev, (void *)buf, CHANSPEC_BUF_SIZE,
-		&channel);
-	if (ret < 0) {
-		WL_ERR(("can't select best channel scan in 2.4GHz, error = %d\n", ret));
-		goto done;
-	}
-
-	if (CHANNEL_IS_2G(channel)) {
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39) && !defined(WL_COMPAT_WIRELESS)
-		channel = ieee80211_channel_to_frequency(channel);
-#else
-		channel = ieee80211_channel_to_frequency(channel, IEEE80211_BAND_2GHZ);
-#endif
-	} else {
-		WL_ERR(("invalid 2.4GHz channel, channel = %d\n", channel));
-		channel = 0;
-	}
-
-	sprintf(pos, "%04d ", channel);
-	pos += 5;
-
-	// terence 20140120: fix for some chipsets only return 2.4GHz channel (4330b2/43341b0/4339a0)
 	ret = wldev_ioctl(dev, WLC_GET_BAND, &band_cur, sizeof(band_cur), false);
-	band = band_cur==WLC_BAND_2G ? band_cur : WLC_BAND_5G;
-	ret = wldev_ioctl(dev, WLC_SET_BAND, &band, sizeof(band), true);
-	if (ret < 0)
-		WL_ERR(("WLC_SET_BAND error %d\n", ret));
+	if (band_cur != WLC_BAND_5G) {
+		/* Best channel selection in 2.4GHz band. */
+		ret = wl_cfg80211_get_chanspecs_2g(ndev, (void *)buf, CHANSPEC_BUF_SIZE);
+		if (ret < 0) {
+			WL_ERR(("can't get chanspecs in 2.4GHz, error = %d\n", ret));
+			goto done;
+		}
 
-	/* Best channel selection in 5GHz band. */
-	ret = wl_cfg80211_get_chanspecs_5g(ndev, (void *)buf, CHANSPEC_BUF_SIZE);
-	if (ret < 0) {
-		WL_ERR(("can't get chanspecs in 5GHz, error = %d\n", ret));
-		goto done;
-	}
+		ret = wl_cfg80211_get_best_channel(ndev, (void *)buf, CHANSPEC_BUF_SIZE,
+			&channel);
+		if (ret < 0) {
+			WL_ERR(("can't select best channel scan in 2.4GHz, error = %d\n", ret));
+			goto done;
+		}
 
-	ret = wl_cfg80211_get_best_channel(ndev, (void *)buf, CHANSPEC_BUF_SIZE,
-		&channel);
-	if (ret < 0) {
-		WL_ERR(("can't select best channel scan in 5GHz, error = %d\n", ret));
-		goto done;
-	}
-
-	if (CHANNEL_IS_5G(channel)) {
+		if (CHANNEL_IS_2G(channel)) {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39) && !defined(WL_COMPAT_WIRELESS)
-		channel = ieee80211_channel_to_frequency(channel);
+			channel = ieee80211_channel_to_frequency(channel);
 #else
-		channel = ieee80211_channel_to_frequency(channel, IEEE80211_BAND_5GHZ);
+			channel = ieee80211_channel_to_frequency(channel, IEEE80211_BAND_2GHZ);
 #endif
-	} else {
-		WL_ERR(("invalid 5GHz channel, channel = %d\n", channel));
-		channel = 0;
+		} else {
+			WL_ERR(("invalid 2.4GHz channel, channel = %d\n", channel));
+			channel = 0;
+		}
 	}
+	pos += snprintf(pos, total_len, "%04d ", channel);
 
-	ret = wldev_ioctl(dev, WLC_SET_BAND, &band_cur, sizeof(band_cur), true);
-	if (ret < 0)
-		WL_ERR(("WLC_SET_BAND error %d\n", ret));
+	if (band_cur != WLC_BAND_2G) {
+		// terence 20140120: fix for some chipsets only return 2.4GHz channel (4330b2/43341b0/4339a0)
+		band = band_cur==WLC_BAND_2G ? band_cur : WLC_BAND_5G;
+		ret = wldev_ioctl(dev, WLC_SET_BAND, &band, sizeof(band), true);
+		if (ret < 0)
+			WL_ERR(("WLC_SET_BAND error %d\n", ret));
 
-	sprintf(pos, "%04d ", channel);
-	pos += 5;
+		/* Best channel selection in 5GHz band. */
+		ret = wl_cfg80211_get_chanspecs_5g(ndev, (void *)buf, CHANSPEC_BUF_SIZE);
+		if (ret < 0) {
+			WL_ERR(("can't get chanspecs in 5GHz, error = %d\n", ret));
+			goto done;
+		}
+
+		ret = wl_cfg80211_get_best_channel(ndev, (void *)buf, CHANSPEC_BUF_SIZE,
+			&channel);
+		if (ret < 0) {
+			WL_ERR(("can't select best channel scan in 5GHz, error = %d\n", ret));
+			goto done;
+		}
+
+		if (CHANNEL_IS_5G(channel)) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 39) && !defined(WL_COMPAT_WIRELESS)
+			channel = ieee80211_channel_to_frequency(channel);
+#else
+			channel = ieee80211_channel_to_frequency(channel, IEEE80211_BAND_5GHZ);
+#endif
+		} else {
+			WL_ERR(("invalid 5GHz channel, channel = %d\n", channel));
+			channel = 0;
+		}
+
+		ret = wldev_ioctl(dev, WLC_SET_BAND, &band_cur, sizeof(band_cur), true);
+		if (ret < 0)
+			WL_ERR(("WLC_SET_BAND error %d\n", ret));
+	}
+	pos += snprintf(pos, total_len, "%04d ", channel);
 
 	/* Set overall best channel same as 5GHz best channel. */
-	sprintf(pos, "%04d ", channel);
-	pos += 5;
+	pos += snprintf(pos, total_len, "%04d ", channel);
 
 done:
 	if (NULL != buf) {

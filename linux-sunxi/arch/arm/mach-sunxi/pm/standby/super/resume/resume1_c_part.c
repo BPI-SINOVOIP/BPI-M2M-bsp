@@ -1,14 +1,3 @@
-/*
- * arch/arm/mach-sunxi/pm/standby/super/resume/resume1_c_part.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 /* these code will be removed to sram.
  * function: open the mmu, and jump to dram, for continuing resume*/
 #include "./../super_i.h"
@@ -91,7 +80,7 @@ int resume1_c_part(void)
 	//after restore mmu, u need to re-init reg base address.
 	restore_mmu_state(&(mem_para_info.saved_mmu_state));
 	save_mem_status(RESUME1_START |0xA);
-
+	
 #endif
 
 //before jump to late_resume	
@@ -104,7 +93,7 @@ int resume1_c_part(void)
 	save_mem_status(RESUME1_START |0xc);
 	flush_icache();
 #endif
-	
+
 	mem_clk_init(1);
 	if(unlikely(mem_para_info.debug_mask&PM_STANDBY_PRINT_RESUME)){
 	    serial_puts("resume1: 3. after restore mmu, before jump.\n");
@@ -176,6 +165,8 @@ void set_pll( void )
 		//get mem para info
 		//move other storage to sram: saved_resume_pointer(virtual addr), saved_mmu_state
 		mem_memcpy((void *)&mem_para_info, (void *)(DRAM_MEM_PARA_INFO_PA), sizeof(mem_para_info));
+		
+		save_mem_status_nommu(RESUME0_START |0x1);
 
 		save_mem_status_nommu(RESUME0_START |0x1);
 
@@ -431,7 +422,7 @@ void set_pll( void )
 	writel((dram_size - reserved_dram_size)<<20, 0x01c1e000 + 0x100 + 0x20);	// secure base addr
 	writel(permission | region_size | 1, 0x01c1e000 + 0x108 + 0x20);		// attribute.
 #endif
-	
+
 	//busy_waiting();
 	//switch to normal world
 	//after restore mmu, u need to re-init reg base address.

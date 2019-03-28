@@ -21,4 +21,3 @@
 # function: add_lunch_combo generic-eng
 
 add_lunch_combo astar_parrot-tina
-add_lunch_combo astar_parrot-dragonboard

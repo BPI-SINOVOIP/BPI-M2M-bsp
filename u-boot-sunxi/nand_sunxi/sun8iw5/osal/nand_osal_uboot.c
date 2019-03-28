@@ -27,11 +27,15 @@
 #include <asm/arch/dma.h>
 #include <sys_config.h>
 
-#define  NAND_DRV_VERSION_0		0x3
-#define  NAND_DRV_VERSION_1		0x5001
-#define  NAND_DRV_DATE			0x20160411
-#define  NAND_DRV_TIME			0x1437
-
+#define  NAND_DRV_VERSION_0		0x03
+#define  NAND_DRV_VERSION_1		0x5011
+#define  NAND_DRV_DATE			0x20180329
+#define  NAND_DRV_TIME			0x16671134
+/*
+ * 1667--aw1667--R16
+ * 11--uboot2011
+ * 34--linux3.4
+*/
 #define get_wvalue(addr)	(*((volatile unsigned long  *)(addr)))
 #define put_wvalue(addr, v)	(*((volatile unsigned long  *)(addr)) = (unsigned long)(v))
 
@@ -61,6 +65,7 @@ int NAND_Print(const char * str, ...)
 	    vsprintf(_buf, str, args);
 
 	    printf(_buf);
+		va_end(args);
 		return 0;
 	}
     

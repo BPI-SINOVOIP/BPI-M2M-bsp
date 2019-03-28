@@ -19,7 +19,7 @@ machine = "bpi-m2m"
 [platform]
 eraseflag   = 0
 next_work = 2
-debug_mode = 0x15
+debug_mode =1
 
 ;----------------------------------------------------------------------------------
 ;[target]  system bootup configuration
@@ -173,9 +173,9 @@ standby_mode	= 1
 ;*****************************************************************************
 [dram_para]
 
-dram_clk        = 600
+dram_clk        = 552
 dram_type       = 3
-dram_zq         = 0x3bbb
+dram_zq         = 0x3bfb
 dram_odt_en     = 1
 dram_para1      = 0x10F20200
 dram_para2      = 0x00
@@ -196,14 +196,7 @@ dram_tpr9       = 0x0
 dram_tpr10      = 0x0
 dram_tpr11      = 0x0
 dram_tpr12      = 168
-dram_tpr13      = 0x10900
-
-;---------------------------------------------------------------------------------------------------------
-; if 1 == standby_mode, then support super standby;
-; else, support normal standby.
-;---------------------------------------------------------------------------------------------------------
-[pm_para]
-standby_mode	= 1
+dram_tpr13      = 0x900
 
 ;---------------------------------------------------------------------------------------------------------
 ; wakeup_src_para:
@@ -1571,8 +1564,30 @@ s_powchk_used      = 0x80000000
 s_power_reg        = 0x00008061
 s_system_power     = 50
 
-[gpu_mali400_0]
-freq = 384
+;----------------------------------------------------------------------------------
+;GPU parameters
+;dvfs_status      : dvfs status, if this is enabled, GPU DVFS will work. Actually, GPU
+;                   DVFS functionality depends on some kernel features such as devfreq.
+;temp_ctrl_status : temperature control status, if this is enabled, the gpu frequency
+;                   will drop down if the temperature of gpu is too high.
+;scene_ctrl_status: scene control status, if this is enabled, android layer can ask
+;                   gpu driver to change frequency in certain scene.
+;max_level        : maximum level.
+;begin_level      : the corresponding frequency and voltage will be used during GPU
+;                    initialization.
+;lv<x>_freq       : frequency in MHz of certain level.
+;lv<x>_volt       : voltage in mV of certain level, 0 means GPU power is not independent.
+;----------------------------------------------------------------------------------
+[gpu]
+dvfs_status       = 0
+temp_ctrl_status  = 1
+scene_ctrl_status = 0
+
+max_level   = 0
+begin_level = 0
+
+lv0_freq = 384
+lv0_volt = 0
 
 ;----------------------------------------------------------------------------------
 ; dram dvfs voltage-frequency table configuration

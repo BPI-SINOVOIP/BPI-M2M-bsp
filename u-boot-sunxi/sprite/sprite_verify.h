@@ -41,5 +41,7 @@ extern int sunxi_sprite_verify_dlmap(void *buffer);
 
 extern int sunxi_sprite_verify_mbr(void *buffer);
 
+extern int sunxi_sprite_get_one_valid_mbr(void *valid_mbr_buffer, void *source_mbr_buffer);
+
 #endif
 

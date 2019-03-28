@@ -1,14 +1,3 @@
-/*
- * drivers/input/keyboard/sun8i-keyboard.h
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #ifndef _SUN8I_KEYBOARD_H
 #define _SUN8I_KEYBOARD_H
 /* just for test */
@@ -133,6 +122,22 @@ static unsigned int sunxi_scankeycodes[KEY_MAX_CNT] = {
 	[7 ] = KEY_RESERVED,
 	[8 ] = KEY_RESERVED,
 	[9 ] = KEY_RESERVED,
+	[10] = KEY_RESERVED,
+	[11] = KEY_RESERVED,
+	[12] = KEY_RESERVED,
+};
+#elif defined(CONFIG_ARCH_SUN8IW8P1)
+static unsigned int sunxi_scankeycodes[KEY_MAX_CNT] = {
+	[0] = KEY_OK,
+	[1] = KEY_MENU,
+	[2] = KEY_RESERVED,
+	[3] = KEY_NEXT,
+	[4] = KEY_ENTER,
+	[5] = KEY_PREVIOUS,
+	[6] = KEY_RESERVED,
+	[7] = KEY_RESERVED,
+	[8] = KEY_RESERVED,
+	[9] = KEY_RESERVED,
 	[10] = KEY_RESERVED,
 	[11] = KEY_RESERVED,
 	[12] = KEY_RESERVED,

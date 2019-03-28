@@ -42,6 +42,7 @@ typedef struct usb_scan_info{
 	u32                     host_insmod_delay;    	/* debounce time            */
 }usb_scan_info_t;
 extern int usb_hw_scan_debug;
+extern __u32 thread_stopped_flag;
 
 void usb_hw_scan(struct usb_cfg *cfg);
 __u32 set_vbus_id_state(u32 state);

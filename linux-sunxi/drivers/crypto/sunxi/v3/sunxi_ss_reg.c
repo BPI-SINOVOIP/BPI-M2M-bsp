@@ -86,6 +86,7 @@ void ss_key_set(char *key, int size, ce_task_desc_t *task)
 	while (key_select[i].type != CE_KEY_SELECT_INPUT) {
 		if (strncasecmp(key, key_select[i].desc, AES_MIN_KEY_SIZE) == 0) {
 			key_sel = key_select[i].type;
+			memset(key, 0, size);
 			break;
 		}
 		i++;

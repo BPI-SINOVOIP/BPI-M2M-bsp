@@ -1,0 +1,5 @@
+config 88W8977
+	tristate "Marvell 8977 SDIO WiFi"
+	---help---
+	  Help message of Marvell 8977
+

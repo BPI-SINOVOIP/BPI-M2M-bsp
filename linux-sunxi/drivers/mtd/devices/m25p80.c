@@ -700,6 +700,12 @@ static const struct spi_device_id m25p_ids[] = {
 	{ "at26df161a", INFO(0x1f4601, 0, 64 * 1024, 32, SECT_4K) },
 	{ "at26df321",  INFO(0x1f4700, 0, 64 * 1024, 64, SECT_4K) },
 
+	/* Boya */
+	{ "bg25q32a", INFO(0xe04016, 0, 64 * 1024, 64, SECT_4K) },
+
+	/* ISSI */
+	{ "ic25lp064a", INFO(0x9d6017, 0, 64 * 1024, 128, SECT_4K) },
+
 	/* EON -- en25xxx */
 	{ "en25f32", INFO(0x1c3116, 0, 64 * 1024,  64, SECT_4K) },
 	{ "en25p32", INFO(0x1c2016, 0, 64 * 1024,  64, 0) },
@@ -729,6 +735,7 @@ static const struct spi_device_id m25p_ids[] = {
 	{ "mx25l12855e", INFO(0xc22618, 0, 64 * 1024, 256, 0) },
 	{ "mx25l25635e", INFO(0xc22019, 0, 64 * 1024, 512, 0) },
 	{ "mx25l25655e", INFO(0xc22619, 0, 64 * 1024, 512, 0) },
+	{ "mx66l51235l", INFO(0xc2201a, 0, 64 * 1024, 1024, 0) },
 
 	/* Spansion -- single (large) sector size only, at least
 	 * for the chips listed here (without boot sectors).
@@ -1148,12 +1155,24 @@ static int __devexit m25p_remove(struct spi_device *spi)
 static void m25p_shutdown(struct spi_device *spi)
 {
 	struct m25p *flash = dev_get_drvdata(&spi->dev);
-	const struct spi_device_id  *id = spi_get_device_id(spi);
-	struct flash_info *info;
 	pr_info("m25p: spinor shutdown\n");
 
 	if (flash->addr_width == 4) {
-		info = (void *)id->driver_data;
+		const struct spi_device_id  *id = spi_get_device_id(spi);
+		struct flash_info *info = (void *)id->driver_data;
+
+		if (info->jedec_id) {
+			const struct spi_device_id *jid;
+
+			jid = jedec_probe(spi);
+			if (IS_ERR(jid)) {
+				pr_debug("IS_ERR(jid)\n");
+				return;
+			} else if (jid != id) {
+				id = jid;
+				info = (void *)id->driver_data;
+			}
+		}
 		set_4byte(flash, info->jedec_id, 0);
 	}
 }

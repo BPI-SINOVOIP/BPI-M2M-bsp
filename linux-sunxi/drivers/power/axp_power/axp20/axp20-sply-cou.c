@@ -1,14 +1,3 @@
-/*
- * drivers/power/axp_power/axp20/axp20-sply-cou.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/types.h>
@@ -40,6 +29,13 @@
 #include "axp20-sply.h"
 
 int axp_debug = 0;
+
+static int axp_usb_connect;
+int axp_usb_is_connected(void)
+{
+	return axp_usb_connect;
+}
+EXPORT_SYMBOL_GPL(axp_usb_is_connected);
 
 #define TIMER5		5
 #define BATCAPCORRATE	0
@@ -132,10 +128,12 @@ int axp_usb_det(void)
 	if(axp_charger->master==NULL)
 		return 0;
 	axp_read(axp_charger->master, AXP20_CHARGE_STATUS, &ret);
-	if(ret & 0x10)
+	if (ret & 0x10) {
+		axp_usb_connect = 1;
 		return 1;
-	else
+	} else {
 		return 0;
+	}
 }
 EXPORT_SYMBOL_GPL(axp_usb_det);
 
@@ -789,7 +787,6 @@ static void axp_close(struct axp_charger *charger)
 	power_supply_changed(&charger->batt);
 }
 
-
 static int axp_battery_event(struct notifier_block *nb, unsigned long event,
         void *data)
 {
@@ -812,6 +809,11 @@ static int axp_battery_event(struct notifier_block *nb, unsigned long event,
     if(event & (AXP20_IRQ_BATIN|AXP20_IRQ_BATRE)) {
     	axp_capchange(charger);
     }
+
+	if (event & AXP20_IRQ_USBIN)
+		axp_usb_connect = 1;
+	else if (event & AXP20_IRQ_USBRE)
+		axp_usb_connect = 0;
 
     if(event & (AXP20_IRQ_ACIN|AXP20_IRQ_USBIN|AXP20_IRQ_ACOV|AXP20_IRQ_USBOV|AXP20_IRQ_CHAOV
                |AXP20_IRQ_CHAST|AXP20_IRQ_TEMOV|AXP20_IRQ_TEMLO)) {

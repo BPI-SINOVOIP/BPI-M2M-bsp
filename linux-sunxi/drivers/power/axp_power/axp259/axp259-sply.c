@@ -45,6 +45,11 @@
 #define DBG_PSY_MSG(format, args...)   do {} while (0)
 #endif
 
+static uint8_t g_charge_done_fix_flag;
+#define CHARGE_DONE_RECHARGE            (0x01)
+#define CHARGE_DONE_END                 (0x02)
+#define CHARGE_DONE_END_RECHARGE        (0x03)
+
 static int axp_debug;
 static int reg_debug;
 static int long_key_power_off = 1;
@@ -682,7 +687,7 @@ static void axp_set_charge(struct axp_charger *charger)
 	tmp = ((((charger->chgpretime - 40) / 10) << 2)
 	       | ((charger->chgcsttime - 360) / 120));
 	val |= tmp;
-	axp_write(charger->master, AXP259_CHARGE_CONTROL1, val);
+	axp_update(charger->master, AXP259_CHARGE_CONTROL1, val, 0x7F);
 
 	if (charger->chgcur == 0)
 		charger->chgen = 0;
@@ -1011,6 +1016,55 @@ static void axp_capchange(struct axp_charger *charger)
 	power_supply_changed(&charger->batt);
 }
 
+/* fix charge-done bug
+ * when battery in high voltage and plug ac,
+ * vbat maybe large than Vtarget a lot,
+ * so error to report charge-done.
+ *
+ * now, use this function to fix the bug.
+ *
+ */
+static void axp_charge_done_fix_start(struct axp_charger *charger)
+{
+	uint8_t val;
+
+	/* in sharp charge-done mode or not*/
+	axp_read(charger->master, AXP259_DATA_BUFFER8, &val);
+	if (val&0x02)
+		return;
+	if (axp259_config.pmu_batdeten != 0) {
+		/* disable battery detection */
+		axp_read(charger->master, AXP259_CHARGE3, &val);
+		val &= ~(1<<7);
+		axp_write(charger->master, AXP259_CHARGE3, val);
+	}
+	/* disable charger */
+	axp_read(charger->master, AXP259_CHARGE1, &val);
+	val &= ~(1<<7);
+	axp_write(charger->master, AXP259_CHARGE1, val);
+	/* enable charger */
+	val |= (1<<7);
+	axp_write(charger->master, AXP259_CHARGE1, val);
+	g_charge_done_fix_flag = CHARGE_DONE_RECHARGE;
+	if (axp_debug)
+		DBG_PSY_MSG("====fix charge done bug start!!\n");
+}
+
+static void axp_charge_done_fix_end(struct axp_charger *charger)
+{
+	uint8_t val;
+
+	if (axp259_config.pmu_batdeten != 0) {
+		/* enable battery detection */
+		axp_read(charger->master, AXP259_CHARGE3, &val);
+		val |= (1<<7);
+		axp_write(charger->master, AXP259_CHARGE3, val);
+	}
+	g_charge_done_fix_flag = CHARGE_DONE_END;
+	if (axp_debug)
+		DBG_PSY_MSG("====fix charge done bug end!!\n");
+}
+
 static int
 axp_battery_event(struct notifier_block *nb,
 		unsigned long event, void *data)
@@ -1026,7 +1080,16 @@ axp_battery_event(struct notifier_block *nb,
 			DBG_PSY_MSG("low 32bit status...\n");
 		if (event & (AXP259_IRQ_BATIN | AXP259_IRQ_BATRE))
 			axp_capchange(charger);
-		if (event & (AXP259_IRQ_CHAOV | AXP259_IRQ_CHAST))
+		if (event & AXP259_IRQ_CHAOV) {
+			axp_capchange(charger);
+			if (axp259_config.pmu_batdeten != 0) {
+				if(charger->rest_vol < 100)
+                                        axp_charge_done_fix_start(charger);
+                                else
+                                        g_charge_done_fix_flag = CHARGE_DONE_END;
+			}
+		}
+		if (event & AXP259_IRQ_CHAST)
 			axp_change(charger);
 		if (event & (AXP259_IRQ_ACIN)) {
 #ifdef CONFIG_HAS_WAKELOCK
@@ -1045,6 +1108,10 @@ axp_battery_event(struct notifier_block *nb,
 #endif
 			if (axp_debug)
 				DBG_PSY_MSG("axp259 ac out!\n");
+			if (g_charge_done_fix_flag != 0) {
+				axp_charge_done_fix_end(charger);
+				g_charge_done_fix_flag = 0;
+			}
 			axp_change(charger);
 		}
 		if (event & AXP259_IRQ_POKLO)
@@ -1851,6 +1918,25 @@ static void axp_charging_monitor(struct work_struct *work)
 		DBG_PSY_MSG("Axp259 coulumb_counter = %d\n", batt_max_cap);
 	}
 
+	switch(g_charge_done_fix_flag) {
+                /* charge or recharge done */
+                case CHARGE_DONE_END:
+                        if(charger->rest_vol < 100) {
+                                axp_charge_done_fix_start(charger);
+                                g_charge_done_fix_flag = CHARGE_DONE_END_RECHARGE;
+                        }
+                        break;
+                /* recharge */
+                case CHARGE_DONE_RECHARGE:
+                /* after charge done, battery discharge long time and
+                 * cap less than 100, so recharge, but cap should fake 100.
+                 */
+                case CHARGE_DONE_END_RECHARGE:
+                        if(charger->rest_vol == 100)
+                                axp_charge_done_fix_end(charger);
+                        break;
+        }
+
 	if (axp_debug) {
 		DBG_PSY_MSG("charger->ic_temp = %d\n", charger->ic_temp);
 		DBG_PSY_MSG("charger->bat_temp = %d\n", charger->bat_temp);
@@ -2289,15 +2375,43 @@ static int axp_battery_probe(struct platform_device *pdev)
 		axp_clr_bits(charger->master, 0x26, 0x40);	/*disable*/
 
 	/*Init CHGLED function */
-	if (axp259_config.pmu_chgled_func)
-		axp_set_bits(charger->master, 0x90, 0x02);/*control by charger*/
-	else
-		axp_clr_bits(charger->master, 0x90, 0x07);	/*drive MOTO*/
-	/*set CHGLED Indication Type */
-	if (axp259_config.pmu_chgled_type)
-		axp_set_bits(charger->master, 0x90, 0x01);	/*Type B*/
-	else
-		axp_clr_bits(charger->master, 0x90, 0x07);	/*Type A TODO*/
+        if (axp259_config.pmu_chgled_func) {
+                switch (axp259_config.pmu_chgled_type) {
+                        case 0:
+                        default:
+                                /* type A */
+                                axp_clr_bits(charger->master, 0x90, 0x07);
+                                break;
+                        case 1:
+                                /* type B */
+                                axp_set_bits(charger->master, 0x90, 0x01);
+                                break;
+                        case 2:
+                                /* breath */
+                                axp_set_bits(charger->master, 0x90, 0x02);
+                                break;
+                        case 3:
+                                /* three state */
+                                axp_set_bits(charger->master, 0x90, 0x04);
+                                break;
+                }
+        } else {
+                switch (axp259_config.pmu_chgled_type) {
+                        case 0:
+                        default:
+                                /* software, detail config in reg90[5:3] */
+                                axp_set_bits(charger->master, 0x90, 0x07);
+                                break;
+                        case 1:
+                                /* breath, detail config in reg91~9A */
+                                axp_set_bits(charger->master, 0x90, 0x03);
+                                break;
+                        case 2:
+                                /* pwm, detail config in reg95~99 */
+                                axp_set_bits(charger->master, 0x90, 0x05);
+                                break;
+                }
+        }
 
 	/*Init PMU Over Temperature protection */
 	if (axp259_config.pmu_hot_shutdowm)

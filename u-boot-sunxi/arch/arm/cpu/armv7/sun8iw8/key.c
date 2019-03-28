@@ -28,17 +28,20 @@
 #include <asm/arch/key.h>
 #include <asm/arch/sys_proto.h>
 #include <pmu.h>
+#include <sys_config.h>
 
 int sunxi_key_init(void)
 {
 	struct sunxi_lradc *sunxi_key_base = (struct sunxi_lradc *)SUNXI_LRADC_BASE;
-    uint reg_val;
+	uint reg_val = 0;
 
-	reg_val = sunxi_key_base->ctrl;
-    reg_val &= ~((7<<1) | (0xffU << 24));
+//	reg_val = sunxi_key_base->ctrl;
+//	reg_val &= ~((7<<1) | (0xffU << 24));
 	reg_val |=  LRADC_HOLD_EN;
+	reg_val |=  LRADC_SAMPLE_RATE;
+	reg_val |=  LEVELB_VOL;
 	reg_val |=  LRADC_EN;
-    sunxi_key_base->ctrl = reg_val;
+	sunxi_key_base->ctrl = reg_val;
 
 	/* disable all key irq */
 	sunxi_key_base->intc = 0;
@@ -64,6 +67,12 @@ int sunxi_key_read(void)
 {
 	u32 ints;
 	int key = -1;
+	int keyen_flag = 1;
+	if( !script_parser_fetch("key_detect_en","keyen_flag",&keyen_flag,1) )
+	{
+		if(!keyen_flag)
+			return -1;
+	}
     struct sunxi_lradc *sunxi_key_base = (struct sunxi_lradc *)SUNXI_LRADC_BASE;
 
 	ints = sunxi_key_base->ints;
@@ -76,7 +85,7 @@ int sunxi_key_read(void)
 		if(ints & ADC0_DATA_PENDING)
 		{
 			key = sunxi_key_base->data0 & 0x3f;
-			if(!key)
+			if(key == 0x3f)
 			{
 				key = -1;
 			}
@@ -85,13 +94,13 @@ int sunxi_key_read(void)
 	else if(ints & ADC0_DATA_PENDING)
 	{
 		key = sunxi_key_base->data0 & 0x3f;
-		if(!key)
+		if(key == 0x3f)
 		{
 			key = -1;
 		}
 	}
 //#ifdef DEBUG
-	if(key > 0)
+	if(key >= 0)
 		printf("key pressed value=0x%x\n", key);
 //#endif
 

@@ -335,6 +335,14 @@ static void twi_chan_cfg(struct sunxi_i2c_platform_data *pdata)
 		if (item.val)
 			twi_used_mask |= SUNXI_TWI_CHAN_MASK(i);
 
+		type = script_get_item(twi_para, "clock-frequency", &item);
+		if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+			I2C_DBG("%s clock-frequency,default: %d\n", twi_para, pdata[i].frequency);
+		} else {
+			pdata[i].frequency = item.val;
+			I2C_DBG("%s clock-frequency: %d\n", twi_para, pdata[i].frequency);
+		}
+
 		type = script_get_item(twi_para, "twi_regulator", &item);
 		if (SCIRPT_ITEM_VALUE_TYPE_STR != type) {
 			I2C_ERR("[twi%d] has no twi_regulator.\n", i);
@@ -354,6 +362,14 @@ static void twi_chan_cfg(struct sunxi_i2c_platform_data *pdata)
 		}
 		if (item.val)
 			twi_used_mask |= SUNXI_TWI_CHAN_MASK(i);
+
+		type = script_get_item(twi_para, "clock-frequency", &item);
+		if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+			I2C_DBG("%s clock-frequency,default: %d\n", twi_para, pdata[i].frequency);
+		} else {
+			pdata[i].frequency = item.val;
+			I2C_DBG("%s clock-frequency: %d\n", twi_para, pdata[i].frequency);
+		}
 
 		type = script_get_item(twi_para, "twi_regulator", &item);
 		if (SCIRPT_ITEM_VALUE_TYPE_STR != type) {

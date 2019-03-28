@@ -53,7 +53,8 @@ static int  nand_open_times;
 
 	nand_mbr.PartCount = mbr->PartCount +1;
     nand_mbr.array[0].addr = 0;
-    nand_mbr.array[0].len = 32*1024;
+//    nand_mbr.array[0].len = 32*1024;
+    nand_mbr.array[0].len = mbr->array[0].addrlo;
     nand_mbr.array[0].user_type = 0x8000;
     nand_mbr.array[0].classname[0] = 'm';
     nand_mbr.array[0].classname[1] = 'b';

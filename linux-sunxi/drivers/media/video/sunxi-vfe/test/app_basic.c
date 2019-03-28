@@ -1,13 +1,3 @@
-/*
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 
 //zw 
 //for csi & isp test
@@ -81,8 +71,8 @@ static int read_frame (int mode)
 
 	if (count == read_num/2)
     {
-		printf("file length = %zu\n", buffers[buf.index].length);
-		printf("file start = %p\n", buffers[buf.index].start);
+		printf("file length = %d\n",buffers[buf.index].length);
+		printf("file start = %x\n",buffers[buf.index].start); 
         
 		num = (mode > 2) ? 2 : mode;
 		bfstart = buffers[buf.index].start;

@@ -264,6 +264,7 @@ struct mmc_host {
 #define MMC_HOST_PLATFORM_CAP_DIS_SECURE_WIPE_OP (1U<<3) /* disable secure wipe operation */
 
 #define MMC_HOST_PLATFORM_CAP_ENA_CACHE          (1u<<4)/*use to enable eMMC cache funciton in host->caps2*/
+#define MMC_HOST_PLATFORM_CAP_ENA_WQ_SPT          (1u<<5)   /*enable work queue to process not atomic work,and speed test*/
 
 
 

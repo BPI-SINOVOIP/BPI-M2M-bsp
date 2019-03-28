@@ -64,6 +64,7 @@ static int eprx_recv_op(void);
 static int ep0_recv_op(void);
 
 extern int fastboot_data_flag;
+extern volatile int sunxi_usb_burn_from_boot_init;
 /*
 ************************************************************************************************************
 *
@@ -145,12 +146,12 @@ void sunxi_usb_irq(void *data)
 
         return ;
 	}
-#if 0
+#if 1
 	/* SOF */
 	if(misc_irq & USBC_INTUSB_SOF)
 	{
 	    sunxi_usb_dbg("IRQ: SOF\n");
-
+                sunxi_usb_burn_from_boot_init = 1;
 		USBC_INT_ClearMiscPending(sunxi_udc_source.usbc_hd, USBC_INTUSB_SOF);
 	}
 #endif
@@ -1302,7 +1303,7 @@ static int eprx_recv_op(void)
     	if(USBC_Dev_IsReadDataReady(sunxi_udc_source.usbc_hd, USBC_EP_TYPE_RX))
 		{
 			this_len = USBC_ReadLenFromFifo(sunxi_udc_source.usbc_hd, USBC_EP_TYPE_RX);
-			if(fastboot_data_flag == 1)
+			if(0)
 			{
 				fifo = USBC_SelectFIFO(sunxi_udc_source.usbc_hd, SUNXI_USB_BULK_OUT_EP_INDEX);
 

@@ -35,6 +35,8 @@
 #include <ide.h>
 #include "part_dos.h"
 
+#ifdef HAVE_BLOCK_DEVICE
+/*
 #if defined(CONFIG_CMD_IDE) || \
     defined(CONFIG_CMD_MG_DISK) || \
     defined(CONFIG_CMD_SATA) || \
@@ -42,7 +44,7 @@
     defined(CONFIG_CMD_USB) || \
     defined(CONFIG_MMC) || \
     defined(CONFIG_SYSTEMACE)
-
+*/
 /* Convert char[4] in little endian format to the host format integer
  */
 static inline int le32_to_int(unsigned char *le32)

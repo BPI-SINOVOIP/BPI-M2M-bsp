@@ -50,8 +50,9 @@
 #define CONFIG_ARCH_SUN8IW8
 #define CONFIG_VIDEO_SUNXI_V3
 #define CONFIG_SUNXI_SPINOR
-#define CONFIG_SPINOR_LOGICAL_OFFSET        ((256 - 16) * 1024/512)
+#define CONFIG_SPINOR_LOGICAL_OFFSET        ((512 - 16) * 1024/512)
 #define CONFIG_SUN8IW8P1_SPI 
+#define CONFIG_SPI_DUAL_MODE
 
 //#define FORCE_BOOT_STANDBY
 #undef FORCE_BOOT_STANDBY
@@ -77,7 +78,7 @@
  * Size of malloc() pool
  * 1MB = 0x100000, 0x100000 = 1024 * 1024
  */
-#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (4 << 20))
+#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (15 << 20))
 
 
 
@@ -93,6 +94,8 @@
 //define storage in boot0 
 #define CONFIG_STORAGE_MEDIA_SPINOR
 #define CONFIG_STORAGE_MEDIA_MMC
+#define CONFIG_STORAGE_MEDIA_NAND
+#define CONFIG_STORAGE_MEDIA_SPINAND
 
 #define UBOOT_START_SECTOR_IN_SPINOR     (24*1024/512)
 #define CONFIG_STANDBY_RUN_ADDR          (0x1000)
@@ -106,7 +109,7 @@
 
 #define DRAM_PARA_STORE_ADDR		     (CONFIG_SYS_SDRAM_BASE + 0x00800000)
 
-#define SYS_CONFIG_MEMBASE               (CONFIG_SYS_SDRAM_BASE + 0x03000000)
+#define SYS_CONFIG_MEMBASE               (CONFIG_SYS_SDRAM_BASE + SZ_16M)
 
 #define CONFIG_SMALL_MEMSIZE
 #define CONFIG_SUNXI_LOGBUFFER
@@ -175,7 +178,7 @@
 #define CONFIG_CMD_BOOTA
 #define CONFIG_SUNXI_DMA
 #define CONFIG_CMD_MEMORY
-#define CONFIG_SUNXI_DISPLAY
+//#define CONFIG_SUNXI_DISPLAY
 
 #define CONFIG_SUNXI_AXP
 #define CONFIG_SUNXI_AXP20
@@ -196,6 +199,14 @@
 //#define CONFIG_DISPLAY_BOARDINFO
 #undef CONFIG_DISPLAY_CPUINFO
 #undef CONFIG_DISPLAY_BOARDINFO
+
+
+/* USB SUSPORT */
+#define CONFIG_EHCI_DCACHE
+#define CONFIG_CMD_USB
+#define CONFIG_USB_STORAGE
+#define CONFIG_USB_EHCI
+#define CONFIG_USB_EHCI_SUNXI
 
 /* Serial & console */
 #define CONFIG_SYS_NS16550
@@ -339,6 +350,8 @@
 #define CONFIG_SYS_BOOT_GET_CMDLINE
 #define CONFIG_AUTO_COMPLETE
 
+#define HAVE_BLOCK_DEVICE
+
 #define CONFIG_CMD_FAT			/* with this we can access bootfs in nand */
 #define CONFIG_CMD_BOOTA		/* boot android image */
 #define CONFIG_CMD_RUN			/* run a command */
@@ -361,5 +374,7 @@
 //#define CONFIG_GATEWAYIP 192.168.0.1
 #define CONFIG_BOOTFILE uImage
 #define CONFIG_LOADADDR        0x40008000
+
+#define CONFIG_PWR_GPIO
 
 #endif /* __CONFIG_H */

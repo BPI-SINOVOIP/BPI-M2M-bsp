@@ -545,6 +545,17 @@ sdioh_iovar_op(sdioh_info_t *si, const char *name,
 		/* Now set it */
 		si->client_block_size[func] = blksize;
 
+		if (si->func[func] == NULL) {
+			sd_err(("%s: SDIO Device not present\n", __FUNCTION__));
+			bcmerror = BCME_NORESOURCE;
+			break;
+		}
+		sdio_claim_host(si->func[func]);
+		bcmerror = sdio_set_block_size(si->func[func], blksize);
+		if (bcmerror)
+			sd_err(("%s: Failed to set F%d blocksize to %d(%d)\n",
+				__FUNCTION__, func, blksize, bcmerror));
+		sdio_release_host(si->func[func]);
 		break;
 	}
 
@@ -1382,7 +1393,7 @@ sdioh_request_word(sdioh_info_t *sd, uint cmd_type, uint rw, uint func, uint add
 #ifdef CUSTOMER_HW_ALLWINNER
 				//AW judge sdio read write timeout, 1s
 				if (sunxi_mci_check_r1_ready(sd->func[func]->card->host, 1000) != 0)
-					printf("%s data timeout, SDIO_CCCR_IOABORT.\n", __FUNCTION__);	
+					printf("%s data timeout, SDIO_CCCR_IOABORT.\n", __FUNCTION__);
 #endif
 				sdio_release_host(sd->func[0]);
 			}

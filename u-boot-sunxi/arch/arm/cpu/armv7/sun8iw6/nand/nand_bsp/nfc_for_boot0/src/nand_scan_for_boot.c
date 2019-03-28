@@ -34,9 +34,17 @@
 #include "../include/nfc.h"
 
 
+__u32 Two_Row_Addr_Flag = 0;
+
+__u32 uboot_start_block = 0;
+__u32 uboot_next_block = 0;
+__u32 nand_specialinfo_page = 0;
+__u32 nand_specialinfo_offset = 0;
+
 
 extern  struct __NandStorageInfo_t  NandStorageInfo;
 extern __s32 BOOT_NandGetPara(boot_nand_para_t *param, __u32 size);
+
 
 void _InitNandPhyInfo(boot_nand_para_t *nand_info)
 {
@@ -54,7 +62,7 @@ void _InitNandPhyInfo(boot_nand_para_t *nand_info)
     NandStorageInfo.SectorCntPerPage = nand_info->SectorCntPerPage ;
     NandStorageInfo.PageCntPerPhyBlk = nand_info->PageCntPerPhyBlk ;
     NandStorageInfo.BlkCntPerDie     = nand_info->BlkCntPerDie     ;
-    NandStorageInfo.OperationOpt     = nand_info->OperationOpt & (NAND_LSB_PAGE_TYPE
+    NandStorageInfo.OperationOpt     = nand_info->OperationOpt & (NAND_LSB_PAGE_TYPE 
 | NAND_RANDOM | NAND_READ_RETRY);
     NandStorageInfo.FrequencePar     = nand_info->FrequencePar     ;
     NandStorageInfo.EccMode          = nand_info->EccMode          ;
@@ -62,6 +70,8 @@ void _InitNandPhyInfo(boot_nand_para_t *nand_info)
 	NandStorageInfo.ReadRetryType    = nand_info->ReadRetryType    ;
 	NandStorageInfo.DDRType          = nand_info->DDRType          ;
 
+	if((nand_info->OperationOpt)&NAND_WITH_TWO_ROW_ADR)
+		Two_Row_Addr_Flag = 1;
 	for(i=0;i<8;i++)
 	    NandStorageInfo.NandChipId[i]  = nand_info->NandChipId[i]    ;
 
@@ -136,6 +146,10 @@ __s32  BOOT_AnalyzeNandSystem(void)
 
     _InitNandPhyInfo(&nand_info);
 
+	uboot_start_block = nand_info.uboot_start_block;
+	uboot_next_block = nand_info.uboot_next_block;
+	nand_specialinfo_page = nand_info.nand_specialinfo_page;
+	nand_specialinfo_offset = nand_info.nand_specialinfo_offset;
 
     //reset the nand flash chip on boot chip select
     result = PHY_ResetChip(BOOT_CHIP_SELECT_NUM);
@@ -198,9 +212,9 @@ __u32 Nand_Is_lsb_page(__u32 page)
 {
 	//__u32 retry_mode;
 	__u32 NAND_LSBPAGE_TYPE;
-
+	
 	NAND_LSBPAGE_TYPE = NAND_Getlsbpage_type();
-
+	
 	if(!NAND_LSBPAGE_TYPE)
 	{
 		return 1;//every page is lsb page
@@ -247,7 +261,7 @@ __u32 Nand_Is_lsb_page(__u32 page)
 			return 0;
 		if(page%2 == 1)
 			return 1;
-		return 0;
+		return 0;	
 	}
 
 	if(NAND_LSBPAGE_TYPE==0x40)//micron 20nm 29f64g08cbaba
@@ -259,8 +273,8 @@ __u32 Nand_Is_lsb_page(__u32 page)
 		if((page%4 == 2)||(page%4 == 3))
 			return 1;
 		return 0;
-	}
-
+	}	
+	
 	if(NAND_LSBPAGE_TYPE==0x41)//micron 20nm 29f32g08cbada
 	{
 		if((page==2)||(page==3))
@@ -270,8 +284,8 @@ __u32 Nand_Is_lsb_page(__u32 page)
 		if((page%4 == 0)||(page%4 == 1))
 			return 1;
 		return 0;
-	}
-
+	}		
+	
 	if(NAND_LSBPAGE_TYPE==0x42)//micron 16nm l95b
 	{
 		if((page==0)||(page==1)||(page==2)||(page==3)||(page==4)||(page==5)||(page==7)||(page==8)||(page==509))
@@ -292,7 +306,7 @@ __u32 Nand_Is_lsb_page(__u32 page)
 		if((page%4 == 2)||(page%4 == 3))
 			return 1;
 		return 0;
-	}
+	}	
 
 
 	if(NAND_LSBPAGE_TYPE==0x30)//sandisk 2xnm 19nm 1ynm
@@ -303,18 +317,17 @@ __u32 Nand_Is_lsb_page(__u32 page)
 			return 0;
 		if(page%2 == 1)
 			return 1;
-		return 0;
+		return 0;	
 	}
-
 	return 0;
 }
 
 
 __u32 NAND_GetLsbblksize(void)
-{
+{	
 	__u32 i,count;
 
-	count=0;
+	count=0;	
 
 	if(NAND_Getlsbpage_type()==0)
 		return NandStorageInfo.PageCntPerPhyBlk*NandStorageInfo.SectorCntPerPage*512;

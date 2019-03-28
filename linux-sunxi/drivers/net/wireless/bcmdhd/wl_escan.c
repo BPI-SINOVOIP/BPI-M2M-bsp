@@ -1,14 +1,3 @@
-/*
- * drivers/net/wireless/bcmdhd/wl_escan.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 
 #if defined(WL_ESCAN)
 
@@ -68,7 +57,7 @@
 
 #define for_each_bss(list, bss, __i)	\
 	for (__i = 0; __i < list->count && __i < IW_MAX_AP; __i++, bss = next_bss(list, bss))
-		
+
 #define wl_escan_set_sync_id(a) ((a) = htod16(0x1234))
 
 #ifdef ESCAN_BUF_OVERFLOW_MGMT
@@ -959,7 +948,7 @@ wl_escan_prep(struct wl_escan_info *escan, wl_uint32_list_t *list,
 	} else {
 		ESCAN_SCAN(("Scanning all channels\n"));
 	}
-		
+
 	if (ssid && ssid->SSID_len) {
 		/* Copy ssid array if applicable */
 		ESCAN_SCAN(("### List of SSIDs to scan ###\n"));
@@ -1067,7 +1056,7 @@ wl_escan_set_scan(
 	escan = g_escan;
 	if (!escan) {
 		ESCAN_ERROR(("device is not ready\n"));           \
-		return -EIO;    
+		return -EIO;
 	}
 	mutex_lock(&escan->usr_sync);
 
@@ -1358,7 +1347,7 @@ static void wl_escan_deinit(void)
 	printf("%s: Enter\n", __FUNCTION__);
 	if (!escan) {
 		ESCAN_ERROR(("device is not ready\n"));           \
-		return;    
+		return;
 	}
 	wl_destroy_event_handler(escan);
 	wl_flush_eq(escan);
@@ -1380,7 +1369,7 @@ static s32 wl_escan_init(void)
 	printf("%s: Enter\n", __FUNCTION__);
 	if (!escan) {
 		ESCAN_ERROR(("device is not ready\n"));           \
-		return -EIO;    
+		return -EIO;
 	}
 
 	/* Init scan_timeout timer */
@@ -1413,7 +1402,7 @@ void wl_escan_detach(void)
 
 	if (!escan) {
 		ESCAN_ERROR(("device is not ready\n"));           \
-		return;    
+		return;
 	}
 
 	wl_escan_deinit();

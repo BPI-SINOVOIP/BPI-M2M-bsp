@@ -1,14 +1,3 @@
-/*
- * drivers/video/sunxi/disp2/hdmi/aw/hdmi_core.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #include "hdmi_core.h"
 
 static __s32		hdmi_state = HDMI_State_Idle;
@@ -18,8 +7,6 @@ static bool		video_enable = 0;
 static bool		audio_enable = false;
 static __u32		cts_enable = 0;
 static __u32		hdcp_enable = 0;
-static __u8		isHDMI = 0;
-static __u8		YCbCr444_Support = 0;
 static __s32		HPD = 0;
 static struct audio_para glb_audio_para;
 static struct video_para glb_video_para;
@@ -37,24 +24,29 @@ __u32   hdmi_hpd_mask = 0x00;//0x10: force unplug; 0x11: force plug
 disp_video_timings video_timing[] =
 {
 	//VIC				   PCLK    AVI_PR  X      Y      HT      HBP   HFP   HST    VT     VBP  VFP  VST h_pol v_pol int vac   trd
-	{HDMI1440_480I,      0,13500000,  1,  720,   480,   858,   57,   19,   62,  525,   15,  4,  3,  0,   0,   1,   0,   0},
-	{HDMI1440_576I,      0,13500000,  1,  720,   576,   864,   69,   12,   63,  625,   19,  2,  3,  0,   0,   1,   0,   0},
-	{HDMI480P,           0,27000000,  0,  720,   480,   858,   60,   16,   62,  525,   30,  9,  6,  0,   0,   0,   0,   0},
-	{HDMI576P,           0,27000000,  0,  720,   576,   864,   68,   12,   64,  625,   39,  5,  5,  0,   0,   0,   0,   0},
-	{HDMI720P_50,        0,74250000,  0,  1280,  720,   1980,  220,  440,  40,  750,   20,  5,  5,  1,   1,   0,   0,   0},
-	{HDMI720P_60,        0,74250000,  0,  1280,  720,   1650,  220,  110,  40,  750,   20,  5,  5,  1,   1,   0,   0,   0},
-	{HDMI1080I_50,       0,74250000,  0,  1920,  1080,   2640,  148,  528,  44,  1125,  15,  2,  5,  1,   1,   1,   0,   0},
-	{HDMI1080I_60,       0,74250000,  0,  1920,  1080,   2200,  148,  88,   44,  1125,  15,  2,  5,  1,   1,   1,   0,   0},
-	{HDMI1080P_50,       0,148500000, 0,  1920,  1080,  2640,  148,  528,  44,  1125,  36,  4,  5,  1,   1,   0,   0,   0},
-	{HDMI1080P_60,       0,148500000, 0,  1920,  1080,  2200,  148,  88,   44,  1125,  36,  4,  5,  1,   1,   0,   0,   0},
-	{HDMI1080P_24,       0,74250000,  0,  1920,  1080,  2750,  148,  638,  44,  1125,  36,  4,  5,  1,   1,   0,   0,   0},
-	{HDMI1080P_25,       0,74250000,  0,  1920,  1080,  2640,  148,  528,  44,  1125,  36,  4,  5,  0,   0,   0,   0,   0},
-	{HDMI1080P_30,       0,74250000,  0,  1920,  1080,  2200,  148,  88,   44,  1125,  36,  4,  5,  0,   0,   0,   0,   0},
-	{HDMI1080P_24_3D_FP, 0,148500000, 0,  1920,  2160,  2750,  148,  638,  44,  1125,  36,  4,  5,  1,   1,   0,   45,  1},
-	{HDMI720P_50_3D_FP,  0,148500000, 0,  1280,  1440,  1980,  220,  440,  40,  750,   20,  5,  5,  1,   1,   0,   30,  1},
-	{HDMI720P_60_3D_FP,  0,148500000, 0,  1280,  1440,  1650,  220,  110,  40,  750,   20,  5,  5,  1,   1,   0,   30,  1},
-	{HDMI3840_2160P_30,  0,297000000, 0,  3840,  2160,  4400,  296,  176,  88,  2250,  72,  8, 10,  1,   1,   0,    0,  0},
-	{HDMI3840_2160P_25,  0,297000000, 0,  3840,  2160,  5280,  296, 1056,  88,  2250,  72,  8, 10,  1,   1,   0,    0,  0},
+	{HDMI1440_480I,      0, 13500000,  1,  720,   480,   858,   57,   19,   62,  525,   15,  4,  3,  0,   0,   1,   0,   0},
+	{HDMI1440_576I,      0, 13500000,  1,  720,   576,   864,   69,   12,   63,  625,   19,  2,  3,  0,   0,   1,   0,   0},
+	{HDMI480P,           0, 27000000,  0,  720,   480,   858,   60,   16,   62,  525,   30,  9,  6,  0,   0,   0,   0,   0},
+	{HDMI576P,           0, 27000000,  0,  720,   576,   864,   68,   12,   64,  625,   39,  5,  5,  0,   0,   0,   0,   0},
+	{HDMI720P_50,        0, 74250000,  0,  1280,  720,   1980,  220,  440,  40,  750,   20,  5,  5,  1,   1,   0,   0,   0},
+	{HDMI720P_60,        0, 74250000,  0,  1280,  720,   1650,  220,  110,  40,  750,   20,  5,  5,  1,   1,   0,   0,   0},
+	{HDMI1080I_50,       0, 74250000,  0,  1920,  1080,   2640,  148,  528,  44,  1125,  15,  2,  5,  1,   1,   1,   0,   0},
+	{HDMI1080I_60,       0, 74250000,  0,  1920,  1080,   2200,  148,  88,   44,  1125,  15,  2,  5,  1,   1,   1,   0,   0},
+	{HDMI1080P_50,       0, 148500000, 0,  1920,  1080,  2640,  148,  528,  44,  1125,  36,  4,  5,  1,   1,   0,   0,   0},
+	{HDMI1080P_60,       0, 148500000, 0,  1920,  1080,  2200,  148,  88,   44,  1125,  36,  4,  5,  1,   1,   0,   0,   0},
+	{HDMI1080P_24,       0, 74250000,  0,  1920,  1080,  2750,  148,  638,  44,  1125,  36,  4,  5,  1,   1,   0,   0,   0},
+	{HDMI1080P_25,       0, 74250000,  0,  1920,  1080,  2640,  148,  528,  44,  1125,  36,  4,  5,  0,   0,   0,   0,   0},
+	{HDMI1080P_30,       0, 74250000,  0,  1920,  1080,  2200,  148,  88,   44,  1125,  36,  4,  5,  0,   0,   0,   0,   0},
+	{HDMI1080P_24_3D_FP, 0, 148500000, 0,  1920,  2160,  2750,  148,  638,  44,  1125,  36,  4,  5,  1,   1,   0,   45,  1},
+	{HDMI720P_50_3D_FP,  0, 148500000, 0,  1280,  1440,  1980,  220,  440,  40,  750,   20,  5,  5,  1,   1,   0,   30,  1},
+	{HDMI720P_60_3D_FP,  0, 148500000, 0,  1280,  1440,  1650,  220,  110,  40,  750,   20,  5,  5,  1,   1,   0,   30,  1},
+	{HDMI3840_2160P_30,  0, 297000000, 0,  3840,  2160,  4400,  296,  176,  88,  2250,  72,  8, 10,  1,   1,   0,    0,  0},
+	{HDMI3840_2160P_25,  0, 297000000, 0,  3840,  2160,  5280,  296, 1056,  88,  2250,  72,  8, 10,  1,   1,   0,    0,  0},
+	{HDMI3840_2160P_24,  0, 297000000, 0,  3840,  2160,  5500,  296, 1276,  88,  2250,  72,  8, 10,  1,   1,   0,    0,  0},
+	{HDMI4096_2160P_24,  0, 297000000, 0,  4096,  2160,  5500,  296, 1020,  88,  2250,  72,  8, 10,  1,   1,   0,    0,  0},
+	{HDMI1280_1024,      0, 108000000, 0,  1280,  1024,  1688,  248,   48, 112,  1066,  38,  1,  3,  1,   1,   0,    0,  0},
+	{HDMI1024_768,       0, 65000000, 0,  1024,   768,  1344,  160,   24, 136,   806,  29,  3,  6,  1,   1,   0,    0,  0},
+	{HDMI900_540,        0, 74250000, 0,   900,   540,  1650,  400,  300,  50,   750, 120, 80, 10,  1,   1,   0,    0,  0},
 };
 
 static void hdmi_para_reset(void)
@@ -313,14 +305,15 @@ __u32 get_csc_type(void)
 
 	if((is_exp == 1) &&
 		((glb_video_para.vic == HDMI1080P_24)
-  	|| (glb_video_para.vic == HDMI1080P_24_3D_FP)
-  	|| (glb_video_para.vic == HDMI3840_2160P_24)
-  	|| (glb_video_para.vic == HDMI3840_2160P_30)
-  	|| (glb_video_para.vic == HDMI3840_2160P_25))
-  	) {
-  		csc = 0;
-  	}
-  
+		|| (glb_video_para.vic == HDMI1080P_24_3D_FP)
+		|| (glb_video_para.vic == HDMI3840_2160P_24)
+		|| (glb_video_para.vic == HDMI3840_2160P_30)
+		|| (glb_video_para.vic == HDMI3840_2160P_25)
+		|| (glb_video_para.vic == HDMI4096_2160P_24))
+	) {
+		csc = 0;
+	}
+
 	return csc;
 }
 
@@ -358,6 +351,8 @@ bool get_audio_enable()
 
 static __s32 audio_config_internal()
 {
+	__u8 isHDMI = GetIsHdmi();
+
 	__inf("audio_config_internal, type code:%d\n", glb_audio_para.type);
 	__inf("audio_config_internal, sample_rate:%d\n", glb_audio_para.sample_rate);
 	__inf("audio_config_internal, sample_bit:%d\n", glb_audio_para.sample_bit);
@@ -488,9 +483,13 @@ __s32 hdmi_core_get_list_num(void)
 __s32 video_config(__u32 vic)
 {
 	int ret = 0;
+	disp_video_timings *info;
+	int i;
+	__u8 isHDMI = 1;
+	__u8 YCbCr444_Support = 1;
 
-  isHDMI = GetIsHdmi();
-  YCbCr444_Support = GetIsYUV();
+	isHDMI = GetIsHdmi();
+	YCbCr444_Support = GetIsYUV();
 
 	__inf("video_config, vic:%d,cts_enable:%d,isHDMI:%d,YCbCr444_Support:%d,hdcp_enable:%d\n",
     vic,cts_enable,isHDMI,YCbCr444_Support,hdcp_enable);
@@ -515,6 +514,35 @@ __s32 video_config(__u32 vic)
       __inf("hdmi video + audio\n");
   }
 
+	info = &video_timing[0];
+	for (i = 0; i < ARRAY_SIZE(video_timing); i++) {
+		if (info->vic == vic) {
+			glb_video_para.pixel_clk        = info->pixel_clk;
+			glb_video_para.clk_div          = hdmi_clk_get_div();
+			glb_video_para.pixel_repeat     = info->pixel_repeat;
+			glb_video_para.x_res            = info->x_res;
+			glb_video_para.y_res            = info->y_res;
+			glb_video_para.hor_total_time   = info->hor_total_time;
+			glb_video_para.hor_back_porch   = info->hor_back_porch;
+			glb_video_para.hor_front_porch  = info->hor_front_porch;
+			glb_video_para.hor_sync_time    = info->hor_sync_time;
+			glb_video_para.ver_total_time   = info->ver_total_time;
+			glb_video_para.ver_back_porch   = info->ver_back_porch;
+			glb_video_para.ver_front_porch  = info->ver_front_porch;
+			glb_video_para.ver_sync_time    = info->ver_sync_time;
+			glb_video_para.hor_sync_polarity =
+							info->hor_sync_polarity;
+			glb_video_para.ver_sync_polarity =
+							info->ver_sync_polarity;
+			glb_video_para.b_interlace      = info->b_interlace;
+			break;
+		}
+		info++;
+	}
+
+	if (i >= ARRAY_SIZE(video_timing))
+		__wrn("cant found proper video timing for vic %d\n", vic);
+
 	__inf("video_on @ video_config = %d!\n",video_on);
 
 	return ret;
@@ -537,3 +565,4 @@ __s32 video_exit_lp(void)
 
 	return 0;
 }
+

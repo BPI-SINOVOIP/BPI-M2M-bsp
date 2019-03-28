@@ -2545,7 +2545,7 @@ static struct snd_soc_codec_driver soc_codec_dev_sndpcm = {
 	.resume  =  sndpcm_resume,
 };
 
-static int __init sndpcm_codec_probe(struct platform_device *pdev)
+static int sndpcm_codec_probe(struct platform_device *pdev)
 {
 	baseaddr = ioremap(CODEC_BASSADDRESS, 0x50);
 	if (baseaddr == NULL)

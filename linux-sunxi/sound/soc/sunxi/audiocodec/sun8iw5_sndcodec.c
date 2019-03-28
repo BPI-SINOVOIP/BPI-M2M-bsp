@@ -176,7 +176,7 @@ struct sunxi_codec_priv {
 	u32 aif1_lrlk_div;
 	u32 aif2_lrlk_div;
 	u32 headphone_direct_used;
-
+	u32 pa_double_used;
 };
 
 static unsigned int read_prcm_wvalue(unsigned int addr)
@@ -433,14 +433,20 @@ static void codec_init(struct sunxi_codec_priv *sunxi_internal_codec)
 {
 	if (sunxi_internal_codec->headphone_direct_used) {
 		snd_soc_update_bits(sunxi_internal_codec->codec, PAEN_HP_CTRL,
-				    (0x3 << HPCOM_FC), 0x3);
+				    (0x3 << HPCOM_FC), (0x3 << HPCOM_FC));
 		snd_soc_update_bits(sunxi_internal_codec->codec, PAEN_HP_CTRL,
-				    (0x1 << COMPTEN), 0x1);
+				    (0x1 << COMPTEN), (0x1 << COMPTEN));
 	} else {
 		snd_soc_update_bits(sunxi_internal_codec->codec, PAEN_HP_CTRL,
-				    (0x3 << HPCOM_FC), 0x0);
+				    (0x3 << HPCOM_FC), (0x0 << HPCOM_FC));
 		snd_soc_update_bits(sunxi_internal_codec->codec, PAEN_HP_CTRL,
-				    (0x1 << COMPTEN), 0x0);
+				    (0x1 << COMPTEN), (0x0 << COMPTEN));
+	}
+	if (sunxi_internal_codec->pa_double_used == 0) {
+		snd_soc_update_bits(sunxi_internal_codec->codec, PAEN_HP_CTRL,
+					(0x1 << LTRNMUTE), (0x1 << LTRNMUTE));
+		snd_soc_update_bits(sunxi_internal_codec->codec, PAEN_HP_CTRL,
+					(0x1 << RTLNMUTE), (0x0 << RTLNMUTE));
 	}
 
 	if (sunxi_internal_codec->aif2_used)
@@ -599,6 +605,39 @@ static int ac_headphone_event(struct snd_soc_dapm_widget *w,
 				    (0x1 << LHPPAMUTE));
 		snd_soc_update_bits(codec, DAC_PA_SRC, (0x1 << RHPPAMUTE),
 				    (0x1 << RHPPAMUTE));
+		usleep_range(2000, 3000);
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
+		/*close */
+		pr_debug("pre:close:%s,line:%d\n", __func__, __LINE__);
+
+		snd_soc_update_bits(codec, DAC_PA_SRC, (0x1 << LHPPAMUTE),
+				    (0x0 << LHPPAMUTE));
+		snd_soc_update_bits(codec, DAC_PA_SRC, (0x1 << RHPPAMUTE),
+				    (0x0 << RHPPAMUTE));
+		break;
+	}
+	return 0;
+}
+
+static int ac_speaker_event(struct snd_soc_dapm_widget *w,
+			      struct snd_kcontrol *k, int event)
+{
+	struct snd_soc_codec *codec = w->codec;
+	struct sunxi_codec_priv *sunxi_internal_codec =
+	    snd_soc_codec_get_drvdata(codec);
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
+		/*open */
+		pr_debug("post:open:%s,line:%d\n", __func__, __LINE__);
+		snd_soc_update_bits(codec, DAC_PA_SRC, (0x1 << LHPPAMUTE),
+				    (0x1 << LHPPAMUTE));
+		if (sunxi_internal_codec->pa_double_used == 1)
+			snd_soc_update_bits(codec, DAC_PA_SRC, (0x1 << RHPPAMUTE),
+					(0x1 << RHPPAMUTE));
+		else
+			snd_soc_update_bits(codec, DAC_PA_SRC, (0x1 << RHPPAMUTE),
+					(0x0 << RHPPAMUTE));
 		usleep_range(2000, 3000);
 		/* enable pa */
 		if (gpio_is_valid(sunxi_internal_codec->audio_pa_ctrl.gpio.gpio)) {
@@ -1440,7 +1479,6 @@ static const struct snd_soc_dapm_widget ac_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_IN_E("AIF1DACR", "AIF1 Playback", 0, SND_SOC_NOPM, 0,
 			      0, ac_aif1clk,
 			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
-
 	SND_SOC_DAPM_MUX("AIF1IN0L Mux", SUNXI_AIF1_DACDAT_CTRL, AIF1_DA0L_ENA,
 			 0, &aif1in0l_mux),
 	SND_SOC_DAPM_MUX("AIF1IN0R Mux", SUNXI_AIF1_DACDAT_CTRL, AIF1_DA0R_ENA,
@@ -1481,6 +1519,9 @@ static const struct snd_soc_dapm_widget ac_dapm_widgets[] = {
 	/*output devices */
 	/*headphone */
 	SND_SOC_DAPM_HP("Headphone", ac_headphone_event),
+
+	/*speaker*/
+	SND_SOC_DAPM_SPK("External Speaker", ac_speaker_event),
 
 	SND_SOC_DAPM_MIXER("Phoneout Mixer", PHONEOUT_CTRL, PHONEOUT_EN, 0,
 			   codec_phoneoutmix_controls,
@@ -1682,6 +1723,8 @@ static const struct snd_soc_dapm_route ac_dapm_routes[] = {
 	{"Headphone", NULL, "HPOUTR"},
 	{"Headphone", NULL, "HPOUTL"},
 
+	{"External Speaker", NULL, "HPOUTR"},
+	{"External Speaker", NULL, "HPOUTL"},
 /*aif1 capture route*/
 	{"AIF1ADCL", NULL, "AIF1OUT0L Mux"},
 	{"AIF1ADCR", NULL, "AIF1OUT0R Mux"},
@@ -2545,6 +2588,22 @@ static int sunxi_internal_codec_probe(struct platform_device *pdev)
 		sunxi_internal_codec->aif2_lrlk_div = 0;
 	} else {
 		sunxi_internal_codec->aif2_lrlk_div = val.val;
+	}
+
+	type = script_get_item("audio0", "pa_double_used", &val);
+	if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+		pr_err("[audiocodec] pa_double_use type err!\n");
+		sunxi_internal_codec->pa_double_used = 0;
+	} else {
+		sunxi_internal_codec->pa_double_used = val.val;
+	}
+
+	type = script_get_item("audio0", "headphone_direct_used", &val);
+	if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+		pr_err("[audiocodec] headphone_direct_used type err!\n");
+		sunxi_internal_codec->headphone_direct_used = 0;
+	} else {
+		sunxi_internal_codec->headphone_direct_used = val.val;
 	}
 
 	req_status = gpio_request(sunxi_internal_codec->audio_pa_ctrl.gpio.gpio, NULL);

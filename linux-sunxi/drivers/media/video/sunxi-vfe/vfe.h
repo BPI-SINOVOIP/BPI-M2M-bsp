@@ -1,14 +1,4 @@
 /*
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-/*
  * sunxi Camera core header file
  * Author:raymonxiu
  */
@@ -413,6 +403,7 @@ struct vfe_dev {
   //struct tasklet_struct   isp_isr_bh_task;
   struct work_struct      isp_isr_bh_task;
   struct work_struct      isp_isr_set_sensor_task;
+  struct workqueue_struct *vfe_wq;
   struct mipi_para        mipi_para;
   struct mipi_fmt         mipi_fmt;
   struct vfe_ctrl_para    ctrl_para;

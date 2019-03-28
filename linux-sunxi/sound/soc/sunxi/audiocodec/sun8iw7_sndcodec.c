@@ -1858,7 +1858,7 @@ static int __init sndpcm_codec_init(void)
 	if (audio_used) {
 		if((err = platform_device_register(&sndpcm_codec_device)) < 0)
 			return err;
-	
+
 		if ((err = platform_driver_register(&sndpcm_codec_driver)) < 0)
 			return err;
 	}

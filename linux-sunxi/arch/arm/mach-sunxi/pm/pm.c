@@ -543,7 +543,6 @@ static int aw_pm_begin(suspend_state_t state)
 	static __u32 backup_debug_mask = 0;
 
 	PM_DBG("%d state begin\n", state);
-	
 	//set freq max
 #ifdef CONFIG_CPU_FREQ_USR_EVNT_NOTIFY
 	//cpufreq_user_event_notify();
@@ -709,7 +708,7 @@ static int aw_suspend_cpu_die(void)
 *			-2: data has been destory.
 *********************************************************************************************************
 */
-static int aw_early_suspend(void)
+static inline int aw_early_suspend(void)
 {
 	save_pm_secure_mem_status(BEFORE_EARLY_SUSPEND |0x9);
 #define MAX_RETRY_TIMES (5)

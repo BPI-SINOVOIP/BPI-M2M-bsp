@@ -37,6 +37,8 @@
 #define  NFB_BASE_PhyExit        NFB_PhyExit
 #define  NFB_BASE_PhyRead        NFB_PhyRead
 
+extern __u32 uboot_start_block;
+extern __u32 uboot_next_block;
 
 __u32 NF_BLOCK_SIZE = 0;
 __u32 NF_BLK_SZ_WIDTH = 0;
@@ -44,14 +46,12 @@ __u32 NF_PAGE_SIZE = 0;
 __u32 NF_PG_SZ_WIDTH = 0;
 __u32 BOOT1_LAST_BLK_NUM = 0;
 __u32 page_with_bad_block = 0;
+__u32 BOOT1_START_BLK = 0;
 
 extern  struct __NandStorageInfo_t  NandStorageInfo;
-
-extern __u32 Nand_Is_lsb_page(__u32 page);
-
+extern __s32 NFB_GetFlashInfo(boot_flash_info_t *param);
 __s32 NF_open( void )
 {
-	__u32 blk_for_boot1;
 	struct boot_flash_info info;
 
 	if( NFB_BASE_PhyInit( ) == FAIL )
@@ -69,77 +69,10 @@ __s32 NF_open( void )
 
 	page_with_bad_block = info.pagewithbadflag;
 	NF_BLOCK_SIZE = info.blocksize * NF_SECTOR_SIZE;
-	switch( NF_BLOCK_SIZE )
-	{
-		case SZ_16K :
-			NF_BLK_SZ_WIDTH = 14;
-			blk_for_boot1   = BLKS_FOR_BOOT1_IN_16K_BLK_NF;
-			break;
-		case SZ_32K :
-			NF_BLK_SZ_WIDTH = 15;
-			blk_for_boot1   =  BLKS_FOR_BOOT1_IN_32K_BLK_NF;
-			break;
-		case SZ_128K :
-			NF_BLK_SZ_WIDTH = 17;
-			blk_for_boot1   =  BLKS_FOR_BOOT1_IN_128K_BLK_NF;
-			break;
-		case SZ_256K :
-			NF_BLK_SZ_WIDTH = 18;
-			blk_for_boot1   =  BLKS_FOR_BOOT1_IN_256K_BLK_NF;
-			break;
-		case SZ_512K :
-			NF_BLK_SZ_WIDTH = 19;
-			blk_for_boot1   =  BLKS_FOR_BOOT1_IN_512K_BLK_NF;
-			break;
-		case SZ_1M :
-			NF_BLK_SZ_WIDTH = 20;
-			blk_for_boot1   =  BLKS_FOR_BOOT1_IN_1M_BLK_NF;
-			break;
-		case SZ_2M :
-			NF_BLK_SZ_WIDTH = 21;
-			blk_for_boot1   =  BLKS_FOR_BOOT1_IN_2M_BLK_NF;
-			break;
-		case SZ_4M :
-			NF_BLK_SZ_WIDTH = 22;
-			blk_for_boot1   =  BLKS_FOR_BOOT1_IN_4M_BLK_NF;
-			break;
-		case SZ_8M :
-			NF_BLK_SZ_WIDTH = 23;
-			blk_for_boot1   =  BLKS_FOR_BOOT1_IN_8M_BLK_NF;
-			break;
-		default :
-		{
-			printf("GET NF_BLOCK_SIZE FAIL\n");
-			goto error;
-		}
-	}
-	BOOT1_LAST_BLK_NUM = BOOT1_START_BLK_NUM + blk_for_boot1 - 1;
+	BOOT1_LAST_BLK_NUM = uboot_next_block - 1;
+	BOOT1_START_BLK = uboot_start_block;
 
 	NF_PAGE_SIZE = info.pagesize * NF_SECTOR_SIZE;
-	switch( NF_PAGE_SIZE )
-	{
-		case SZ_512 :
-			NF_PG_SZ_WIDTH =  9;
-			break;
-		case SZ_2K :
-			NF_PG_SZ_WIDTH = 11;
-			break;
-		case SZ_4K :
-			NF_PG_SZ_WIDTH = 12;
-			break;
-		case SZ_8K :
-			NF_PG_SZ_WIDTH = 13;
-			break;
-		case SZ_16K :
-			NF_PG_SZ_WIDTH = 14;
-			break;
-		default :
-		{
-			printf("GET NF_PAGE_SIZE FAIL\n");
-			goto error;
-		}
-	}
-
 	return NF_OK;
 
 error:
@@ -205,7 +138,7 @@ __s32 NF_read( __u32 sector_num, void *buffer, __u32 N )
 	residue = g_mod( N, scts_per_page, &page_nr );
 
 	page_index = 0;
-
+	
 	for( i = 0; i < page_cnt_per_blk; i++ )
 	{
 		if(page_nr==0)
@@ -292,10 +225,10 @@ __u32 load_uboot_in_one_block_judge(__u32 length)
 {
 	__u32 lsb_page_type;
 	__u32 lsb_blk_size;
-
+	
 	lsb_page_type = NAND_Getlsbpage_type();
 	lsb_blk_size = NAND_GetLsbblksize();
-
+	
 	if((( length <=  NF_BLOCK_SIZE )&&(lsb_page_type==0))||(( length <=  lsb_blk_size )&&(lsb_page_type!=0)))
 		return 1;
 	else

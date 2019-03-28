@@ -21,7 +21,7 @@
 
 #define VFE_ISP_REGULATOR				""
 #define VFE_CSI_REGULATOR				""
-#define USE_SPECIFIC_CCI
+/*#define USE_SPECIFIC_CCI*/
 #define CSI0_CCI_REG_BASE				0x01cb3000
 
 #define CSI0_REGS_BASE          				0x01cb0000

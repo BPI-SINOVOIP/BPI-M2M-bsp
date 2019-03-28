@@ -75,7 +75,7 @@ static u32 __sha_padding(u32 this_data_size, u32 total_data_size, u8* text, u32 
 	u32 k, q;
 	u32 size;
 	u32 padding_buf[32];
-    u8 *ptext;
+	u8 *ptext;
 
 	memset(padding_buf, 0, 16 * sizeof(u32));
 	if(hash_mode < 4)
@@ -393,16 +393,14 @@ int  sunxi_sha_calc(u8 *dst_addr, u32 dst_len,
 	u32 total_len = 0;
 	u32 md_size = 32;
 	s32 i = 0;
-	u8  sign_buff[32 + 32], *p_sign;
 	task_queue task0;
+	ALLOC_CACHE_ALIGN_BUFFER(u8,p_sign,CACHE_LINE_SIZE);
 
-	memset(sign_buff, 0, sizeof(sign_buff));
 	memset((u8 *)&task0 , 0 ,sizeof(task_queue));
-	p_sign =  (u8 *)(((u32)sign_buff + 31)&(~31));
 
 	total_len = __sha_padding(src_len, src_len, (u8 *)src_addr, 1)/4;	//计算明文长度
 
-    task0.task_id = 0;
+	task0.task_id = 0;
 	task0.common_ctl = (19)|(1U << 31);
 	task0.symmetric_ctl = 0;
 	task0.asymmetric_ctl = 0;
@@ -423,7 +421,7 @@ int  sunxi_sha_calc(u8 *dst_addr, u32 dst_len,
 	task0.next_descriptor = 0;
 
 	flush_cache((uint)&task0, sizeof(task0));
-	flush_cache((uint)sign_buff, 64);
+	flush_cache((uint)p_sign, CACHE_LINE_SIZE);
 	flush_cache((uint)src_addr, total_len * 4);
 
 	writel((uint)&task0, SS_TDQ); //descriptor address
@@ -433,6 +431,8 @@ int  sunxi_sha_calc(u8 *dst_addr, u32 dst_len,
 	writel(0x1, SS_TLR);
 	//wait end
 	__ss_encry_decry_end(task0.task_id);
+
+	invalidate_dcache_range((ulong)p_sign,(ulong)p_sign + CACHE_LINE_SIZE);
 	//copy data
 	for(i=0; i< md_size; i++)
 	{
@@ -472,22 +472,17 @@ s32 sunxi_rsa_calc(u8 * n_addr,   u32 n_len,
 				   u8 * dst_addr, u32 dst_len,
 				   u8 * src_addr, u32 src_len)
 {
-#define	TEMP_BUFF_LEN	((2048>>3) + 32)
+#define	TEMP_BUFF_LEN	((2048>>3) + CACHE_LINE_SIZE)
 	uint   i;
 	task_queue task0;
 	u32 reg_val = 0;
-	u8	temp_n_addr[TEMP_BUFF_LEN],   *p_n;
-	u8	temp_e_addr[TEMP_BUFF_LEN],   *p_e;
-	u8	temp_src_addr[TEMP_BUFF_LEN], *p_src;
-	u8	temp_dst_addr[TEMP_BUFF_LEN], *p_dst;
 	u32 mod_bit_size = 2048;
-
 	u32 mod_size_len_inbytes = mod_bit_size/8;
 
-	p_n = (u8 *)(((u32)temp_n_addr + 31)&(~31));
-	p_e = (u8 *)(((u32)temp_e_addr + 31)&(~31));
-	p_src = (u8 *)(((u32)temp_src_addr + 31)&(~31));
-	p_dst = (u8 *)(((u32)temp_dst_addr + 31)&(~31));
+	ALLOC_CACHE_ALIGN_BUFFER(u8,p_n,TEMP_BUFF_LEN);
+	ALLOC_CACHE_ALIGN_BUFFER(u8,p_e,TEMP_BUFF_LEN);
+	ALLOC_CACHE_ALIGN_BUFFER(u8,p_src,TEMP_BUFF_LEN);
+	ALLOC_CACHE_ALIGN_BUFFER(u8,p_dst,TEMP_BUFF_LEN);
 
 	__rsa_padding(p_src, src_addr, src_len, mod_size_len_inbytes);
 	__rsa_padding(p_n, n_addr, n_len, mod_size_len_inbytes);
@@ -513,10 +508,10 @@ s32 sunxi_rsa_calc(u8 * n_addr,   u32 n_len,
 	task0.next_descriptor = 0;
 
 	flush_cache((uint)&task0, sizeof(task0));
-	flush_cache((uint)temp_n_addr, TEMP_BUFF_LEN);
-	flush_cache((uint)temp_e_addr, TEMP_BUFF_LEN);
-	flush_cache((uint)temp_src_addr, TEMP_BUFF_LEN);
-	flush_cache((uint)temp_dst_addr, TEMP_BUFF_LEN);
+	flush_cache((uint)p_n, mod_size_len_inbytes);
+	flush_cache((uint)p_e, mod_size_len_inbytes);
+	flush_cache((uint)p_src, mod_size_len_inbytes);
+	flush_cache((uint)p_dst, mod_size_len_inbytes);
 
 	writel((uint)&task0, SS_TDQ); //descriptor address
 	//enable SS end interrupt
@@ -566,15 +561,15 @@ int sunxi_aes_encrypt_rssk_hdcp_to_dram(u8 *src_addr, u8 *dst_addr, u32 dst_len)
 	task_queue task0;
 	int i;
 	u32 cts_size;
-    int key_start_addr  = 0;
+	int key_start_addr  = 0;
 
 	src_align = (u8 *)(((u32)tmp_src_align + 63)&(~63));
 	dst_align = (u8 *)(((u32)tmp_dst_align + 63)&(~63));
 	key_map = (u8 *)(((u32)tmp_key_map + 63)&(~63));
 
 	memset(key_map, 0, 256);
-    memset((void *)&task0,0x00,sizeof(task_queue));
-    memcpy(src_align, src_addr, dst_len);
+	memset((void *)&task0,0x00,sizeof(task_queue));
+	memcpy(src_align, src_addr, dst_len);
 	//set encrypt mode
 	cts_size = ((dst_len + 15) & (~15))>>2;
 	memset(src_align + dst_len, 0, 16);
@@ -670,8 +665,8 @@ int sunxi_aes_decrypt_rssk_hdcp_to_keysram(u8 *src_addr, u32 src_len)
 	key_map = (u8 *)(((u32)tmp_key_map + 64)&(~63));
 
 	memset(key_map, 0, 256);
-    memset((void *)&task0,0x00,sizeof(task_queue));
-    memcpy(src_align, src_addr, src_len);
+	memset((void *)&task0,0x00,sizeof(task_queue));
+	memcpy(src_align, src_addr, src_len);
 	//set decrypt mode
 	cts_size = ((src_len + 15) & (~15))>>2;
 	memset(src_align + src_len, 0, 16);
@@ -757,9 +752,9 @@ int sunxi_aes_decrypt_rssk_hdcp_to_dram(u8 *src_addr, u32 src_len, u8 *dst_addr)
 	key_map = (u8 *)(((u32)tmp_key_map + 64)&(~63));
 	ret_align = (u8 *)(((u32)tmp_ret_align + 64)&(~63));
 
-    memcpy(src_align, src_addr, src_len);
-    memset((void *)&task0,0x00,sizeof(task_queue));
-    memset(ret_align,0x00,512);
+	memcpy(src_align, src_addr, src_len);
+	memset((void *)&task0,0x00,sizeof(task_queue));
+	memset(ret_align,0x00,512);
 	memcpy(src_align, src_addr, src_len);
 
 	key_start_addr = EFUSE_RSSK;
@@ -844,7 +839,7 @@ int sunxi_md5_keysram_calcute(void *md5_buf, int md5_buf_len)
 	}
 	dst_align = (u8 *)(((u32)tmp_dst_align + 64)&(~63));
 
-    memset((void *)&task0,0x00,sizeof(task_queue));
+	memset((void *)&task0,0x00,sizeof(task_queue));
 	task0.task_id = 0;
 	task0.common_ctl = (SS_METHOD_MD5 | (1U<<SS_INT_ENABLE_OFS));
 	task0.symmetric_ctl = 0;
@@ -917,7 +912,7 @@ int sunxi_md5_dram_calcute(void *src_buf, int src_len, void *md5_buf, int md5_bu
 	src_align = (u8 *)(((u32)tmp_src_align + 64)&(~63));
 
 	memcpy(src_align, src_buf, src_len);
-    memset((void *)&task0,0x00,sizeof(task_queue));
+	memset((void *)&task0,0x00,sizeof(task_queue));
 	memset(dst_align, 0, 64);
 
 	total_len = __sha_padding(src_len, src_len, src_align, 0)/4;
@@ -1010,8 +1005,8 @@ int sunxi_aes_encrypt(u8 *src_addr, u8 *dst_addr, u32 data_bytes, u8 *key_buf, u
 	dst_align = (u8 *)(((u32)tmp_dst_align + 63)&(~63));
 	key_map = (u8 *)(((u32)tmp_key_map + 63)&(~63));
 
-    memset((void *)&task0,0x00,sizeof(task_queue));
-    memcpy(src_align, src_addr, data_bytes);
+	memset((void *)&task0,0x00,sizeof(task_queue));
+	memcpy(src_align, src_addr, data_bytes);
 	//set encrypt mode
 	cts_size = data_bytes>>2;
 
@@ -1133,8 +1128,8 @@ int sunxi_aes_decrypt(u8 *src_addr, u8 *dst_addr, u32 data_bytes, u8 *key_buf, u
 	dst_align = (u8 *)(((u32)tmp_dst_align + 63)&(~63));
 	key_map = (u8 *)(((u32)tmp_key_map + 63)&(~63));
 
-    memset((void *)&task0,0x00,sizeof(task_queue));
-    memcpy(src_align, src_addr, data_bytes);
+	memset((void *)&task0,0x00,sizeof(task_queue));
+	memcpy(src_align, src_addr, data_bytes);
 
 	//set encrypt mode
 	cts_size = data_bytes>>2;
@@ -1246,7 +1241,7 @@ int TNHALCryptoMD5(const u8 *pucData, u32 unDataSize, int bFinal, u8 *pucOut)
 	md5_iv_align  = (u8 *)(((u32)md5_iv_buf + 63)&(~63));
 
 	memcpy(src_align, pucData, unDataSize);
-    memset((void *)&task0,0x00,sizeof(task_queue));
+	memset((void *)&task0,0x00,sizeof(task_queue));
 	memset(dst_align, 0, 64);
 
 	task0.task_id = 0;
@@ -1365,7 +1360,7 @@ int TNHALCryptoSHA1(const u8 *pucData, u32 unDataSize, int bFinal, u8 *pucOut)
 	sha1_iv_align = (u8 *)(((u32)sha1_iv_buf + 63)&(~63));
 
 	memcpy(src_align, pucData, unDataSize);
-    memset((void *)&task0,0x00,sizeof(task_queue));
+	memset((void *)&task0,0x00,sizeof(task_queue));
 	memset(dst_align, 0, 64);
 
 	task0.task_id = 0;
@@ -1485,7 +1480,7 @@ int TNHALCryptoSHA256(const u8 *pucData, u32 unDataSize, int bFinal, u8 *pucOut)
 	sha256_iv_align = (u8 *)(((u32)sha256_iv_buf + 63)&(~63));
 
 	memcpy(src_align, pucData, unDataSize);
-    memset((void *)&task0,0x00,sizeof(task_queue));
+	memset((void *)&task0,0x00,sizeof(task_queue));
 	memset(dst_align, 0, 64);
 
 	task0.task_id = 0;
@@ -1604,7 +1599,7 @@ int TNHALCryptoSHA512(const u8 *pucData, u32 unDataSize, int bFinal, u8 *pucOut)
 	sha512_iv_align = (u8 *)(((u32)sha512_iv_buf + 63)&(~63));
 
 	memcpy(src_align, pucData, unDataSize);
-    memset((void *)&task0,0x00,sizeof(task_queue));
+	memset((void *)&task0,0x00,sizeof(task_queue));
 	memset(dst_align, 0, 64);
 
 	//total_len = __sha_padding(unDataSize, src_align, 4)/4;
@@ -1729,8 +1724,8 @@ int TNHALCryptoAESEcb(const u8 *pucIn, u32 unInLen, u8 *pucOut, const u8 *psKey,
 	dst_align = (u8 *)(((u32)tmp_dst_align + 63)&(~63));
 	key_map = (u8 *)(((u32)tmp_key_map + 63)&(~63));
 
-    memset((void *)&task0,0x00,sizeof(task_queue));
-    memcpy(src_align, pucIn, unInLen);
+	memset((void *)&task0,0x00,sizeof(task_queue));
+	memcpy(src_align, pucIn, unInLen);
 
 	//set encrypt mode
 	cts_size = unInLen>>2;
@@ -1841,12 +1836,12 @@ int TNHALCryptoAESCbc(const u8 *pucIn, u32 unInLen, u8 *pucOut, const u8 *psKey,
 	key_map = (u8 *)(((u32)tmp_key_map + 63)&(~63));
 	iv_map = (u8 *)(((u32)iv_key_align + 15)&(~15));
 
-    memset((void *)&task0,0x00,sizeof(task_queue));
-    memcpy(src_align, pucIn, unInLen);
-    if(psIv == NULL)
-    	memset(iv_map, 0, 128);
-    else
-    	memcpy(iv_map, psIv, 128);
+	memset((void *)&task0,0x00,sizeof(task_queue));
+	memcpy(src_align, pucIn, unInLen);
+	if(psIv == NULL)
+		memset(iv_map, 0, 128);
+	else
+		memcpy(iv_map, psIv, 128);
 
 	//set encrypt mode
 	cts_size = unInLen>>2;

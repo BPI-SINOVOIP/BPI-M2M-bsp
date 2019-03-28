@@ -1,14 +1,3 @@
-/*
- * drivers/video/sunxi/disp2/disp/de/lowlevel_sun8iw6/de_dsi.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #include "de_dsi_type.h"
 #include "de_dsi.h"
 
@@ -115,12 +104,13 @@ __s32 dsi_open(__u32 sel,disp_panel_para * panel)
 __s32 dsi_close(__u32 sel)
 {
 	dsi_dev[sel]->dsi_cfg1.bits.dpi_src = 0;
-	//FIXME
-	//LCD_delay_fs(sel, 1);
 	dsi_delay_ms(16);
 	dsi_dev[sel]->dsi_vid_ctl0.bits.video_mode_en	  = 0;
 	dsi_dev[sel]->dsi_cmd_ctl.bits.cmd_mode_en		  = 1;
 	dsi_hs_clk(sel,0);
+	dsi_delay_ms(5);
+	dsi_dev[sel]->dsi_ctl0.bits.module_en = 0;
+
 	return 0;
 }
 

@@ -198,6 +198,8 @@ static void rmmod_device_driver(struct usb_msg_center_info *center_info)
 #if defined(CONFIG_AW_AXP)
 	axp_usbcur(CHARGE_AC);
 	axp_usbvol(CHARGE_AC);
+#elif defined(CONFIG_SUNXI_LRADC_BATTERY)
+	lradc_set_usb_type(1);
 #endif
 	return;
 }

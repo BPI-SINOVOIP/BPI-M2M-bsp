@@ -1,15 +1,12 @@
 EXTRA_LDFLAGS += --strip-debug
 ifneq ($(strip $(CONFIG_ARCH_SUN8IW8)),)
 
-obj-$(CONFIG_OV2710_MIPI)	+= ov2710_mipi.o
-obj-$(CONFIG_OV4689)		+= ov4689.o
-obj-$(CONFIG_OV4689_60FPS)	+= ov4689_60fps.o
-obj-$(CONFIG_AR0330_MIPI)	+= ar0330_mipi.o
-obj-$(CONFIG_OV4689_SDV)	+= ov4689_sdv.o
-obj-$(CONFIG_GC1004_MIPI)	+= gc1004_mipi.o
-obj-$(CONFIG_H22_MIPI)		+= h22_mipi.o
-obj-$(CONFIG_NT99231_MIPI)		+= nt99231_mipi.o
-
+obj-m			+= ov2710_mipi.o
+obj-m			+= ov5640.o
+obj-m                  	+= imx179_2lane.o
+obj-m                 	+= ov7740.o
+obj-m			+= hm2131.o
+obj-m			+= n3.o
 else
 obj-m			+= ov5640.o
 obj-m			+= ov2640.o
@@ -20,7 +17,6 @@ obj-m			+= gc2035.o
 obj-m			+= gt2005.o
 obj-m			+= gc0307.o
 obj-m			+= gc0308.o
-obj-m			+= gc0328.o
 obj-m			+= gc0328c.o
 obj-m			+= gc0329.o
 obj-m			+= gc0311.o
@@ -68,6 +64,7 @@ obj-m           += ov8858_r2a_4lane.o
 obj-m           += ov8865_4lane.o
 obj-m           += ps1210.o
 obj-m           += imx291.o
+obj-m           += imx179.o
 
 endif
 

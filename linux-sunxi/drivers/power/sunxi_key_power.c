@@ -1,14 +1,3 @@
-/*
- * drivers/power/sunxi_key_power.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/kernel.h>
@@ -177,6 +166,7 @@ static int sunxi_pwr_key_fetch_sysconfig_para(void)
 	if (SCIRPT_ITEM_VALUE_TYPE_PIO != type)
 		printk(KERN_ERR "get pwr_pin failed!\n");
 	sun8i_pwr_pin = val.gpio.gpio;
+
 	return 0;
 script_get_err:
 	pr_notice("=========script_get_err============\n");

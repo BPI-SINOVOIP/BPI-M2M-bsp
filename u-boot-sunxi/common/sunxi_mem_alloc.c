@@ -23,15 +23,19 @@
  */
 #include <common.h>
 
+extern void *malloc(size_t size);
+extern void free(void *p);
+
 struct alloc_struct_t
 {
-    uint address;                      //申请内存的地址
-    uint size;                         //分配的内存大小，用户实际得到的内存大小
-    uint o_size;                       //用户申请的内存大小
+    uint address;
+    uint size;
+    uint o_size;
     struct alloc_struct_t *next;
 };
 
-#define SUNXI_BYTE_ALIGN(x)            ( ( (x + 31) >> 5) << 5)             /* alloc based on 1k byte */
+/* alloc based on 1k byte */
+#define SUNXI_BYTE_ALIGN(x)            ( ( (x + 31) >> 5) << 5)
 
 static struct alloc_struct_t boot_heap_head, boot_heap_tail;
 /*
@@ -71,46 +75,50 @@ void mem_noncache_malloc_init(uint noncache_start, uint noncache_size)
 */
 void *malloc_noncache(uint num_bytes)
 {
-    struct alloc_struct_t *ptr, *newptr;
-    __u32  actual_bytes;
+	struct alloc_struct_t *ptr, *newptr;
+	__u32  actual_bytes;
 
-    if (!num_bytes) return NULL;
+	if (!num_bytes) return NULL;
+	/* translate the byte count to size of long type */
+	actual_bytes = SUNXI_BYTE_ALIGN(num_bytes);
 
-    actual_bytes = SUNXI_BYTE_ALIGN(num_bytes);    /* translate the byte count to size of long type       */
+	/* scan from the boot_heap_head of the heap */
+	ptr = &boot_heap_head;
 
-    ptr = &boot_heap_head;                      /* scan from the boot_heap_head of the heap            */
+	/* look for enough memory for alloc */
+	while (ptr && ptr->next)
+	{
+		if (ptr->next->address >= (ptr->address + ptr->size + \
+				2 * sizeof(struct alloc_struct_t) + actual_bytes))
+		{
+			break;
+		}
+		/* find enough memory to alloc */
+		ptr = ptr->next;
+	}
 
-    while (ptr && ptr->next)                    /* look for enough memory for alloc                    */
-    {
-        if (ptr->next->address >= (ptr->address + ptr->size +                                          \
-                2 * sizeof(struct alloc_struct_t) + actual_bytes))
-        {
-            break;
-        }
-                                                /* find enough memory to alloc                         */
-        ptr = ptr->next;
-    }
+	if (!ptr->next)
+	{
+		/* it has reached the boot_heap_tail of the heap now */
+		return 0;
+	}
 
-    if (!ptr->next)
-    {
-        return 0;                   /* it has reached the boot_heap_tail of the heap now              */
-    }
+	newptr = (struct alloc_struct_t *)(ptr->address + ptr->size);
+	/* create a new node for the memory block */
+	if (!newptr)
+	{
+		/* create the node failed, can't manage the block */
+		return 0;
+	}
 
-    newptr = (struct alloc_struct_t *)(ptr->address + ptr->size);
-                                                /* create a new node for the memory block             */
-    if (!newptr)
-    {
-        return 0;                               /* create the node failed, can't manage the block     */
-    }
+	/* set the memory block chain, insert the node to the chain */
+	newptr->address = ptr->address + ptr->size + sizeof(struct alloc_struct_t);
+	newptr->size    = actual_bytes;
+	newptr->o_size  = num_bytes;
+	newptr->next    = ptr->next;
+	ptr->next       = newptr;
 
-    /* set the memory block chain, insert the node to the chain */
-    newptr->address = ptr->address + ptr->size + sizeof(struct alloc_struct_t);
-    newptr->size    = actual_bytes;
-    newptr->o_size  = num_bytes;
-    newptr->next    = ptr->next;
-    ptr->next       = newptr;
-
-    return (void *)newptr->address;
+	return (void *)newptr->address;
 }
 /*
 *********************************************************************************************************
@@ -125,25 +133,76 @@ void *malloc_noncache(uint num_bytes)
 */
 void  free_noncache(void *p)
 {
-    struct alloc_struct_t *ptr, *prev;
+	struct alloc_struct_t *ptr, *prev;
 
 	if( p == NULL )
 		return;
-
-    ptr = &boot_heap_head;                /* look for the node which po__s32 this memory block                     */
-    while (ptr && ptr->next)
-    {
-        if (ptr->next->address == (__u32)p)
-            break;              /* find the node which need to be release                              */
-        ptr = ptr->next;
-    }
+	/* look for the node which po__s32 this memory block*/
+	ptr = &boot_heap_head;
+	while (ptr && ptr->next)
+	{
+		if (ptr->next->address == (__u32)p)
+			break;              /* find the node which need to be release*/
+		ptr = ptr->next;
+	}
 
 	prev = ptr;
 	ptr = ptr->next;
+	/* the node is heap boot_heap_tail*/
+	if (!ptr) return;
 
-    if (!ptr) return;           /* the node is heap boot_heap_tail                                               */
+	/* delete the node which need be released from the memory block chain  */
+	prev->next = ptr->next;
+	return ;
+}
 
-    prev->next = ptr->next;     /* delete the node which need be released from the memory block chain  */
+void *malloc_align(size_t size, size_t align)
+{
+	int *ret, *ret_align, *ret_tem;
+	int  tem;
+	if (size <= 0 && align <=0)
+	{
+		printf("input arg error: should bigger than 0\n");
+	}
+	if ((align & 0x3))
+	{
+		printf("align arg error: align at least 4 byte.\n");
+		return NULL;
+	}
+	size =  size + align;
+	ret = (int *)malloc(size);
+	if (!ret)
+	{
+		printf("malloc return NULL! size = %d\n", size);
+		return NULL;
+	}
 
-    return ;
+	if (!((int)ret & (align-1)))
+	{
+		/* the buffer is align
+		 * */
+		tem = (int)ret + align;
+		ret_align = (int *)(tem);
+		ret_tem = ret_align;
+		ret_tem--;
+		*ret_tem = (int)ret;
+	}
+	else
+	{
+		tem =(int)ret & ~(align-1);
+		tem = tem+align;
+		ret_align = (int *)(tem);
+		ret_tem = ret_align;
+		ret_tem--;
+		*ret_tem = (int)ret;
+	}
+	return (void *)ret_align;
+}
+
+void free_align(void *ptr)
+{
+	int *ret;
+	ret = (int *)ptr;
+	ret--;
+	free((void *)*ret);
 }

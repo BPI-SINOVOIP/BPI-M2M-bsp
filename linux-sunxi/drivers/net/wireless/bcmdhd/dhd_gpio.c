@@ -1,14 +1,3 @@
-/*
- * drivers/net/wireless/bcmdhd/dhd_gpio.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 
 #include <osl.h>
 #include <dhd_linux.h>
@@ -42,6 +31,9 @@ static int host_oob_irq = -1;
 static int sdc_id = 0;
 extern void sunxi_mci_rescan_card(unsigned id, unsigned insert);
 extern void wifi_pm_power(int on);
+
+/* Customer specifia wifi mac addr file */
+#define WIFIMAC_PATH "/mnt/factory/ULI/factory/mac.txt"
 #endif
 
 static int
@@ -159,6 +151,39 @@ static int dhd_wlan_get_mac_addr(unsigned char *buf)
 	int err = 0;
 
 	printf("======== %s ========\n", __FUNCTION__);
+
+#ifdef CONFIG_ARCH_SUNXI
+  {
+    char *file_name = WIFIMAC_PATH;
+    void * fp = NULL;
+    char  tmp_addr[18];
+    struct ether_addr tmp_ea;
+    char *str;
+    int i=0;
+
+    fp = dhd_os_open_image(file_name);
+    if (fp == NULL) {
+      printk("%s: Open wifi mac file failed %s\n", __FUNCTION__, file_name);
+      err = -EINVAL;
+      goto end;
+    }
+
+    dhd_os_get_image_block(tmp_addr, 18, fp);
+    tmp_addr[17] = ':';
+
+    str = tmp_addr;
+    for (i=0; i<6; i++) {
+      tmp_ea.octet[i] = simple_strtoul(str, (char **)&str, 16 );
+      str++;
+    }
+
+    bcopy((char *)&tmp_ea, buf, sizeof(struct ether_addr));
+
+    dhd_os_close_image(fp);
+    fp = NULL;
+  }
+#endif /* CONFIG_ARCH_SUNXI */
+
 #ifdef EXAMPLE_GET_MAC
 	/* EXAMPLE code */
 	{
@@ -167,6 +192,8 @@ static int dhd_wlan_get_mac_addr(unsigned char *buf)
 	}
 #endif /* EXAMPLE_GET_MAC */
 
+
+end:
 	return err;
 }
 

@@ -24,7 +24,7 @@ include $(TOPDIR)/config.mk
 LIB	= $(obj)libawfat.o
 
 AOBJS	=
-COBJS-y	:= ff.o diskio.o
+COBJS-y	:= ff.o diskio.o fs.o
 
 SRCS	:= $(AOBJS:.o=.S) $(COBJS-y:.o=.c)
 OBJS	:= $(addprefix $(obj),$(AOBJS) $(COBJS-y))

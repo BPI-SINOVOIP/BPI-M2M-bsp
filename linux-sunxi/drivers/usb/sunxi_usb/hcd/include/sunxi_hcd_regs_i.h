@@ -67,7 +67,7 @@ static inline void  sunxi_hcd_write_rxfifoadd(void __iomem *usbc_base, u16 c_off
 static inline u8 sunxi_hcd_read_configdata(void __iomem *usbc_base)
 {
 #if defined (CONFIG_ARCH_SUN8IW5) || defined (CONFIG_ARCH_SUN8IW6) || defined (CONFIG_ARCH_SUN8IW9)
-	/* note: this reg(0x01c190c0) is deleted in 1667,
+	/* note: this reg(0x01c190c0) is deleted in SUN8IW5,
 	 * so we set manually to meet ep_config_from_table. */
 	return (1 << USBC_BP_CONFIGDATA_DYNFIFO_SIZING);
 #else

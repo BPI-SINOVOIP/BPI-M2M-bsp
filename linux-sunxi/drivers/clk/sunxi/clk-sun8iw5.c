@@ -71,7 +71,7 @@ void dummy_reg_init(void)
 // media means: video/ve/gpu/hsic/de
 /*                          ns  nw  ks  kw  ms  mw  ps  pw  d1s  d1w  d2s  d2w  {frac  out  mode}  en-s   sdmss  sdmsw  sdmpat      sdmval*/
 SUNXI_CLK_FACTORS(pll_cpu,   8,  5,  4,  2,  0,  2,  16, 2,  0,   0,   0,   0,    0,    0,   0,     31,   24,     0,       PLL_CPUPAT,  0xd1303333);
-SUNXI_CLK_FACTORS(pll_audio, 8,  7,  0,  0,  0,  5,  16, 4,  0,   0,   0,   0,    0,    0,   0,     31,    0,     0,       0,        0);
+SUNXI_CLK_FACTORS(pll_audio, 8,  7,  0,  0,  0,  5,  16, 4,  0,   0,   0,   0,    0,    0,   0,     31,    24,     1,       PLL_AUDIOPAT, 0xc00121ff);
 SUNXI_CLK_FACTORS_UPDATE(pll_ddr0,  8,  5,  4,  2,  0,  2,  0,  0,  0,   0,   0,   0,    0,    0,   0,     31,    0,     0,       0,        0 , 20);
 SUNXI_CLK_FACTORS(pll_periph,8,  5,  4,  2,  0,  0,  0,  0,  0,   0,   0,   0,    0,    0,   0,     31,    0,     0,       0,        0);
 SUNXI_CLK_FACTORS(pll_video, 8,  7,  0,  0,  0,  4,  0,  0,  0,   0,   0,   0,    1,    25,  24,    31,   20,     0,       PLL_VIDEOPAT,0xd1303333);
@@ -143,14 +143,16 @@ static int get_factors_pll_periph(u32 rate, u32 parent_rate, struct clk_factors_
 }
 static int get_factors_pll_audio(u32 rate, u32 parent_rate, struct clk_factors_value *factor)
 {
-    if(rate == 22579200) {
-        factor->factorn = 78;
-        factor->factorm = 20;
-        factor->factorp = 3;
-    } else if(rate == 24576000) {
-        factor->factorn = 85;
-        factor->factorm = 20;
-        factor->factorp = 3;
+    if (rate == 22579200) {
+	factor->factorn = 6;
+	factor->factorm = 0;
+	factor->factorp = 7;
+	sunxi_clk_factor_pll_audio.sdmval = 0xc0010d84;
+    } else if (rate == 24576000) {
+	factor->factorn = 13;
+	factor->factorm = 0;
+	factor->factorp = 13;
+	sunxi_clk_factor_pll_audio.sdmval = 0xc000ac02;
     } else
         return -1;
 
@@ -336,17 +338,16 @@ static unsigned long calc_rate_pll_cpu(u32 parent_rate, struct clk_factors_value
 
 static unsigned long calc_rate_pll_audio(u32 parent_rate, struct clk_factors_value *factor)
 {
-    u64 tmp_rate = (parent_rate?parent_rate:24000000);
-    if((factor->factorn == 78) && (factor->factorm == 20) && (factor->factorp == 3))
-        return 22579200;
-    else if((factor->factorn == 85) && (factor->factorm == 20) && (factor->factorp == 3))
-        return 24576000;
-    else
-    {
-        tmp_rate = tmp_rate * (factor->factorn+1);
-        do_div(tmp_rate, (factor->factorm+1) * (factor->factorp+1));
-        return (unsigned long)tmp_rate;
-    }
+	u64 tmp_rate = (parent_rate ? parent_rate : 24000000);
+	if ((factor->factorn == 6) && (factor->factorm == 0) && (factor->factorp == 7))
+		return 22579200;
+	else if ((factor->factorn == 13) && (factor->factorm == 0) && (factor->factorp == 13))
+		return 24576000;
+	else {
+		tmp_rate = tmp_rate * (factor->factorn+1);
+		do_div(tmp_rate, (factor->factorm+1) * (factor->factorp+1));
+		return (unsigned long)tmp_rate;
+	}
 }
 
 static unsigned long calc_rate_media(u32 parent_rate, struct clk_factors_value *factor)

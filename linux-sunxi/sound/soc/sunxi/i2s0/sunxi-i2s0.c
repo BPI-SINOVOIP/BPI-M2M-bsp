@@ -35,6 +35,11 @@
 #include "sunxi-i2s0dma.h"
 #include "sunxi-i2s0.h"
 
+#ifdef CONFIG_SND_SOC_AC108
+#include "../audiocodec/sun8iw5_sndcodec.h"
+#include "../../codecs/ac108.h"
+#endif
+
 struct sunxi_i2s0_info sunxi_i2s0;
 static unsigned int pin_count = 0;
 static script_item_u  *pin_i2s0_list;
@@ -69,6 +74,10 @@ static struct sunxi_dma_params sunxi_i2s0_pcm_stereo_out = {
 	.dma_addr	= SUNXI_I2S0BASE + SUNXI_I2S0TXFIFO,/*send data address	*/
 };
 
+#if defined(CONFIG_SND_SOC_AC108)
+static void mclk_en(void);
+extern struct ac108_public_config ac108_pub_cfg;
+#endif
 static struct sunxi_dma_params sunxi_i2s0_pcm_stereo_in = {
 	.name   	= "i2s0_capture",
 	.dma_addr	=SUNXI_I2S0BASE + SUNXI_I2S0RXFIFO,/*accept data address	*/
@@ -77,16 +86,14 @@ static struct sunxi_dma_params sunxi_i2s0_pcm_stereo_in = {
 static void sunxi_snd_txctrl_i2s0(struct snd_pcm_substream *substream, int on)
 {
 	u32 reg_val;
-       /*for test*/
-//     reg_val = readl(sunxi_i2s0.regs + SUNXI_I2S0CTL);
-//     reg_val |= SUNXI_I2S0CTL_LOOP;
-//     writel(reg_val, sunxi_i2s0.regs + SUNXI_I2S0CTL);
-
+		/*for test*/
+		/* reg_val = readl(sunxi_i2s0.regs + SUNXI_I2S0CTL); */
+		/* reg_val |= SUNXI_I2S0CTL_LOOP; */
+		/* writel(reg_val, sunxi_i2s0.regs + SUNXI_I2S0CTL); */
 	reg_val = readl(sunxi_i2s0.regs + SUNXI_TXCHSEL);
 	reg_val &= ~0x7;
 	reg_val |= SUNXI_TXCHSEL_CHNUM(substream->runtime->channels);
 	writel(reg_val, sunxi_i2s0.regs + SUNXI_TXCHSEL);
-
 	reg_val = readl(sunxi_i2s0.regs + SUNXI_TXCHMAP);
 	reg_val = 0;
 	if(substream->runtime->channels == 1) {
@@ -157,12 +164,22 @@ static void sunxi_snd_txctrl_i2s0(struct snd_pcm_substream *substream, int on)
 
 static void sunxi_snd_rxctrl_i2s0(struct snd_pcm_substream *substream, int on)
 {
-       u32 reg_val;
-
+    u32 reg_val;
+#if defined(CONFIG_SND_SOC_AC108)
+	mclk_en();
+#endif
 	reg_val = readl(sunxi_i2s0.regs + SUNXI_RXCHSEL);
 	reg_val &= ~0x7;
+	/* reg_val |= SUNXI_RXCHSEL_CHNUM(substream->runtime->channels); */
+	/* Fix me: select channel from sysconfig.fex */
+#if defined(CONFIG_SND_SOC_AC108)
+	int ac108_i2s_channels = 2;
+	reg_val |= SUNXI_RXCHSEL_CHNUM(ac108_i2s_channels);
+	writel(reg_val, sunxi_i2s0.regs + SUNXI_RXCHSEL);
+#else
 	reg_val |= SUNXI_RXCHSEL_CHNUM(substream->runtime->channels);
 	writel(reg_val, sunxi_i2s0.regs + SUNXI_RXCHSEL);
+#endif
 
 	reg_val = readl(sunxi_i2s0.regs + SUNXI_RXCHMAP);
 	reg_val = 0;
@@ -390,6 +407,15 @@ static int sunxi_i2s0_trigger(struct snd_pcm_substream *substream,
 		case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 			if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
 				sunxi_snd_rxctrl_i2s0(substream, 1);
+#ifdef CONFIG_SND_SOC_AC108
+				if (ac108_pub_cfg.codec_mic_used) {
+					/*clear RX counter */
+					codec_wr_control(SUNXI_DA_RXCNT, 0xffffffff, RX_CNT, 0);
+					/*flush RX FIFO */
+					codec_wr_control(SUNXI_DA_FCTL, 0x1, FRX, 1);
+					codec_wr_control(SUNXI_DA_INT, 0x1, RX_DRQ, 1);
+				}
+#endif
 			} else {
 				sunxi_snd_txctrl_i2s0(substream, 1);
 			}
@@ -404,6 +430,10 @@ static int sunxi_i2s0_trigger(struct snd_pcm_substream *substream,
 		case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 			if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
 				sunxi_snd_rxctrl_i2s0(substream, 0);
+#ifdef CONFIG_SND_SOC_AC108
+				if (ac108_pub_cfg.codec_mic_used)
+					codec_wr_control(SUNXI_DA_INT, 0x1, RX_DRQ, 0);
+#endif
 			} else {
 			  	sunxi_snd_txctrl_i2s0(substream, 0);
 			}
@@ -477,7 +507,12 @@ static int sunxi_i2s0_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id, int sa
 								break;
 					case 384:	mclk_div = 4;
 								break;
+#if defined(CONFIG_SND_SOC_AC108)
+					case 768:
+								mclk_div = 1;
+#else
 					case 768:	mclk_div = 2;
+#endif
 								break;
 				}
 				break;
@@ -589,7 +624,13 @@ static int sunxi_i2s0_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id, int sa
 		}
 
 		/*bclk div caculate*/
+		/* Fix ME: 8 is for arecord/ac108,not from sys_config.fex */
+#if defined(CONFIG_SND_SOC_AC108)
+		bclk_div = 16 / ac108_pub_cfg.ac108_nums;
+
+#else
 		bclk_div = mclk/(2*word_select_size);
+#endif
 	} else {
 		mclk_div = 2;
 		bclk_div = 6;
@@ -841,6 +882,40 @@ static int sunxi_i2s0_resume(struct snd_soc_dai *cpu_dai)
 	}
 	return 0;
 }
+#if defined(CONFIG_I2S0_FOR_ASTAR_DM_PATCH) || \
+    defined(CONFIG_I2S0_FOR_ASTAR_NOMA_PATCH)
+static void mclk_en(void)
+{
+	int reg_val = 0;
+
+	/*set mclk from audiocodec*/
+	reg_val = readl(0xf1c22f60);/*0x01c22c00+0x360*/
+	reg_val &= ~0x7;
+	reg_val |= (0x1<<2);
+	writel(reg_val, 0xf1c22f60);
+
+	/*set audiocodec mclk gpio config*/
+	reg_val = readl(0xf1c208fc);
+	reg_val &= ~(0x7);
+	reg_val |= (0x3);
+	writel(reg_val, 0xf1c208fc);
+
+	/*enable global en*/
+	reg_val = readl(0xf1c22c00);
+	reg_val |= 1<<0;
+	writel(reg_val, 0xf1c22c00);
+
+
+	/*
+	* 0x80: enable mclk and set mclk_div = 1; mclk = 24.576M/22.5792M
+	* 0x81: enable mclk and set mclk_div = 2; mclk = 12.288M/11.2896M
+	*/
+	reg_val = readl(0xf1c22c24);
+	reg_val |= 1<<7;
+	writel(reg_val, 0xf1c22c24);
+
+}
+#endif
 
 #define SUNXI_I2S0_RATES (SNDRV_PCM_RATE_8000_192000 | SNDRV_PCM_RATE_KNOT)
 static struct snd_soc_dai_ops sunxi_i2s0_dai_ops = {

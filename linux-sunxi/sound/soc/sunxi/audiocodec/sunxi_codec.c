@@ -31,14 +31,21 @@
 #include <mach/hardware.h>
 #include "sunxi_codecdma.h"
 
+#ifdef CONFIG_SND_SOC_AC108
+#include "../../codecs/ac108.h"
+#endif
+
 #ifdef CONFIG_ARCH_SUN8IW5
 #include "sun8iw5_sndcodec.h"
 #endif
 #ifdef CONFIG_ARCH_SUN8IW9
 #include "sun8iw9_sndcodec.h"
 #endif
-
 #define SUNXI_PCM_RATES (SNDRV_PCM_RATE_8000_192000 | SNDRV_PCM_RATE_KNOT)
+
+#ifdef CONFIG_SND_SOC_AC108
+extern struct ac108_public_config ac108_pub_cfg;
+#endif
 
 #if defined CONFIG_ARCH_SUN8IW5 || defined CONFIG_ARCH_SUN8IW9
 static bool RECORD_TEST_EN;
@@ -88,11 +95,19 @@ static void sunxi_snd_rxctrl(struct snd_pcm_substream *substream, int on)
 	/*flush RX FIFO */
 	codec_wr_control(SUNXI_DA_FCTL, 0x1, FRX, 1);
 	if (on) {
-		/* enable DMA DRQ mode for record */
+#ifdef CONFIG_SND_SOC_AC108
+		if (!ac108_pub_cfg.codec_mic_used)
+			codec_wr_control(SUNXI_DA_INT, 0x1, RX_DRQ, 1);
+#else
 		codec_wr_control(SUNXI_DA_INT, 0x1, RX_DRQ, 1);
+#endif
 	} else {
-		/* DISBALE dma DRQ mode */
+#ifdef CONFIG_SND_SOC_AC108
+		if (!ac108_pub_cfg.codec_mic_used)
+			codec_wr_control(SUNXI_DA_INT, 0x1, RX_DRQ, 0);
+#else
 		codec_wr_control(SUNXI_DA_INT, 0x1, RX_DRQ, 0);
+#endif
 	}
 }
 
@@ -297,8 +312,8 @@ static int sunxi_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id,
 	case 48000:
 		{
 			/*bclk = 2*wss*fs = 3.072M,bclk_div = 8; */
-			over_sample_rate = 256;
-			mclk_div = 2;
+			over_sample_rate = 512;
+			mclk_div = 1;
 			break;
 		}
 	case 88200:
@@ -606,7 +621,7 @@ static struct snd_soc_dai_driver sunxi_pcm_dai[] = {
 #endif
 };
 
-static int __devinit sunxi_pcm_dev_probe(struct platform_device *pdev)
+static int sunxi_pcm_dev_probe(struct platform_device *pdev)
 {
 	int err = -1;
 #if defined CONFIG_ARCH_SUN8IW5 || defined CONFIG_ARCH_SUN8IW9

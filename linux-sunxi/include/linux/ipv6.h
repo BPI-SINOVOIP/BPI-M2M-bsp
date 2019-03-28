@@ -1,14 +1,3 @@
-/*
- * include/linux/ipv6.h
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #ifndef _IPV6_H
 #define _IPV6_H
 
@@ -226,8 +215,8 @@ enum {
 	DEVCONF_DISABLE_IPV6,
 	DEVCONF_ACCEPT_DAD,
 	DEVCONF_FORCE_TLLAO,
-	DEVCONF_ACCEPT_RA_RT_TABLE,
-	DEVCONF_USE_OPTIMISTIC,
+	DEVCONF_ACCEPT_RA_RT_TABLE,	
+	DEVCONF_USE_OPTIMISTIC,	
 	DEVCONF_MAX
 };
 

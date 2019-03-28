@@ -1,14 +1,3 @@
-/*
- * mm/backing-dev.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 
 #include <linux/wait.h>
 #include <linux/backing-dev.h>
@@ -236,12 +225,73 @@ static ssize_t max_ratio_store(struct device *dev,
 }
 BDI_SHOW(max_ratio, bdi->max_ratio)
 
+#ifdef CONFIG_FILE_DIRTY_LIMIT
+static ssize_t max_file_dirty_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct backing_dev_info *bdi = dev_get_drvdata(dev);
+	char *end;
+	unsigned int nr;
+	ssize_t ret = -EINVAL;
+
+	nr = simple_strtoul(buf, &end, 10);
+	if (*buf && (end[0] == '\0' || (end[0] == '\n' && end[1] == '\0'))) {
+		ret = bdi_set_max_file_dirty(bdi, nr);
+		if (!ret)
+			ret = count;
+	}
+	return ret;
+}
+BDI_SHOW(max_file_dirty, bdi->max_file_dirty)
+
+static ssize_t reimburse_centisecs_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct backing_dev_info *bdi = dev_get_drvdata(dev);
+	char *end;
+	unsigned int centisecond;
+	ssize_t ret = -EINVAL;
+
+	centisecond = simple_strtoul(buf, &end, 10);
+	if (*buf && (end[0] == '\0' || (end[0] == '\n' && end[1] == '\0'))) {
+		ret = bdi_set_reimburse_centisecs(bdi, centisecond);
+		if (!ret)
+			ret = count;
+	}
+	return ret;
+}
+BDI_SHOW(reimburse_centisecs, bdi->reimburse_time)
+
+static ssize_t writeback_batch_shift_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct backing_dev_info *bdi = dev_get_drvdata(dev);
+	char *end;
+	unsigned int shift;
+	ssize_t ret = -EINVAL;
+
+	shift = simple_strtoul(buf, &end, 10);
+	if (*buf && (end[0] == '\0' || (end[0] == '\n' && end[1] == '\0'))) {
+		ret = bdi_set_writeback_batch_shift(bdi, shift);
+		if (!ret)
+			ret = count;
+	}
+	return ret;
+}
+BDI_SHOW(writeback_batch_shift, ilog2(bdi->writeback_batch))
+#endif
+
 #define __ATTR_RW(attr) __ATTR(attr, 0644, attr##_show, attr##_store)
 
 static struct device_attribute bdi_dev_attrs[] = {
 	__ATTR_RW(read_ahead_kb),
 	__ATTR_RW(min_ratio),
 	__ATTR_RW(max_ratio),
+#ifdef CONFIG_FILE_DIRTY_LIMIT
+	__ATTR_RW(max_file_dirty),
+	__ATTR_RW(reimburse_centisecs),
+	__ATTR_RW(writeback_batch_shift),
+#endif
 	__ATTR_NULL,
 };
 
@@ -689,6 +739,11 @@ int bdi_init(struct backing_dev_info *bdi)
 	bdi->min_ratio = 0;
 	bdi->max_ratio = 100;
 	bdi->max_prop_frac = PROP_FRAC_BASE;
+#ifdef CONFIG_FILE_DIRTY_LIMIT
+	bdi->max_file_dirty = 8192;
+	bdi->reimburse_time = 100;
+	bdi->writeback_batch = 1024;
+#endif
 	spin_lock_init(&bdi->wb_lock);
 	INIT_LIST_HEAD(&bdi->bdi_list);
 	INIT_LIST_HEAD(&bdi->work_list);

@@ -361,6 +361,13 @@ config SPI_SUNXI
    help
        Allwinner Soc SPI controller, present on SUNXI chips.
 
+config SUPORT_GPIO_CS
+	bool "support for ordinary GPIO instead of SPI built-in cs"
+	depends on SPI_SUNXI
+	default n
+	help
+	  spi controller supports the use of ordinary GPIO instead of CS.
+
 config SPI_CHAN_NUM
 	int "The SPI channel number in FPGA board."
 	depends on SPI_SUNXI && (FPGA_V4_PLATFORM || FPGA_V7_PLATFORM)

@@ -188,11 +188,11 @@ static int sunxi_clk_factors_set_flat_facotrs(struct sunxi_clk_factors *factor ,
     struct sunxi_clk_factors_config *config = factor->config;
     u32 reg, tmp_factor_p, tmp_factor_m;
     unsigned long flags = 0;
-	
-#ifdef CONFIG_EVB_PLATFORM	
+
+#ifdef CONFIG_EVB_PLATFORM
     unsigned int loop = 300; /*lock loops*/
-#endif	
-	
+#endif
+
     if(factor->lock)
         spin_lock_irqsave(factor->lock, flags);
 
@@ -245,7 +245,7 @@ static int sunxi_clk_factors_set_flat_facotrs(struct sunxi_clk_factors *factor ,
         else
             udelay(10);
     }
-	
+
     if(!loop)
 #if (defined CONFIG_FPGA_V4_PLATFORM) || (defined CONFIG_FPGA_V7_PLATFORM)
         printk("clk %s wait lock timeout\n",factor->hw.clk->name);
@@ -410,8 +410,8 @@ struct clk *sunxi_clk_register_factors(struct device *dev,void __iomem *base,spi
 
     /* struct clk_factors assignments */
     factors->reg = base + init_data->reg;
-    factors->lock_reg = base + init_data->lock_reg;   
-    factors->lock_bit = init_data->lock_bit; 
+    factors->lock_reg = base + init_data->lock_reg;
+    factors->lock_bit = init_data->lock_bit;
     factors->config = init_data->config;
     factors->config->sdmpat = (unsigned int __force)(base + factors->config->sdmpat);
     factors->lock = lock;
@@ -434,8 +434,8 @@ int sunxi_clk_get_common_factors(struct sunxi_clk_factors_config* f_config,struc
     factor->factorn = (table[index].factor >>f_config->nshift)&((1<<(f_config->nwidth))-1);
     factor->factork = (table[index].factor >>f_config->kshift)&((1<<(f_config->kwidth))-1);
     factor->factorm = (table[index].factor >>f_config->mshift)&((1<<(f_config->mwidth))-1);
-    factor->factorp = (table[index].factor >>f_config->pshift)&((1<<(f_config->pwidth))-1);   
-    factor->factord1 = (table[index].factor >>f_config->d1shift)&((1<<(f_config->d1width))-1); 
+    factor->factorp = (table[index].factor >>f_config->pshift)&((1<<(f_config->pwidth))-1);
+    factor->factord1 = (table[index].factor >>f_config->d1shift)&((1<<(f_config->d1width))-1);
     factor->factord2 = (table[index].factor >>f_config->d2shift)&((1<<(f_config->d2width))-1);
     if(f_config->frac)
     {
@@ -476,14 +476,14 @@ static int sunxi_clk_freq_find(struct sunxi_clk_factor_freq tbl[],unsigned long 
 }
 int sunxi_clk_get_common_factors_search(struct sunxi_clk_factors_config* f_config,struct clk_factors_value *factor, struct sunxi_clk_factor_freq table[],unsigned long index,unsigned long tbl_count)
 {
-    int i=sunxi_clk_freq_find(table,tbl_count,index);   
+    int i=sunxi_clk_freq_find(table,tbl_count,index);
     if(i >=tbl_count)
       return -1;
     factor->factorn = (table[i].factor >>f_config->nshift)&((1<<(f_config->nwidth))-1);
     factor->factork = (table[i].factor >>f_config->kshift)&((1<<(f_config->kwidth))-1);
     factor->factorm = (table[i].factor >>f_config->mshift)&((1<<(f_config->mwidth))-1);
-    factor->factorp = (table[i].factor >>f_config->pshift)&((1<<(f_config->pwidth))-1);   
-    factor->factord1 = (table[i].factor >>f_config->d1shift)&((1<<(f_config->d1width))-1); 
+    factor->factorp = (table[i].factor >>f_config->pshift)&((1<<(f_config->pwidth))-1);
+    factor->factord1 = (table[i].factor >>f_config->d1shift)&((1<<(f_config->d1width))-1);
     factor->factord2 = (table[i].factor >>f_config->d2shift)&((1<<(f_config->d2width))-1);
     if(f_config->frac)
     {

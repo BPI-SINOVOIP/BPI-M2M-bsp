@@ -1,15 +1,4 @@
 /*
- * fs/fat/file.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-/*
  *  linux/fs/fat/file.c
  *
  *  Written 1992,1993 by Werner Almesberger
@@ -29,6 +18,17 @@
 #include <linux/fsnotify.h>
 #include <linux/security.h>
 #include "fat.h"
+
+#include <linux/falloc.h>
+static long fat_fallocate(struct file *file, int mode, loff_t offset, loff_t len);
+static DEFINE_MUTEX (i_mutex);
+/*
+#ifndef FAT_DBG_INFO
+#define FAT_DBG_INFO(fmt, ...) \
+	printk(KERN_EMERG "[fat->%s(%i):(%i:%i:%s)]:" fmt "\n",
+	__FUNCTION__, __LINE__, current->tgid, current->pid, current->comm, ##__VA_ARGS__)
+#endif
+*/
 
 static int fat_ioctl_get_attributes(struct inode *inode, u32 __user *user_attr)
 {
@@ -186,6 +186,7 @@ const struct file_operations fat_file_operations = {
 #endif
 	.fsync		= fat_file_fsync,
 	.splice_read	= generic_file_splice_read,
+	.fallocate      = fat_fallocate,
 };
 
 static int fat_cont_expand(struct inode *inode, loff_t size)
@@ -224,23 +225,115 @@ out:
 	return err;
 }
 
+/*
+ * Preallocate space for a file. This implements fat's fallocate file
+ * operation, which gets called from sys_fallocate system call. User
+ * space requests len bytes at offset. If FALLOC_FL_KEEP_SIZE is set
+ * we just allocate clusters without zeroing them out. Otherwise we
+ * allocate and zero out clusters via an expanding truncate.
+ */
+static long fat_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
+{
+	int nr_cluster; /* Number of clusters to be allocated */
+	loff_t mm_bytes; /* Number of bytes to be allocated for file */
+	loff_t ondisksize; /* block aligned on-disk size in bytes*/
+	struct inode *inode = file->f_mapping->host;
+	struct super_block *sb = inode->i_sb;
+	struct msdos_sb_info *sbi = MSDOS_SB(sb);
+	int err = 0;
+
+	/* No support for hole punch or other fallocate flags. */
+	if (mode & ~FALLOC_FL_KEEP_SIZE)
+		return -EOPNOTSUPP;
+
+	/* No support for dir */
+	if (!S_ISREG(inode->i_mode))
+		return -EOPNOTSUPP;
+
+	if (check_prealloc(inode)) {
+		fat_msg(sb, KERN_ERR, "Repeatedly called fat_fallocate");
+		return -EOPNOTSUPP;
+	}
+
+	mutex_lock(&i_mutex);
+	if (mode & FALLOC_FL_KEEP_SIZE) {
+		ondisksize = inode->i_blocks << 9;
+		if ((offset + len) <= ondisksize)
+			goto error;
+
+		/* First compute the number of clusters to be allocated */
+		mm_bytes = offset + len - ondisksize;
+		nr_cluster = (mm_bytes + (sbi->cluster_size - 1)) >> sbi->cluster_bits;
+
+		/* Start the allocation.We are not zeroing out the clusters */
+		while (nr_cluster-- > 0) {
+			int cluster;
+			err = fat_alloc_clusters(inode, &cluster, 1);
+			if (err) {
+				fat_msg(sb, KERN_ERR, "fat_fallocate():fat_alloc_clusters() error");
+				goto error;
+			}
+			err = fat_chain_add(inode, cluster, 1);
+			if (err) {
+				fat_msg(sb, KERN_ERR, "fat_fallocate():fat_chain_add() error");
+				fat_free_clusters(inode, cluster);
+				goto error;
+			}
+		}
+	} else {
+		if ((offset + len) <= i_size_read(inode))
+			goto error;
+
+		/* This is just an expanding truncate */
+		err = fat_cont_expand(inode, (offset + len));
+	}
+	sync_mapping_buffers(sbi->fat_inode->i_mapping);
+	mark_prealloc(inode);
+error:
+	mutex_unlock(&i_mutex);
+	return err;
+}
+
+
 /* Free all clusters after the skip'th cluster. */
 static int fat_free(struct inode *inode, int skip)
 {
 	struct super_block *sb = inode->i_sb;
 	int err, wait, free_start, i_start, i_logstart;
 
+	if (check_prealloc(inode) && !MSDOS_I(inode)->i_start) {
+#ifdef	FAT_DEBUG
+			DBG_INFO("skip = %i, inode->i_nlink = %i", skip, inode->i_nlink);
+			BUG();
+#else
+			fat_fs_error(sb, "skip = %i, inode->i_nlink = %i", skip, inode->i_nlink);
+			return -EFAULT;
+#endif
+	}
+
 	if (MSDOS_I(inode)->i_start == 0)
 		return 0;
 
-	fat_cache_inval_inode(inode);
+	if (check_prealloc(inode) && (skip || inode->i_nlink)) {
+		if (!inode->i_nlink) {
+#ifdef	FAT_DEBUG
+			DBG_INFO("incorrectly call unlink, skip = %i", skip);
+			BUG();
+#else
+			fat_fs_error(sb, "incorrectly call unlink, skip = %i", skip);
+			return -EFAULT;
+#endif
+		}
+	} else {
+		fat_cache_inval_inode(inode);
+	}
 
 	wait = IS_DIRSYNC(inode);
 	i_start = free_start = MSDOS_I(inode)->i_start;
 	i_logstart = MSDOS_I(inode)->i_logstart;
 
 	/* First, we write the new file size. */
-	if (!skip) {
+	if (!skip && !check_prealloc(inode)) {
 		MSDOS_I(inode)->i_start = 0;
 		MSDOS_I(inode)->i_logstart = 0;
 	}
@@ -257,7 +350,7 @@ static int fat_free(struct inode *inode, int skip)
 		mark_inode_dirty(inode);
 
 	/* Write a new EOF, and get the remaining cluster chain for freeing. */
-	if (skip) {
+	if (skip && !check_prealloc(inode)) {
 		struct fat_entry fatent;
 		int ret, fclus, dclus;
 
@@ -288,6 +381,11 @@ static int fat_free(struct inode *inode, int skip)
 
 		free_start = ret;
 	}
+
+	if (check_prealloc(inode) && (skip || inode->i_nlink)) {
+		return 0;
+	}
+
 	inode->i_blocks = skip << (MSDOS_SB(sb)->cluster_bits - 9);
 
 	/* Freeing the remained cluster chain */
@@ -411,9 +509,19 @@ int fat_setattr(struct dentry *dentry, struct iattr *attr)
 		inode_dio_wait(inode);
 
 		if (attr->ia_size > inode->i_size) {
-			error = fat_cont_expand(inode, attr->ia_size);
-			if (error || attr->ia_valid == ATTR_SIZE)
-				goto out;
+			if (!check_prealloc(inode)) {
+				error = fat_cont_expand(inode, attr->ia_size);
+				if (error || attr->ia_valid == ATTR_SIZE)
+					goto out;
+			} else {
+#ifdef FAT_DEBUG
+				DBG_INFO("incorrectly call ftruncate");
+				BUG();
+#else
+				return -EOPNOTSUPP;
+#endif
+			}
+
 			attr->ia_valid &= ~ATTR_SIZE;
 		}
 	}
@@ -444,7 +552,23 @@ int fat_setattr(struct dentry *dentry, struct iattr *attr)
 	if (attr->ia_valid & ATTR_SIZE) {
 		down_write(&MSDOS_I(inode)->truncate_lock);
 		truncate_setsize(inode, attr->ia_size);
-		fat_truncate_blocks(inode, attr->ia_size);
+		if (!check_prealloc(inode)) {
+			fat_truncate_blocks(inode, attr->ia_size);
+		} else {
+			if (MSDOS_I(inode)->mmu_private > attr->ia_size)
+				MSDOS_I(inode)->mmu_private = attr->ia_size;
+
+			if (!MSDOS_I(inode)->i_start) {
+#ifdef FAT_DEBUG
+				DBG_INFO("prealloc lost, fname=%s", dentry->d_iname);
+				BUG();
+#else
+				fat_fs_error(sb, "prealloc lost, fname=%s", dentry->d_iname);
+				return -EFAULT;
+#endif
+			}
+		}
+
 		up_write(&MSDOS_I(inode)->truncate_lock);
 	}
 

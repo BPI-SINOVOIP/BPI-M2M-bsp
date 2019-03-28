@@ -300,7 +300,7 @@ static int mmc_resource_init(int sdc_no)
 	mmchost->mmc_clk_dly[MMC_CLK_50M].oclk_dly 	= 5;
 	mmchost->mmc_clk_dly[MMC_CLK_50M].sclk_dly 	= 4;
 
-#elif defined CONFIG_ARCH_SUN8IW6P1	
+#elif defined CONFIG_ARCH_SUN8IW6P1
 	mmchost->mmc_clk_dly[MMC_CLK_25M].mode 			= MMC_CLK_25M;
 	mmchost->mmc_clk_dly[MMC_CLK_25M].oclk_dly 	= 0;
 	mmchost->mmc_clk_dly[MMC_CLK_25M].sclk_dly 	= 7;
@@ -486,7 +486,14 @@ static void get_fex_para(int sdc_no)
 				}
 		}
 
-
+		ret = script_parser_fetch("card0_boot_para","sdc_test", &rval, 1);
+		if (ret < 0) {
+			MMCINFO("get sdc_test fail.\n");
+			mmc_dev[sdc_no].mmc_test = 0;
+		} else {
+			MMCINFO("get sdc_test 0x%x\n", rval);
+			mmc_dev[sdc_no].mmc_test = rval;
+		}
 
 	}else {// if(sdc_no == 2)
 		gpio_request_simple("card2_boot_para", NULL);
@@ -522,6 +529,25 @@ static void get_fex_para(int sdc_no)
 				mmc_dev[sdc_no].drv_erase_feature |= DRV_PARA_ENABLE_EMMC_SANITIZE_WHEN_ERASE;
 			}
 		}
+
+		ret = script_parser_fetch\
+		("card2_boot_para", "sdc_hw_rst", &rval, 1);
+		if (ret < 0) {
+			MMCINFO("get sdc2 sdc_hw_rst fail.\n");
+			mmc_dev[sdc_no].drv_hwrst_feature \
+			&= ~DRV_PARA_ENABLE_EMMC_HWRST;
+		} else {
+			if (rval & DRV_PARA_ENABLE_EMMC_HWRST) {
+				MMCINFO("enable emmc hw reset.\n");
+				mmc_dev[sdc_no].drv_hwrst_feature \
+				|= DRV_PARA_ENABLE_EMMC_HWRST;
+			} else	{
+				MMCINFO("disable emmc hw reset.\n");
+				mmc_dev[sdc_no].drv_hwrst_feature\
+				&= ~DRV_PARA_ENABLE_EMMC_HWRST;
+			}
+		}
+
 
 #if defined(CONFIG_ARCH_SUN8IW5P1) || defined(CONFIG_ARCH_SUN8IW6P1) || defined(CONFIG_ARCH_SUN8IW8P1)||(defined CONFIG_ARCH_SUN8IW7P1)|| (defined CONFIG_ARCH_SUN8IW9P1)
 		/*************************sdc_2xmode*************************************/
@@ -612,6 +638,16 @@ static void get_fex_para(int sdc_no)
 		}
 
 
+		ret = script_parser_fetch("card2_boot_para","sdc_test", &rval, 1);
+		if (ret < 0) {
+			MMCINFO("get sdc_test fail.\n");
+			mmc_dev[sdc_no].mmc_test = 0;
+		} else {
+			MMCINFO("get sdc_test 0x%x\n", rval);
+			mmc_dev[sdc_no].mmc_test = rval;
+		}
+
+
 		ret = script_parser_fetch("card2_boot_para","sdc_ex_dly_used", &rval, 1);
 		if(ret < 0){
         		MMCINFO("get sdc_ex_dly_used fail,use default\n");
@@ -698,14 +734,15 @@ static void get_fex_para(int sdc_no)
 				}
 		}
 
-
 	}
 }
 
 static void mmc_host_ahb_gate_rst_onoff(struct sunxi_mmc_host* mmchost, int on)
 {
 	u32 rval = 0;
+#ifndef CONFIG_ARCH_SUN9IW1P1
 	u32 sdc_no = mmchost->mmc_no;
+#endif
 
 #if defined (CONFIG_ARCH_SUN8IW1P1) || \
 	defined (CONFIG_ARCH_SUN8IW3P1) || \
@@ -759,25 +796,23 @@ static void mmc_host_ahb_gate_rst_onoff(struct sunxi_mmc_host* mmchost, int on)
 		rval = smc_readl(mmchost->hclkbase);
 		rval |= (1 << 8);
 		smc_writel(rval, mmchost->hclkbase);
-	
+
 		rval = smc_readl(mmchost->hclkrst);
 		rval |= (1 << 8);
 		smc_writel(rval, mmchost->hclkrst);
-	
+
 		rval = smc_readl(mmchost->commreg);
 		rval |= (1<<16)|(1<<18);
 		smc_writel(rval, mmchost->commreg);
-	} 
-	else 
-	{
+	} else {
 		rval = smc_readl(mmchost->hclkbase);
 		rval &= (~(1 << 8));
 		smc_writel(rval, mmchost->hclkbase);
-	
+
 		rval = smc_readl(mmchost->hclkrst);
 		rval &= (~(1 << 8));
 		smc_writel(rval, mmchost->hclkrst);
-	
+
 		rval = smc_readl(mmchost->commreg);
 		rval &= (~((1<<16)|(1<<18)));
 		smc_writel(rval, mmchost->commreg);
@@ -834,7 +869,7 @@ static int mmc_update_clk(struct mmc *mmc)
 	cmd = (1U << 31) | (1 << 21) | (1 << 13);
   	writel(cmd, &mmchost->reg->cmd);
 	while((readl(&mmchost->reg->cmd)&0x80000000) && --timeout){
-		__msdelay(1);
+		__usdelay(1);
 	}
 	if (!timeout){
 		MMCINFO("mmc %d,update clk failed\n",mmchost->mmc_no);
@@ -849,13 +884,13 @@ static int mmc_update_clk(struct mmc *mmc)
 static int mmc_update_phase(struct mmc *mmc)
 {
 	struct sunxi_mmc_host* mmchost = (struct sunxi_mmc_host *)mmc->priv;
-	
+
 	if( (mmchost->mmc_no== 2) && (mmc->host_func & MMC_HOST_2XMODE_FUNC) )
 	{
 		MMCINFO("mmc re-update_phase\n");
 		return mmc_update_clk(mmc);
 	}
-	
+
 	return 0;
 }
 
@@ -1161,29 +1196,29 @@ static int mmc_trans_data_by_cpu(struct mmc *mmc, struct mmc_data *data)
 	unsigned i;
 	unsigned byte_cnt = data->blocksize * data->blocks;
 	unsigned *buff;
-	unsigned timeout = 1000;
+	unsigned timeout = MMC_TRANS_BY_CPU_TIMOUT_US;
 
 	if (data->flags & MMC_DATA_READ) {
 		buff = (unsigned int *)data->dest;
 		for (i=0; i<(byte_cnt>>2); i++) {
 			while(--timeout && (readl(&mmchost->reg->status)&(1 << 2))){
-				__msdelay(1);
+				__usdelay(1);
 			}
 			if (timeout <= 0)
 				goto out;
 			buff[i] = readl(mmchost->database);
-			timeout = 1000;
+			timeout = MMC_TRANS_BY_CPU_TIMOUT_US;
 		}
 	} else {
 		buff = (unsigned int *)data->src;
 		for (i=0; i<(byte_cnt>>2); i++) {
 			while(--timeout && (readl(&mmchost->reg->status)&(1 << 3))){
-				__msdelay(1);
+				__usdelay(1);
 			}
 			if (timeout <= 0)
 				goto out;
 			writel(buff[i], mmchost->database);
-			timeout = 1000;
+			timeout = MMC_TRANS_BY_CPU_TIMOUT_US;
 		}
 	}
 
@@ -1478,6 +1513,7 @@ static int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 			error = readl(&mmchost->reg->rint) & 0xbfc2;
 			if(!error)
 				error = 0xffffffff;
+			MMCINFO("mmc %d cmd %d err %x\n", mmchost->mmc_no, cmd->cmdidx, error);
 			goto out;
 		}
 	}
@@ -1580,9 +1616,6 @@ static int mmc_send_cmd(struct mmc *mmc, struct mmc_cmd *cmd,
 		MMCDBG("mmc %d mmc resp 0x%08x\n",mmchost->mmc_no, cmd->response[0]);
 	}
 out:
-	
-	MMCDBG("mmc %d ---cmd%d rntsr 0x%x  0x%08x, crcsta: 0x%08x \n",mmchost->mmc_no, cmd->cmdidx, readl(&mmchost->reg->ntsr), readl(&mmchost->reg->ntdbg), readl(&mmchost->reg->crcsta));
-
 	if(error){
 		mmchost->raw_int_bak = readl(&mmchost->reg->rint )& 0xbfc2;
 		//mmc_dump_errinfo(mmchost,cmd);
@@ -1612,7 +1645,7 @@ out:
 			MMCINFO("Read remain data\n");
 			while(readl(&mmchost->reg->bbcr)<512){
 				tmp = readl(mmchost->database);
-				 tmp=tmp;
+				tmp = tmp;
 				MMCDBG("Read data %x,bbcr %x\n",tmp,readl(&mmchost->reg->bbcr));
 				__usdelay(1);
 				if(!(timeout--)){
@@ -1876,7 +1909,7 @@ int sunxi_mmc_init(int sdc_no)
 	mmc->init = mmc_core_init;
 	mmc->control_num = sdc_no;
 	mmc->update_phase = mmc_update_phase;
-#if defined(CONFIG_ARCH_SUN8IW5P1) || defined(CONFIG_ARCH_SUN8IW6P1)||defined(CONFIG_ARCH_SUN8IW8P1) ||(defined CONFIG_ARCH_SUN8IW7P1)
+#if defined(CONFIG_ARCH_SUN8IW5P1) || defined(CONFIG_ARCH_SUN8IW6P1)||defined(CONFIG_ARCH_SUN8IW8P1) ||(defined CONFIG_ARCH_SUN8IW7P1) || (defined CONFIG_ARCH_SUN8IW9P1)
 	mmc->set_phase = mmc_2xmode_set_phase;
 #endif
 

@@ -1,14 +1,4 @@
 /*
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-/*
  * A V4L2 driver for gc1004_mipi Raw cameras.
  *
  */
@@ -954,6 +944,27 @@ static struct sensor_win_size sensor_win_sizes[] = {
         .regs_size  = ARRAY_SIZE(sensor_default_regs),
         .set_size   = NULL,
     },
+{
+	.width      = 640,
+	.height     = 480,
+	.hoffset    = 160,
+	.voffset    = 0,
+	.width_input = 960,
+	.height_input = 720,
+	.hts        = 2096,
+	.vts        = 764,
+	.pclk       = 48*1000*1000,
+	.mipi_bps = 192*1000*1000,
+	.fps_fixed  = 1,
+	.bin_factor = 1,
+	.intg_min   = 1<<4,
+	.intg_max   = 764<<4,
+	.gain_min   = 1<<4,
+	.gain_max   = 16<<4,
+	.regs       = sensor_default_regs,
+	.regs_size  = ARRAY_SIZE(sensor_default_regs),
+	.set_size   = NULL,
+},
 
 };
 

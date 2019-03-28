@@ -776,6 +776,8 @@ struct isp_gen_settings
 	int contrast_hal;
 	int brightness_hal;
 	int sharpness_hal;
+	int saturation_hal;
+
 	int ae_lum;               //16bits,Q8
 	int color_temp;
 

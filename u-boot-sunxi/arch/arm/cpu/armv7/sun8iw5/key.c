@@ -28,6 +28,7 @@
 #include <asm/arch/key.h>
 #include <asm/arch/sys_proto.h>
 #include <pmu.h>
+#include <sys_config.h>
 
 int sunxi_key_init(void)
 {
@@ -64,6 +65,12 @@ int sunxi_key_read(void)
 {
 	u32 ints;
 	int key = -1;
+	int keyen_flag = 1;
+	if( !script_parser_fetch("key_detect_en","keyen_flag",&keyen_flag,1) )
+	{
+		if(!keyen_flag)
+			return -1;
+	}
     struct sunxi_lradc *sunxi_key_base = (struct sunxi_lradc *)SUNXI_LRADC_BASE;
 
 	ints = sunxi_key_base->ints;

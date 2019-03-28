@@ -975,16 +975,18 @@ int de_rtmx_set_overlay_size(unsigned int sel, unsigned int chno, unsigned int w
 	return 0;
 }
 
-static int de_rtmx_get_coarse_fac(unsigned int ovl_w, unsigned int ovl_h,unsigned int vsu_outw, unsigned int vsu_outh, unsigned int fmt,
-						   unsigned int lcd_fps, unsigned int lcd_height, unsigned int de_freq_MHz,
-						   unsigned int *yhm, unsigned int *yhn, unsigned int *yvm, unsigned int *yvn,
-						   unsigned int *chm, unsigned int *chn, unsigned int *cvm, unsigned int *cvn,
-						   unsigned int *midyw, unsigned int *midyh, unsigned int *midcw, unsigned int *midch)
+static int de_rtmx_get_coarse_fac(unsigned int sel, unsigned int chno,
+	unsigned int ovl_w, unsigned int ovl_h, unsigned int vsu_outw, unsigned int vsu_outh, unsigned int fmt,
+	unsigned int lcd_fps, unsigned int lcd_height, unsigned int de_freq_MHz,
+	unsigned int *yhm, unsigned int *yhn, unsigned int *yvm, unsigned int *yvn,
+	unsigned int *chm, unsigned int *chn, unsigned int *cvm, unsigned int *cvn,
+	unsigned int *midyw, unsigned int *midyh, unsigned int *midcw, unsigned int *midch)
 {
 	unsigned int format,wshift, hshift,status;
 	unsigned int tmpyhm, tmpyhn, tmpyvm, tmpyvn;
 	unsigned int tmp, required_speed_ability;
 	unsigned long long update_speed_ability;
+	unsigned int linebuf = 1024;
 
 	//0-422, 1-420, 2-411, 3-no mean
 	switch(fmt)
@@ -1038,33 +1040,41 @@ static int de_rtmx_get_coarse_fac(unsigned int ovl_w, unsigned int ovl_h,unsigne
 	ovl_w = ovl_w & (~((1<<wshift)-1));
 	ovl_h = ovl_h & (~((1<<hshift)-1));
 
-	status = 0x0;
-	//horizontal Y channel
-	if(ovl_w > 8*vsu_outw)
-	{
-		tmpyhn = 8*vsu_outw;
-		tmpyhn = tmpyhn & (~((1<<wshift)-1));
-		tmpyhm = ovl_w;
-		*yhm   = tmpyhm;
-		*yhn   = tmpyhn;
-		*chm   = *yhm;
-		*chn   = *yhn;
+	linebuf = (format > 2) ? de_feat_get_scale_linebuf_for_rgb(sel, chno) :
+		de_feat_get_scale_linebuf_for_yuv(sel, chno);
 
-		//actually fetch horizontal pixel Y channel
-		*midyw = tmpyhn;
-
-		//actually fetch horizontal pixel C channel
-		*midcw = tmpyhn>>wshift;
-		status = 0x1;
+	status = DE_NO_CS;
+	if ((ovl_w > linebuf)
+		&& (ovl_w > 8 * vsu_outw)) {
+		tmpyhn = (linebuf < (8 * vsu_outw)) ? linebuf : (8 * vsu_outw);
+		status |= DE_CS_HORZ;
+		/* horizontal Y channel */
+	} else if (ovl_w > linebuf) {
+		tmpyhn = linebuf;
+		status |= DE_CS_HORZ;
+	} else if (ovl_w > 8 * vsu_outw) {
+		tmpyhn = 8 * vsu_outw;
+		status |= DE_CS_HORZ;
 	}
-	else
-	{
-		*yhm  = 0;
-		*yhn  = 0;
-		*chm  = 0;
-		*chn  = 0;
+	if (status & DE_CS_HORZ) {
+		tmpyhn = tmpyhn & (~((1 << wshift) - 1));
+		tmpyhm = ovl_w;
+		*yhm = tmpyhm;
+		*yhn = tmpyhn;
+		*chm = *yhm;
+		*chn = *yhn;
+
+		/* actually fetch horizontal pixel Y channel */
+		*midyw = tmpyhn;
+		/* actually fetch horizontal pixel C channel */
+		*midcw = tmpyhn >> wshift;
+	} else {
+		*yhm = 0;
+		*yhn = 0;
+		*chm = 0;
+		*chn = 0;
 		*midyw = ovl_w;
-		*midcw = ovl_w>>wshift;
+		*midcw = ovl_w >> wshift;
 	}
 
 // 	lcd_freq_MHz = lcd_width*lcd_height*lcd_fps/1000000;
@@ -1106,7 +1116,7 @@ static int de_rtmx_get_coarse_fac(unsigned int ovl_w, unsigned int ovl_h,unsigne
 
 		//actually fetch vertical pixel C channel
 		*midch = tmpyvn>>hshift;
-		status|=(0x1<<1);
+		status |= DE_CS_VERT;
 	}
 	else if(ovl_h > 2*vsu_outh)	//to save dram bandwidth when scale down factor more than 4.
 	{
@@ -1123,7 +1133,7 @@ static int de_rtmx_get_coarse_fac(unsigned int ovl_w, unsigned int ovl_h,unsigne
 
 		//actually fetch vertical pixel C channel
 		*midch = tmpyvn>>hshift;
-		status|=(0x1<<1);
+		status |= DE_CS_VERT;
 	}
 	else
 	{
@@ -1159,7 +1169,7 @@ int de_rtmx_set_coarse_fac(unsigned int sel, unsigned char chno, unsigned int fm
 	unsigned int yhm,yhn,yvm,yvn,chm,chn,cvm,cvn;
 	int status;
 
-	status = de_rtmx_get_coarse_fac(ovl_w, ovl_h,vsu_outw, vsu_outh, fmt, lcd_fps, lcd_height, de_freq_MHz,
+	status = de_rtmx_get_coarse_fac(sel, chno, ovl_w, ovl_h, vsu_outw, vsu_outh, fmt, lcd_fps, lcd_height, de_freq_MHz,
 						   &yhm, &yhn, &yvm, &yvn, &chm, &chn, &cvm, &cvn, midyw, midyh, midcw, midch);
 
 	de200_rtmx[sel].vi_ovl[chno]->vi_hori_ds[0].bits.m = yhm;

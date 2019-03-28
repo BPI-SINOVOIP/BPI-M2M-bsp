@@ -58,7 +58,7 @@
 
 #define UBOOT_START_SECTOR_IN_SPINOR     (24*1024/512)
 
-
+#define CONFIG_SPI_DUAL_MODE
 //#define CONFIG_A67_FPGA
 #define CONFIG_ARCH_SUN8IW5P1
 #define CONFIG_ARCH_R16
@@ -309,6 +309,7 @@
 #define CONFIG_BOOTCOMMAND	"nand read 50000000 boot;boota 50000000"
 #define CONFIG_SYS_BOOT_GET_CMDLINE
 //#define CONFIG_AUTO_COMPLETE
+#define HAVE_BLOCK_DEVICE
 
 #define CONFIG_CMD_FAT			/* with this we can access bootfs in nand */
 //#define CONFIG_CMD_BOOTA		[> boot android image <]

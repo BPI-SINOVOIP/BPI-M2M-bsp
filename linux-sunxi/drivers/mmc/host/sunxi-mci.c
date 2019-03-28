@@ -70,6 +70,8 @@ static unsigned long long begin_time, over_time, end_time;
 static volatile struct sunxi_mmc_idma_des *last_pdes;
 #endif
 
+static void sunxi_mmc_handle_bh(struct work_struct *work);
+
 
 #if 0
 static void uart_put(char c)
@@ -331,9 +333,7 @@ void sunxi_mci_change_gpio_bias(struct sunxi_mmc_host* smc_host,u32 vdd)
 
 s32 sunxi_mci_set_vddio(struct sunxi_mmc_host* smc_host, u32 vdd)
 {
-#ifdef CONFIG_MMC_DEBUG_SUNXI
 	char* vddstr[] = {"3.3V", "1.8V", "1.2V", "OFF", "ON"};
-#endif
 	static u32 on[4] = {0};
 	u32 id = smc_host->pdev->id;
 	s32 ret = 0;
@@ -429,18 +429,14 @@ s32 sunxi_mci_set_vddio(struct sunxi_mmc_host* smc_host, u32 vdd)
 	sunxi_mci_change_gpio_bias(smc_host,vdd);
 #endif
 
-#ifdef CONFIG_MMC_DEBUG_SUNXI
 	SMC_DBG(smc_host, "sdc%d switch io voltage to %s\n", smc_host->pdev->id, vddstr[vdd]);
-#endif
 	return 0;
 }
 
 s32 sunxi_mci_get_vddio(struct sunxi_mmc_host* smc_host)
 {
 	int voltage;
-#ifdef CONFIG_MMC_DEBUG_SUNXI
 	char *vol_str[4] = {"3.3V","1.8V","1.2V","0V"};
-#endif
 
 	if (smc_host->regulator == NULL)
 		return 0;
@@ -455,9 +451,7 @@ s32 sunxi_mci_get_vddio(struct sunxi_mmc_host* smc_host)
 	if (voltage > 2700000 && voltage < 3600000)
 		smc_host->regulator_voltage = SDC_WOLTAGE_3V3;
 
-#ifdef CONFIG_MMC_DEBUG_SUNXI
 	SMC_DBG(smc_host, "%s:card io voltage mode:%s\n", __FUNCTION__, vol_str[smc_host->regulator_voltage]);
-#endif
 	return 0 ;
 }
 
@@ -1698,13 +1692,21 @@ static int sunxi_mci_resource_request(struct sunxi_mmc_host *smc_host)
 		goto free_mem_region;
 	}
 
+	INIT_WORK(&smc_host->bh_work, sunxi_mmc_handle_bh);
+	smc_host->swq = create_singlethread_workqueue("sunxi_mci_wq");
+	if (!smc_host->swq) {
+		SMC_ERR(smc_host, "not enough memory for the sunxi_mci_wq workqueue");
+		ret = -ENOMEM;
+		goto iounmap;
+	}
+
 	/* mclk */
-	sprintf(mclk_name, MMC_MODCLK_PREFIX"%d", smc_no);
+	snprintf(mclk_name, 8, MMC_MODCLK_PREFIX"%d", smc_no);
 	smc_host->mclk = clk_get(&pdev->dev, mclk_name);
 	if (NULL==smc_host->mclk||IS_ERR(smc_host->mclk)) {
 		ret = PTR_ERR(smc_host->mclk);
 		SMC_ERR(smc_host, "Error to get clk for %s\n", mclk_name);
-		goto iounmap;
+		goto destroy_wq;
 	}
 
 	/* alloc idma descriptor structure */
@@ -1796,6 +1798,8 @@ free_sgbuff:
 free_mclk:
 	clk_put(smc_host->mclk);
 	smc_host->mclk = NULL;
+destroy_wq:
+	destroy_workqueue(smc_host->swq);
 iounmap:
 	iounmap(smc_host->reg_base);
 free_mem_region:
@@ -1830,6 +1834,8 @@ static int sunxi_mci_resource_release(struct sunxi_mmc_host *smc_host)
 
 	clk_put(smc_host->mclk);
 	smc_host->mclk = NULL;
+
+	destroy_workqueue(smc_host->swq);
 
 	iounmap(smc_host->reg_base);
 	release_mem_region(SMC_BASE(smc_host->pdev->id), SMC_BASE_OS);
@@ -1960,6 +1966,8 @@ static void sunxi_mci_restore_io(struct sunxi_mmc_host* smc_host)
 static void sunxi_mci_finalize_request(struct sunxi_mmc_host *smc_host)
 {
 	struct mmc_request* mrq = smc_host->mrq;
+	struct mmc_data	*data = mrq->data;
+	struct mmc_command	*cmd = mrq->cmd;
 	unsigned long iflags;
 
 	spin_lock_irqsave(&smc_host->lock, iflags);
@@ -1996,6 +2004,58 @@ static void sunxi_mci_finalize_request(struct sunxi_mmc_host *smc_host)
 		rval |= SDXC_DebounceEnb;
 		mci_writel(smc_host, REG_GCTRL, rval);
 	}
+
+	if (!(smc_host->pdata->platform_cap & MMC_HOST_PLATFORM_CAP_ENA_WQ_SPT))
+		goto out;
+
+	/*To avoid that "wait busy" and "maual stop" occur at the same time,
+	*We wait busy only on not error occur.
+	*/
+	if (!(cmd->error)
+		|| (data && !data->error)) {
+		if ((cmd->flags & MMC_RSP_BUSY)
+			|| (data && (data->flags & MMC_DATA_WRITE))) {
+			if (mci_readl(smc_host, REG_STAS) & SDXC_CardDataBusy) {
+				smc_host->mrq_busy = mrq;
+				SMC_DBG(smc_host, "%s %d\n", __FUNCTION__, __LINE__);
+				goto finalize_out;
+			}
+		}
+	}
+
+	if (data && data->error) {
+		smc_host->manual_stop_mrq = mrq;
+		SMC_DBG(smc_host, "%s %d\n", __FUNCTION__, __LINE__);
+		goto finalize_out;;
+	}
+
+finalize_out:
+
+	if (smc_host->perf_enable && data) {
+		ktime_t diff;
+		diff = ktime_sub(ktime_get(), smc_host->perf.start);
+		if (data->flags & MMC_DATA_READ) {
+			smc_host->perf.rbytes += data->bytes_xfered;
+			smc_host->perf.rtime = ktime_add(smc_host->perf.rtime, diff);
+		} else if (data->flags & MMC_DATA_WRITE) {
+			if (!smc_host->mrq_busy) {
+				smc_host->perf.wbytes += data->bytes_xfered;
+				smc_host->perf.wtime = ktime_add(smc_host->perf.wtime, diff);
+			}
+			smc_host->perf.wbytestran += data->bytes_xfered;
+			smc_host->perf.wtimetran = ktime_add(smc_host->perf.wtimetran, diff);
+		}
+	}
+
+	if (smc_host->manual_stop_mrq || smc_host->mrq_busy) {
+		SMC_DBG(smc_host, "%s %d\n", __FUNCTION__, __LINE__);
+		smp_wmb();
+		queue_work(smc_host->swq, &smc_host->bh_work);
+		return;
+	}
+
+	SMC_DBG(smc_host, "%s %d\n", __FUNCTION__, __LINE__);
+out:
 	smp_wmb();
 	mmc_request_done(smc_host->mmc, mrq);
 
@@ -2203,6 +2263,115 @@ sdio_out:
 
 	return IRQ_HANDLED;
 }
+
+
+
+static int sunxi_check_r1_ready_may_sleep(struct sunxi_mmc_host *smc_host)
+{
+	unsigned int cnt = 0;
+	/**SUNXI_MAX_R1B_TIMEOUT-10ms(dead wait)-(10)(wait interval 10us,all wait 10*1000 us=10ms)***/
+	unsigned int delay_max_cnt[] = { 1000, SUNXI_MAX_R1B_TIMEOUT_MS-10-10 };
+	int i = 0;
+	unsigned long expire = jiffies + msecs_to_jiffies(10);
+	char *mmc_sunxi_event[] = { "mmc_sunxi_event=mmc_host_busy_too_long", NULL };
+
+
+	/*****dead wait******/
+	do {
+		if (!(mci_readl(smc_host, REG_STAS) & SDXC_CardDataBusy))
+			break;
+		cond_resched();
+	} while (time_before(jiffies, expire));
+
+	if (!(mci_readl(smc_host, REG_STAS) & SDXC_CardDataBusy)) {
+		SMC_DBG(smc_host, "dead Wait r1 rdy ok\n");
+		return 0;
+	}
+
+	/**If set this bit,when use sunxi_check_r1_ready_may_sleep,we will wait 0xFFFFFFFF ms, for debug use***/
+	if (smc_host->ctl_spec_cap & SUNXI_R1B_WAIT_MAX) {
+		delay_max_cnt[1] = 0xFFFFFFFF;
+		/*dev_err(mmc_dev(smc_host->mmc), "all wait %x\n",delay_max_cnt[1] );*/
+	}
+	/*****no dead wait*****/
+	for (i = 0; i < 2; i++, cnt = 0) {
+		do {
+			if (!(mci_readl(smc_host, REG_STAS) & SDXC_CardDataBusy)) {
+				SMC_DBG(smc_host,
+					"cmd%d Wait r1 rdy ok c%d i%d \n", mci_readl(smc_host, REG_CMDR)&0x3F, cnt, i);
+				return 0;
+			}
+
+			/* wait data0 busy... */
+			if (i == 0) {
+				if (((cnt % 500000) == 0) && cnt) {
+					SMC_MSG(smc_host,
+					 "cmd%d Has wait r1 rdy c%d i%d\n",  mci_readl(smc_host, REG_CMDR)&0x3F, cnt, i);
+				}
+				usleep_range(10, 20);
+			} else {
+				if (((cnt % 5000) == 0) && cnt) {
+					SMC_MSG(smc_host,
+					 "cmd%d Has wait r1 rdy c%d i%d\n",  mci_readl(smc_host, REG_CMDR)&0x3F, cnt, i);
+				}
+				if (cnt == SUNXI_MAX_R1B_TO_UET_MS)
+					kobject_uevent_env(&mmc_dev(smc_host->mmc)->kobj, KOBJ_CHANGE, mmc_sunxi_event);
+				usleep_range(1000, 1200);
+			}
+		} while ((cnt++) < delay_max_cnt[i]);
+	}
+
+	SMC_ERR(smc_host, "cmd%d Wait r1 rdy timeout\n", mci_readl(smc_host, REG_CMDR)&0x3F);
+	return -1;
+}
+
+static void sunxi_mmc_handle_bh(struct work_struct *work)
+{
+	int rval = 0;
+	struct sunxi_mmc_host *smc_host = container_of(work, struct sunxi_mmc_host, bh_work);
+	struct mmc_request *mrq_busy = smc_host->mrq_busy;
+	struct mmc_request *mrq_stop = smc_host->manual_stop_mrq;
+	struct mmc_host *mmc = smc_host->mmc;
+	if (mrq_busy) {
+		rval = sunxi_check_r1_ready_may_sleep(smc_host);
+		if (rval) {
+			mrq_busy->cmd->error = -ETIMEDOUT;
+			if (mrq_busy->data)
+				mrq_busy->data->error = -ETIMEDOUT;
+			if (mrq_busy->stop)
+				mrq_busy->stop->error = -ETIMEDOUT;
+		}
+		smc_host->mrq_busy = NULL;
+
+		if (smc_host->perf_enable
+			&& mrq_busy->data
+			&& (mrq_busy->data->flags & MMC_DATA_WRITE)) {
+			ktime_t diff;
+			diff = ktime_sub(ktime_get(), smc_host->perf.start);
+			smc_host->perf.wbytes += mrq_busy->data->bytes_xfered;
+			smc_host->perf.wtime = ktime_add(smc_host->perf.wtime, diff);
+		}
+
+		SMC_DBG(smc_host, "%s %d\n", __FUNCTION__, __LINE__);
+		mmc_request_done(mmc, mrq_busy);
+		return;
+	}
+
+	if (mrq_stop) {
+		char *mmc_sunxi_event[] = { "mmc_sunxi_event=mmc_host_rw_failed_st", NULL };
+		smc_host->manual_stop_mrq = NULL;
+		SMC_DBG(smc_host, "%s %d\n", __FUNCTION__, __LINE__);
+		kobject_uevent_env(&mmc_dev(mmc)->kobj, KOBJ_CHANGE, mmc_sunxi_event);
+		mmc_request_done(mmc, mrq_stop);
+		return;
+	}
+
+	SMC_DBG(smc_host, "no request in work\n");
+}
+
+
+
+
 
 static void sunxi_mci_tasklet(unsigned long data)
 {
@@ -2464,7 +2633,22 @@ static void sunxi_mci_request(struct mmc_host *mmc, struct mmc_request *mrq)
 		SMC_DBG(smc_host, "no medium present, ferr %d, suspend %d pwd %d\n",
 			    smc_host->ferror, smc_host->suspend, smc_host->power_on);
 		mrq->cmd->error = -ENOMEDIUM;
-		mrq->cmd->error = -ENOMEDIUM;
+		mmc_request_done(mmc, mrq);
+		return;
+	}
+
+	if (smc_host->mrq || smc_host->manual_stop_mrq || smc_host->mrq_busy) {
+		mrq->cmd->error = -EBUSY;
+		SMC_ERR(smc_host, "request already pending\n");
+		/*
+		*Only for case that core layer wait busy timeout and
+		*igive up waiting, but file system still send next
+		*requests without stop.This case will make system
+		*get stuck,can't do any other tings,so give sometime
+		*to sytem to do other things,although this case only
+		*occur on some bad card
+		*/
+		msleep(20);
 		mmc_request_done(mmc, mrq);
 		return;
 	}
@@ -2477,6 +2661,8 @@ static void sunxi_mci_request(struct mmc_host *mmc, struct mmc_request *mrq)
 
 	smc_host->mrq = mrq;
 	if (data) {
+		if (smc_host->perf_enable && cmd->data)
+			smc_host->perf.start = ktime_get();
 #ifdef  USE_SECURE_WRITE_PROTECT
 			if((data->flags & MMC_DATA_WRITE)
 				&&sunxi_check_secure_area(cmd->arg,data->blocks)){
@@ -2971,7 +3157,7 @@ static int sunxi_mci_proc_write_dbglevel(struct file *file, const char __user *b
 	smc_debug = simple_strtoul(buffer, NULL, 10);
 
 	smc_host->debuglevel = smc_debug;
-	return sizeof(smc_debug);
+	return count;
 }
 
 static int sunxi_mci_proc_read_cdmode(char *page, char **start, off_t off,
@@ -2992,7 +3178,7 @@ static int sunxi_mci_proc_write_cdmode(struct file *file, const char __user *buf
 	cdmode = simple_strtoul(buffer, NULL, 10);
 
 	smc_host->cd_mode = cdmode;
-	return sizeof(cdmode);
+	return count;
 }
 
 static int sunxi_mci_proc_read_insert_status(char *page, char **start, off_t off,
@@ -3029,7 +3215,7 @@ static int sunxi_mci_proc_card_insert_ctrl(struct file *file, const char __user 
 	}
 
 	SMC_DBG(smc_host, "Insert status %d\n", smc_host->present);
-	return sizeof(insert);
+	return count;
 }
 
 static int sunxi_mci_proc_get_iodriving(char *page, char **start, off_t off,
@@ -3112,6 +3298,67 @@ static int sunxi_mci_proc_set_iodriving(struct file *file, const char __user *bu
 }
 
 
+
+static int sunxi_mci_show_perf(char *page, char **start, off_t off,
+						int coutn, int *eof, void *data)
+{
+	struct sunxi_mmc_host *smc_host = (struct sunxi_mmc_host *)data;
+	struct mmc_host *mmc = smc_host->mmc;
+	int64_t rtime_drv, wtime_drv, wtime_drv_tran;
+	int64_t rbytes_drv, wbytes_drv, wbytes_drv_tran;
+
+
+	mmc_claim_host(mmc);
+
+	rbytes_drv = smc_host->perf.rbytes;
+	wbytes_drv = smc_host->perf.wbytes;
+	wbytes_drv_tran = smc_host->perf.wbytestran;
+
+	rtime_drv = ktime_to_us(smc_host->perf.rtime);
+	wtime_drv = ktime_to_us(smc_host->perf.wtime);
+	wtime_drv_tran = ktime_to_us(smc_host->perf.wtimetran);
+
+	mmc_release_host(mmc);
+
+	return snprintf(page, PAGE_SIZE, "Write performance at host driver Level:"
+					"%ld bytes in %ld microseconds\n"
+					"Read performance at host driver Level:"
+					"%ld bytes in %ld microseconds\n"
+					"write performance at host driver Level(no wait busy):"
+					"%ld bytes in %ld microseconds\n",
+					wbytes_drv, wtime_drv,
+					rbytes_drv, rtime_drv,
+					wbytes_drv_tran, wtime_drv_tran);
+
+}
+
+
+static int sunxi_mci_set_perf(struct file *file, const char __user *buffer,
+					unsigned long count, void *data)
+{
+	struct sunxi_mmc_host *smc_host = (struct sunxi_mmc_host *)data;
+	struct mmc_host *mmc = smc_host->mmc;
+	int64_t value;
+
+	sscanf(buffer, "%ld", &value);
+	printk("set perf value %lld\n", value);
+
+	mmc_claim_host(mmc);
+	if (!value) {
+		memset(&smc_host->perf, 0, sizeof(smc_host->perf));
+		smc_host->perf_enable = false;
+	} else {
+		smc_host->perf_enable = true;
+	}
+	mmc_release_host(mmc);
+
+	return count;
+}
+
+
+
+
+
 void sunxi_mci_procfs_attach(struct sunxi_mmc_host *smc_host)
 {
 	struct device *dev = &smc_host->pdev->dev;
@@ -3171,6 +3418,16 @@ void sunxi_mci_procfs_attach(struct sunxi_mmc_host *smc_host)
 	smc_host->proc_iodrive->data = smc_host;
 	smc_host->proc_iodrive->read_proc = sunxi_mci_proc_get_iodriving;
 	smc_host->proc_iodrive->write_proc = sunxi_mci_proc_set_iodriving;
+
+
+	smc_host->proc_iodrive = create_proc_entry("sunxi_host_perf", 0644, smc_host->proc_root);
+	if (IS_ERR(smc_host->proc_iodrive)) {
+		SMC_MSG(smc_host, "%s: failed to create procfs \"sunxi_host_perf\".\n", dev_name(dev));
+	}
+
+	smc_host->proc_iodrive->data = smc_host;
+	smc_host->proc_iodrive->read_proc = sunxi_mci_show_perf;
+	smc_host->proc_iodrive->write_proc = sunxi_mci_set_perf;
 
 }
 
@@ -3387,7 +3644,6 @@ static int sunxi_mci_remove(struct platform_device *pdev)
 	return 0;
 }
 
-#ifdef CONFIG_PM
 
 void sunxi_mci_regs_save(struct sunxi_mmc_host* smc_host)
 {
@@ -3430,6 +3686,8 @@ void sunxi_mci_regs_restore(struct sunxi_mmc_host* smc_host)
 	mci_writel(smc_host, REG_NTSR , bak_regs->ntsr);
 #endif
 }
+
+#ifdef CONFIG_PM
 
 static int sunxi_mci_suspend(struct device *dev)
 {
@@ -3499,6 +3757,11 @@ static int sunxi_mci_suspend(struct device *dev)
 			smc_host->voltage = SDC_WOLTAGE_OFF;
 			smc_host->power_on = 0;
 
+		}
+
+		if (ret == 0 && smc_host->cd_mode == CARD_DETECT_BY_GPIO_IRQ) {
+			disable_irq(smc_host->cd_hdle);
+			SMC_MSG(smc_host, "smc %d disable cd irq\n", pdev->id);
 		}
 
 		SMC_MSG(NULL, "smc %d suspend\n", pdev->id);
@@ -3597,6 +3860,11 @@ static int sunxi_mci_resume(struct device *dev)
 			rval = mci_readl(smc_host, REG_RINTR);
 			SMC_DBG(smc_host, ">> REG_RINTR=0x%x\n", rval);
 			sunxi_mci_init_host(smc_host);
+		}
+
+		if (smc_host->cd_mode == CARD_DETECT_BY_GPIO_IRQ) {
+			enable_irq(smc_host->cd_hdle);
+			SMC_MSG(smc_host, "smc %d enable cd irq\n", pdev->id);
 		}
 
 		ret = mmc_resume_host(mmc);
@@ -4192,7 +4460,7 @@ static int sunxi_mci_get_devinfo(void)
 			if(mmcinfo->platform_cap & MMC_HOST_PLATFORM_CAP_ENA_CACHE){
 				mmcinfo->caps2 |= MMC_CAP2_CACHE_CTRL;
                 SMC_MSG(NULL,"mmc %d enable cache\n",i);
-            }
+			}
         }
 
 		/* get ex_dly_used information */

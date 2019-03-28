@@ -1,12 +1,13 @@
 /*
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ * Allwinner SoCs display driver.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2016 Allwinner.
  *
+ * This file is licensed under the terms of the GNU General Public
+ * License version 2.  This program is licensed "as is" without any
+ * warranty of any kind, whether express or implied.
  */
+
 #ifndef __SUNXI_DISPLAY_H__
 #define __SUNXI_DISPLAY_H__
 
@@ -143,7 +144,12 @@ typedef enum
 	DISP_TV_MOD_3840_2160P_30HZ     = 0x1c,
 	DISP_TV_MOD_3840_2160P_25HZ     = 0x1d,
 	DISP_TV_MOD_3840_2160P_24HZ     = 0x1e,
-	DISP_TV_MODE_NUM                = 0x1f,
+	DISP_TV_MOD_4096_2160P_24HZ     = 0x1f,
+
+	DISP_TV_MOD_1280_1024P_60HZ     = 0x41,
+	DISP_TV_MOD_1024_768P_60HZ      = 0x42,
+	DISP_TV_MOD_900_540P_60HZ       = 0x43,
+	DISP_TV_MODE_NUM                = 0x59,
 }disp_tv_mode;
 
 

@@ -167,6 +167,8 @@ typedef struct {
 extern const bitmap_name_mapping_t pwr_dm_bitmap_name_mapping[VCC_MAX_INDEX];
 extern int pwr_dm_bitmap_name_mapping_cnt;
 
+extern int axp_usb_is_connected(void);
+
 /* internal interface*/
 void set_pwr_regu_tree(unsigned int value, unsigned int bitmap);
 int axp_check_sys_id(const char *supply_id);

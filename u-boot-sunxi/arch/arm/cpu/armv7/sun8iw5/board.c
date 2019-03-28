@@ -28,6 +28,7 @@
 #include <asm/arch/timer.h>
 #include <asm/arch/key.h>
 #include <asm/arch/clock.h>
+#include <asm/arch/cpu.h>
 #include <asm/arch/sys_proto.h>
 #include <boot_type.h>
 #include <sys_partition.h>
@@ -138,19 +139,20 @@ int script_init(void)
 
 int power_source_init(void)
 {
-	int pll1;
+	int pmu_type,pll1;
 	int dcdc3_vol;
 
 	if(script_parser_fetch("power_sply", "dcdc3_vol", &dcdc3_vol, 1))
 	{
 		dcdc3_vol = 1200;
 	}
-	if(axp_probe() > 0)
+	pmu_type = axp_probe();
+	if(pmu_type > 0)
 	{
 		axp_probe_factory_mode();
 		if(!axp_probe_power_supply_condition())
 		{
-			if(!axp_set_supply_status(0, PMU_SUPPLY_DCDC3, dcdc3_vol, -1))
+			if(!axp_set_supply_status(pmu_type, PMU_SUPPLY_DCDC3, dcdc3_vol, -1))
 			{
 				tick_printf("PMU: dcdc3 %d\n", dcdc3_vol);
 				sunxi_clock_set_corepll(uboot_spare_head.boot_data.run_clock, 0);
@@ -188,4 +190,24 @@ int power_source_init(void)
 }
 
 
+#define SUNXI_RTC_GPREG_NUM 3
+int sunxi_set_rtc3_flag(u8 flag)
+{
+	volatile uint reg_val;
+	do {
+		writel(flag, RTC_GENERAL_PURPOSE_REG(SUNXI_RTC_GPREG_NUM));
+		reg_val = readl(RTC_GENERAL_PURPOSE_REG(SUNXI_RTC_GPREG_NUM));
+	} while ((reg_val & 0xff) != flag);
 
+	return 0;
+}
+
+int sunxi_get_rtc3_flag(void)
+{
+	uint rtc3_flag;
+
+	rtc3_flag = readl(RTC_GENERAL_PURPOSE_REG(SUNXI_RTC_GPREG_NUM));
+	//printf("rtc3_flag =%d\n",rtc3_flag);
+
+	return rtc3_flag;
+}

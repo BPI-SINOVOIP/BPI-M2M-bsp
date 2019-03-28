@@ -904,6 +904,44 @@ static int Fb_set_par(struct fb_info *info)
 	return 0;
 }
 
+static int Fb_mmap(struct fb_info *info, struct vm_area_struct *vma)
+{
+	unsigned long off;
+	unsigned long start;
+	u32 len;
+
+	off = vma->vm_pgoff << PAGE_SHIFT;
+
+	/* frame buffer memory */
+	start = info->fix.smem_start;
+	if (start == 0)
+		return -EINVAL;
+	len = PAGE_ALIGN((start & ~PAGE_MASK) + info->fix.smem_len);
+	if (off >= len) {
+		/* memory mapped io */
+		off -= len;
+		if (info->var.accel_flags)
+			return -EINVAL;
+		start = info->fix.mmio_start;
+		len = PAGE_ALIGN((start & ~PAGE_MASK) + info->fix.mmio_len);
+	}
+	start &= PAGE_MASK;
+	if ((vma->vm_end - vma->vm_start + off) > len)
+		return -EINVAL;
+	off += start;
+	vma->vm_pgoff = off >> PAGE_SHIFT;
+	/* This is an IO map - tell maydump to skip this VMA */
+	vma->vm_flags |= VM_IO | VM_RESERVED;
+	vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);
+	/*fb_pgprotect*/
+	vma->vm_page_prot = pgprot_writecombine(vma->vm_page_prot);
+	if (io_remap_pfn_range(vma, vma->vm_start, off >> PAGE_SHIFT,
+			     vma->vm_end - vma->vm_start, vma->vm_page_prot))
+		return -EAGAIN;
+	return 0;
+
+}
+
 static int Fb_blank(int blank_mode, struct fb_info *info)
 {
 	u32 sel = 0;
@@ -1153,6 +1191,7 @@ static struct fb_ops dispfb_ops =
 	.fb_setcolreg   = Fb_setcolreg,
 	.fb_setcmap     = Fb_setcmap,
 	.fb_blank       = Fb_blank,
+	.fb_mmap	= Fb_mmap,
 #if defined(CONFIG_FB_CONSOLE_SUNXI)
 	.fb_fillrect    = cfb_fillrect,
 	.fb_copyarea    = cfb_copyarea,
@@ -1287,7 +1326,7 @@ s32 Display_Fb_Request(u32 fb_id, disp_fb_create_info *fb_para)
 				layer_para.screen_win.height = fb_para->output_height;
 			}
 
-			hdl = 0;//fb bound to layer 0
+			hdl = 3; /*fb bound to layer 3*/
 //			hdl = bsp_disp_layer_request(sel, layer_para.mode);
 //
 //			if(hdl == 0) {
@@ -1296,8 +1335,12 @@ s32 Display_Fb_Request(u32 fb_id, disp_fb_create_info *fb_para)
 //
 //				return DIS_NO_RES;
 //			}
-			layer_para.pipe = 0;
-			layer_para.alpha_mode = 1;
+			layer_para.pipe = 1;
+#if defined(CONFIG_ARCH_SUN8IW5P1)
+			layer_para.zorder = 3;
+			layer_para.fb.pre_multiply = 0;
+#endif
+			layer_para.alpha_mode = 0;
 			layer_para.alpha_value = 0xff;
 			layer_para.ck_enable = 0;
 			layer_para.fb.src_win.x = 0;

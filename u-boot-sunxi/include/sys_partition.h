@@ -35,9 +35,13 @@ extern uint sunxi_partition_get_offset(int part_index);
 
 extern uint sunxi_partition_get_size(int part_index);
 
+extern uint sunxi_partition_set_size(int part_index, int size);
+
 extern uint sunxi_partition_get_offset_byname(const char *part_name);
 
 extern uint sunxi_partition_get_size_byname(const char *part_name);
+
+extern uint sunxi_partition_set_size_byname(const char *part_name, int size);
 
 extern int sunxi_partition_get_info_byname(const char *part_name, uint *part_offset, uint *part_size);
 

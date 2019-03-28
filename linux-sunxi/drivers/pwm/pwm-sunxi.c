@@ -246,7 +246,7 @@ static int sunxi_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
     if(pwm->pwm == 0)
         temp = (temp & 0xfffffff0) |pre_scal[pre_scal_id][0];
     else
-        temp = (temp & 0xfff87fff) |pre_scal[pre_scal_id][0];
+	temp = (temp & 0xfff87fff) | (pre_scal[pre_scal_id][0] << 15);
 
     sunxi_pwm_write_reg(0, temp);
 

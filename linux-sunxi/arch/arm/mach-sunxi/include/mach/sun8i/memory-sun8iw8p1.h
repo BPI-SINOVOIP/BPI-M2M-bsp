@@ -22,10 +22,10 @@
 #define PLAT_MEM_SIZE            SZ_256M
 #endif
 
-#define SYS_CONFIG_MEMBASE       (PLAT_PHYS_OFFSET + SZ_32M + SZ_16M)           /* 0x43000000 */
+#define SYS_CONFIG_MEMBASE       (PLAT_PHYS_OFFSET + SZ_16M)           /* 0x43000000 */
 #define SYS_CONFIG_MEMSIZE       (SZ_128K)                                      /* 0x00020000 */
 
-#define SUPER_STANDBY_MEM_BASE   (PLAT_PHYS_OFFSET + SZ_32M + SZ_16M + SZ_512K) /* 0x43080000 */
+#define SUPER_STANDBY_MEM_BASE   (PLAT_PHYS_OFFSET + SZ_16M + SZ_512K) /* 0x43080000 */
 #define SUPER_STANDBY_MEM_SIZE   (SZ_2K)                                        /* 0x00000800 */
 
 #ifdef CONFIG_ANDROID_RAM_CONSOLE

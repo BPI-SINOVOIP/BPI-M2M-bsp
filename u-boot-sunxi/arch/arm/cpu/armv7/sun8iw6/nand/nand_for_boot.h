@@ -32,7 +32,7 @@
 #define __BSP_FOR_BOOT1_H__
 
 
-#include <asm/arch/nand_bsp.h>
+
 
 
 #define SUCCESS	0
@@ -69,7 +69,13 @@ typedef struct
 	__u32 		good_block_ratio;					//good block ratio get from hwscan
 	__u32		ReadRetryType;						//the read retry type
 	__u32       DDRType;
-	__u32		Reserved[22];
+	__u32		uboot_start_block;
+	__u32		uboot_next_block;
+	__u32		logic_start_block;
+	__u32		nand_specialinfo_page;
+	__u32		nand_specialinfo_offset;
+	__u32 		physic_block_reserved;
+	__u32		Reserved[16];
 }boot_nand_para_t;
 
 typedef struct boot_flash_info{
@@ -198,21 +204,6 @@ extern int mbr2disks(struct nand_disk* disk_array);
 */
 extern __s32 NAND_SetDrqCbMethod(__u32 used);
 
-
-extern __s32 NFB_PhyInit(void);
-extern __s32 NFB_PhyExit(void);
-extern __s32 NFB_PhyRead (struct boot_physical_param *readop);
-extern __s32 NFB_GetFlashInfo(boot_flash_info_t *param);
-
-extern __u32 g_mod( __u32 dividend, __u32 divisor, __u32 *quot_p );
-extern __u8  *get_page_buf( void );
-extern int BOOT_NandGetPara(void *param, uint size);
-
-extern __u32 NAND_Getlsbpage_type(void);
-
-extern int verify_addsum( void *mem_base, __u32 size );
-
-extern __u32 NAND_GetLsbblksize(void);
 
 #endif  //ifndef __NAND_LOGIC_H__
 

@@ -1,14 +1,4 @@
 /*
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-/*
  * A V4L2 driver for OV2710 Raw cameras.
  *
  */
@@ -673,10 +663,12 @@ static int sensor_power(struct v4l2_subdev *sd, int on)
 		case CSI_SUBDEV_PWR_OFF:
 			vfe_dev_dbg("CSI_SUBDEV_PWR_OFF!\n");
 			cci_lock(sd);
+			usleep_range(10000, 12000);
 			vfe_gpio_set_status(sd,PWDN,1);//set the gpio to output
 			vfe_gpio_set_status(sd,RESET,1);//set the gpio to output
 			vfe_gpio_write(sd,RESET,CSI_GPIO_LOW);  
 			vfe_gpio_write(sd,PWDN,CSI_GPIO_HIGH);
+			usleep_range(10000, 12000);
 			//inactive mclk before power off
 			vfe_set_mclk(sd,OFF);
 			//power supply off

@@ -23,6 +23,12 @@ struct __NandPageCachePool_t PageCachePool;
 _ndfc_dma_desc_t *ndfc_dma_desc = (void *)0;
 #endif
 
+extern __u32 uboot_start_block;
+extern __u32 uboot_next_block;
+extern __u32 nand_specialinfo_page;
+extern __u32 nand_specialinfo_offset;
+
+extern __u32 Two_Row_Addr_Flag;
 __u32 RetryCount[1] = {0};
 const __u16 random_seed[128] = {
     //0        1      2       3        4      5        6       7       8       9
@@ -168,10 +174,17 @@ __s32 _read_single_page(struct boot_physical_param *readop,__u8 read_mode)
 	NFC_CMD_LIST cmd_list[4];
 	__u32 list_len,i;
 
-
+	if(Two_Row_Addr_Flag)
+	{
 	/*the cammand have no corresponding feature if IGNORE was set, */
-	_cal_addr_in_chip(readop->block,readop->page,0,addr,5);
-	_add_cmd_list(cmd_list,0x00,5,addr,NFC_NO_DATA_FETCH,NFC_IGNORE,NFC_IGNORE,NFC_NO_WAIT_RB);
+		_cal_addr_in_chip(readop->block,readop->page,0,addr,4);
+		_add_cmd_list(cmd_list,0x00,4,addr,NFC_NO_DATA_FETCH,NFC_IGNORE,NFC_IGNORE,NFC_NO_WAIT_RB);
+	}
+	else
+	{
+		_cal_addr_in_chip(readop->block,readop->page,0,addr,5);
+		_add_cmd_list(cmd_list,0x00,5,addr,NFC_NO_DATA_FETCH,NFC_IGNORE,NFC_IGNORE,NFC_NO_WAIT_RB);
+	}
 
 	_add_cmd_list(cmd_list + 1,0x05,NFC_IGNORE,NFC_IGNORE,NFC_IGNORE,NFC_IGNORE,NFC_IGNORE,NFC_IGNORE);
 	_add_cmd_list(cmd_list + 2,0xe0,NFC_IGNORE,NFC_IGNORE,NFC_IGNORE,NFC_IGNORE,NFC_IGNORE,NFC_IGNORE);
@@ -320,6 +333,28 @@ __s32 PHY_Init(void)
 	return ret;
 }
 
+__s32 check_nand_special_info(__u8 *buf)
+{
+	__u8 sum;
+	__u32 i;
+	__s32 ret = -1;
+
+	if(*((__u8 *)buf) == 0xa5)
+	{
+		for(sum=0,i=2;i<514;i++)
+		{
+			sum += *((__u8 *)buf + i);
+		}
+		if(sum == *((__u8 *)buf + 1))
+		{
+			ret = 0;
+			PHY_DBG("check sum ok \n");
+		}
+	}
+
+	return ret;
+}
+
 __s32 PHY_GetDefaultParam(__u32 bank)
 {
 	__u32 i, j, chip = 0;// rb = 0;
@@ -339,41 +374,37 @@ __s32 PHY_GetDefaultParam(__u32 bank)
 
     if((READ_RETRY_MODE==2)||(READ_RETRY_MODE==3))
     {
-        for(i = 8; i<12; i++)
+    	//PHY_DBG("uboot_start_block %d uboot_next_block %d\n",uboot_start_block,uboot_next_block);
+		//PHY_DBG("nand_specialinfo_page %d nand_specialinfo_offset %d\n",nand_specialinfo_page,nand_specialinfo_offset);
+        for(i = uboot_start_block; i<uboot_next_block; i++)
         {
             nand_op.chip = chip;
             nand_op.block = i;
-            nand_op.page = 0;
+            nand_op.page = nand_specialinfo_page;
             nand_op.mainbuf = PHY_TMP_PAGE_CACHE;
             nand_op.oobbuf = oob_buf;
 
             ret = PHY_SimpleRead(&nand_op);
-
-            if((ret>=0)&&(oob[0] == 0x00)&&(oob[1] == 0x4F)&&(oob[2] == 0x4F)&&(oob[3] == 0x42))
+			//PHY_DBG("ret %d oob %x\n",ret,*((__u32 *)oob_buf));
+            if((ret>=0)&&(oob[0] == 0xff)&&(oob[1] != 0xff)&&(oob[2] != 0xff)&&(oob[3] != 0xff))
             {
-                otp_ok_flag = 1;
-                for(j=0;j<64;j++)
-                {
-                    if((pdata[j] + pdata[64+j])!= 0xff)
-                    {
-                        PHY_DBG("otp data check error!\n");
-                        otp_ok_flag = 0;
-                        break;
-                    }
-                }
-                if(otp_ok_flag == 1)
-                {
+				if(0 == check_nand_special_info((__u8 *)PHY_TMP_PAGE_CACHE + nand_specialinfo_offset))
+				{
+                	otp_ok_flag = 1;
+                
                     PHY_DBG("find good otp value in chip %d, block %d \n", nand_op.chip, nand_op.block);
                     break;
-                }
+				}
             }
+			
         }
 
         if(otp_ok_flag)
         {
-            pdata = (__u8 *)(PHY_TMP_PAGE_CACHE);
+            pdata = (__u8 *)(PHY_TMP_PAGE_CACHE + nand_specialinfo_offset + 2);
             for(j=0;j<64;j++)
                 default_value[j] = pdata[j];
+			
             NFC_GetOTPValue(0, default_value, READ_RETRY_TYPE);
         }
         else
@@ -387,40 +418,30 @@ __s32 PHY_GetDefaultParam(__u32 bank)
     {
 			
 		otp_ok_flag = 0;
-		for(i = 8; i<12; i++)
+		for(i = uboot_start_block; i<uboot_next_block; i++)
 		{
 			nand_op.chip = chip;
 			nand_op.block = i;
-			nand_op.page = 0;
+			nand_op.page = nand_specialinfo_page;
 			nand_op.mainbuf = PHY_TMP_PAGE_CACHE;
 			nand_op.oobbuf = oob_buf;
 
 			ret = PHY_SimpleRead(&nand_op);
 			
-			if((ret>=0)&&(oob[0] == 0x00)&&(oob[1] == 0x4F)&&(oob[2] == 0x4F)&&(oob[3] == 0x42))
-			{
-				otp_ok_flag = 1;
-					
-				for(j=0;j<32;j++)
+			if((ret>=0)&&(oob[0] == 0xff)&&(oob[1] != 0xff)&&(oob[2] != 0xff)&&(oob[3] != 0xff))
+            {
+				if(0 == check_nand_special_info((__u8 *)PHY_TMP_PAGE_CACHE + nand_specialinfo_offset))
 				{
-					if((pdata[32+j] + pdata[j])!= 0xff)
-					{
-						otp_ok_flag = 0;
-						break;
-					}
+                	otp_ok_flag = 1;
+                
+                    PHY_DBG("find good otp value in chip %d, block %d \n", nand_op.chip, nand_op.block);
+                    break;
 				}
-
-				if(otp_ok_flag == 1)
-				{
-					PHY_DBG("find good otp value in chip %d, block %d \n", nand_op.chip, nand_op.block);
-					break;
-				}
-
-			}
+            }
 		}
 		if(otp_ok_flag)
 		{
-			pdata = (__u8 *)(PHY_TMP_PAGE_CACHE);
+			pdata = (__u8 *)(PHY_TMP_PAGE_CACHE + nand_specialinfo_offset + 2);
 			NFC_GetOTPValue(chip, pdata, READ_RETRY_TYPE);
 		}
 		else

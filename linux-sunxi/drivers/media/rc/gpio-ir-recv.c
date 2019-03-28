@@ -20,23 +20,33 @@
 #include <linux/irq.h>
 #include <media/rc-core.h>
 #include <media/gpio-ir-recv.h>
+#include <mach/sys_config.h>
+#include <linux/timer.h>
 
 #define GPIO_IR_DRIVER_NAME	"gpio-rc-recv"
 #define GPIO_IR_DEVICE_NAME	"gpio_ir_recv"
 
 struct gpio_rc_dev {
 	struct rc_dev *rcdev;
+	struct timer_list rc_timer;
 	int gpio_nr;
 	bool active_low;
 };
+
+static void sunxi_rc_do_timer(unsigned long arg)
+{
+	struct gpio_rc_dev *gpio_dev = (struct gpio_rc_dev *)arg;
+
+	ir_raw_event_handle(gpio_dev->rcdev);
+}
 
 static irqreturn_t gpio_ir_recv_irq(int irq, void *dev_id)
 {
 	struct gpio_rc_dev *gpio_dev = dev_id;
 	int gval;
-	int rc = 0;
 	enum raw_event_type type = IR_SPACE;
 
+	mod_timer(&gpio_dev->rc_timer, jiffies + (HZ/50));
 	gval = gpio_get_value_cansleep(gpio_dev->gpio_nr);
 
 	if (gval < 0)
@@ -48,24 +58,43 @@ static irqreturn_t gpio_ir_recv_irq(int irq, void *dev_id)
 	if (gval == 1)
 		type = IR_PULSE;
 
-	rc = ir_raw_event_store_edge(gpio_dev->rcdev, type);
-	if (rc < 0)
-		goto err_get_value;
-
-	ir_raw_event_handle(gpio_dev->rcdev);
+	ir_raw_event_store_edge(gpio_dev->rcdev, type);
 
 err_get_value:
 	return IRQ_HANDLED;
+}
+
+static int sunxi_ir_gpio_config(struct gpio_ir_recv_platform_data *pdata)
+{
+	script_item_u val;
+	script_item_value_type_e type = 0;
+	struct gpio_config *sunxi_gpio;
+
+	type = script_get_item("cir", "cir_used", &val);
+	if (SCIRPT_ITEM_VALUE_TYPE_INT != type)
+		pr_err("%s: cir_used script_get_item  err.\n", __func__);
+
+	type = script_get_item("cir", "cir_gpio", &val);
+	if (SCIRPT_ITEM_VALUE_TYPE_PIO != type)
+		pr_err("%s: cir_gpio script_get_item err.\n", __func__);
+	else
+		sunxi_gpio = &val.gpio;
+
+	pdata->gpio_nr = sunxi_gpio->gpio;
+	pdata->active_low = 1;
+
+	return 0;
 }
 
 static int __devinit gpio_ir_recv_probe(struct platform_device *pdev)
 {
 	struct gpio_rc_dev *gpio_dev;
 	struct rc_dev *rcdev;
-	const struct gpio_ir_recv_platform_data *pdata =
-					pdev->dev.platform_data;
+	struct gpio_ir_recv_platform_data *pdata = NULL;
 	int rc;
 
+	pdata = kzalloc(sizeof(struct gpio_ir_recv_platform_data), GFP_KERNEL);
+	sunxi_ir_gpio_config(pdata);
 	if (!pdata)
 		return -EINVAL;
 
@@ -92,6 +121,11 @@ static int __devinit gpio_ir_recv_probe(struct platform_device *pdev)
 	gpio_dev->rcdev = rcdev;
 	gpio_dev->gpio_nr = pdata->gpio_nr;
 	gpio_dev->active_low = pdata->active_low;
+
+	init_timer(&gpio_dev->rc_timer);
+	gpio_dev->rc_timer.function = &sunxi_rc_do_timer;
+	gpio_dev->rc_timer.data = (unsigned long)gpio_dev;
+	add_timer(&gpio_dev->rc_timer);
 
 	rc = gpio_request(pdata->gpio_nr, "gpio-ir-recv");
 	if (rc < 0)
@@ -189,8 +223,20 @@ static struct platform_driver gpio_ir_recv_driver = {
 	},
 };
 
+static struct platform_device gpio_ir_recv_device = {
+	.name	= GPIO_IR_DRIVER_NAME,
+	.id	= 0,
+};
+
 static int __init gpio_ir_recv_init(void)
 {
+	int ret;
+
+	ret = platform_device_register(&gpio_ir_recv_device);
+	if (ret < 0) {
+		pr_err("platform_device_register ir  failed, return %d\n", ret);
+		return ret;
+	}
 	return platform_driver_register(&gpio_ir_recv_driver);
 }
 module_init(gpio_ir_recv_init);

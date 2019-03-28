@@ -779,7 +779,7 @@ static struct snd_soc_dai_driver sunxi_spdif_dai = {
 	.ops = &sunxi_spdif_dai_ops,
 };		
 
-static int __init sunxi_spdif_dev_probe(struct platform_device *pdev)
+static int sunxi_spdif_dev_probe(struct platform_device *pdev)
 {
 	int reg_val = 0;
 	int ret = 0;

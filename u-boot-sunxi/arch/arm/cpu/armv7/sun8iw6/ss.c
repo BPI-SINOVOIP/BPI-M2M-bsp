@@ -1,3 +1,4 @@
+
 /*
 **********************************************************************************************************************
 *
@@ -71,7 +72,7 @@ static u32 __sha_padding(u32 data_size, u8* text, u32 hash_mode)
 	u32 k, q;
 	u32 size;
 	u32 padding_buf[16];
-    u8 *ptext;
+	u8 *ptext;
 
 	k = data_size/64;
 	q = data_size%64;
@@ -279,13 +280,12 @@ int  sunxi_sha_calc(u8 *dst_addr, u32 dst_len,
 	u32 total_len = 0;
 	u32 md_size = 0;
 	s32 i = 0;
-	u8  iv_buff[32 + 32], *p_iv;
-	u8  sign_buff[32 + 32], *p_sign;
 
-	memset(sign_buff, 0, sizeof(sign_buff));
-	memset(iv_buff, 0, sizeof(iv_buff));
-	p_iv 	= (u8 *)(((u32)iv_buff + 31)&(~31));
-	p_sign =  (u8 *)(((u32)sign_buff + 31)&(~31));
+	ALLOC_CACHE_ALIGN_BUFFER(u8,p_sign,CACHE_LINE_SIZE);
+	ALLOC_CACHE_ALIGN_BUFFER(u8,p_iv,CACHE_LINE_SIZE);
+
+	memset(p_iv, 0, CACHE_LINE_SIZE);
+
 	//set mode
 	reg_val = readl(SS_CTL);
 	reg_val &= ~(0xf<<2);
@@ -304,11 +304,11 @@ int  sunxi_sha_calc(u8 *dst_addr, u32 dst_len,
 	writel(0	      , SS_DATA_DST_HIGH_ADR);
 	//set src len
 	//while((*(volatile int *)0)!=1);
-	total_len = __sha_padding(src_len,(u8 *)src_addr, 1);	//计算明文长度
+	total_len = __sha_padding(src_len,(u8 *)src_addr, 1);
 
 	flush_cache((u32)src_addr, total_len);
-	flush_cache((u32)sign_buff, sizeof(sign_buff));
-	flush_cache((u32)iv_buff, sizeof(iv_buff));
+	flush_cache((u32)p_sign, CACHE_LINE_SIZE);
+	flush_cache((u32)p_iv, CACHE_LINE_SIZE);
 
 	writel(total_len/4,SS_DATA_LEN);
 	//set IV
@@ -329,9 +329,10 @@ int  sunxi_sha_calc(u8 *dst_addr, u32 dst_len,
 	//wait end
 	while((readl(SS_INT_STATUS)&0x01)==0);
 
+	invalidate_dcache_range((ulong)p_sign,(ulong)p_sign+CACHE_LINE_SIZE);
 	for(i=0; i< md_size; i++)
 	{
-	    dst_addr[i] = p_sign[i];   //从目的地址读生成的消息摘要
+	    dst_addr[i] = p_sign[i];
 	}
 	//clear SS end interrupt
 	reg_val = readl(SS_INT_STATUS);
@@ -369,21 +370,16 @@ s32 sunxi_rsa_calc(u8 * n_addr,   u32 n_len,
 				   u8 * dst_addr, u32 dst_len,
 				   u8 * src_addr, u32 src_len)
 {
-#define	TEMP_BUFF_LEN	((2048>>3) + 32)
+#define	TEMP_BUFF_LEN	((2048>>3) + CACHE_LINE_SIZE)
 
 	u32 reg_val = 0;
-	u8	temp_n_addr[TEMP_BUFF_LEN],   *p_n;
-	u8	temp_e_addr[TEMP_BUFF_LEN],   *p_e;
-	u8	temp_src_addr[TEMP_BUFF_LEN], *p_src;
-	u8	temp_dst_addr[TEMP_BUFF_LEN], *p_dst;
 	u32 mod_bit_size = 2048;
-
 	u32 mod_size_len_inbytes = mod_bit_size/8;
 
-	p_n = (u8 *)(((u32)temp_n_addr + 31)&(~31));
-	p_e = (u8 *)(((u32)temp_e_addr + 31)&(~31));
-	p_src = (u8 *)(((u32)temp_src_addr + 31)&(~31));
-	p_dst = (u8 *)(((u32)temp_dst_addr + 31)&(~31));
+	ALLOC_CACHE_ALIGN_BUFFER(u8,p_n,TEMP_BUFF_LEN);
+	ALLOC_CACHE_ALIGN_BUFFER(u8,p_e,TEMP_BUFF_LEN);
+	ALLOC_CACHE_ALIGN_BUFFER(u8,p_src,TEMP_BUFF_LEN);
+	ALLOC_CACHE_ALIGN_BUFFER(u8,p_dst,TEMP_BUFF_LEN);
 
 	__rsa_padding(p_src, src_addr, src_len, mod_size_len_inbytes);
 	__rsa_padding(p_n, n_addr, n_len, mod_size_len_inbytes);
@@ -415,6 +411,11 @@ s32 sunxi_rsa_calc(u8 * n_addr,   u32 n_len,
 	writel((u32)p_n  , SS_PM_LOW_ADR);
 	writel(0		 , SS_PM_HIGH_ADR);
 
+	flush_cache((u32)p_n, mod_size_len_inbytes);
+	flush_cache((u32)p_e, mod_size_len_inbytes);
+	flush_cache((u32)p_src, mod_size_len_inbytes);
+	flush_cache((u32)p_dst, mod_size_len_inbytes);
+
 	//enable INT
 	reg_val = readl(SS_INT_CTRL);
 	reg_val &= ~0x3;
@@ -428,6 +429,8 @@ s32 sunxi_rsa_calc(u8 * n_addr,   u32 n_len,
 	writel(reg_val,SS_CTL);
 	//wait end
 	while((readl(SS_INT_STATUS)&0x01)==0);
+
+	invalidate_dcache_range((ulong)p_dst,(ulong)p_dst+mod_bit_size);
 	//read dst data
 	__rsa_padding(dst_addr, p_dst, mod_bit_size/64, mod_bit_size/64);
 	//clear SS end interrupt

@@ -346,6 +346,8 @@ void putc(const char c)
 
 void puts(const char *s)
 {
+        if(!gd->debug_mode)
+            return;
 #ifdef CONFIG_SILENT_CONSOLE
 	if (gd->flags & GD_FLG_SILENT)
 		return;

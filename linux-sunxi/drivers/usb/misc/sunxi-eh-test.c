@@ -70,50 +70,66 @@ static char *sunxi_eh_get_ed_test_path(struct usb_interface *intf)
 
 	udev_sysfs_path = kobject_get_path(&udev->dev.kobj, GFP_KERNEL);
 
-#if defined (CONFIG_ARCH_SUN8IW3) /* aw1650, a23, a21 */
-	if (!strncmp(udev_sysfs_path, HOST0_SYSFS_PATH, strlen(HOST0_SYSFS_PATH))) /* usb0 */
+#if defined(CONFIG_ARCH_SUN8IW3)
+	if (!strncmp(udev_sysfs_path, HOST0_SYSFS_PATH,
+		strlen(HOST0_SYSFS_PATH))) /* usb0 */
 		ed_test_path = HOST0_ED_TEST_PATH;
-	else if (!strncmp(udev_sysfs_path, EHCI1_SYSFS_PATH, strlen(EHCI1_SYSFS_PATH))) /* usb1 */
+	else if (!strncmp(udev_sysfs_path, EHCI1_SYSFS_PATH,
+		strlen(EHCI1_SYSFS_PATH))) /* usb1 */
 		ed_test_path = EHCI1_ED_TEST_PATH;
-	else if (!strncmp(udev_sysfs_path, EHCI2_SYSFS_PATH, strlen(EHCI2_SYSFS_PATH))) /* usb2 */
+	else if (!strncmp(udev_sysfs_path, EHCI2_SYSFS_PATH,
+		strlen(EHCI2_SYSFS_PATH))) /* usb2 */
 		ed_test_path = EHCI2_ED_TEST_PATH;
 
-#elif defined (CONFIG_ARCH_SUN8IW5) /* aw1667, a33, r16, z35 */
-	if (!strncmp(udev_sysfs_path, HOST0_SYSFS_PATH, strlen(HOST0_SYSFS_PATH))) /* usb0 */
+#elif defined(CONFIG_ARCH_SUN8IW5)
+	if (!strncmp(udev_sysfs_path, HOST0_SYSFS_PATH,
+		strlen(HOST0_SYSFS_PATH))) /* usb0 */
 		ed_test_path = HOST0_ED_TEST_PATH;
-	else if (!strncmp(udev_sysfs_path, EHCI1_SYSFS_PATH, strlen(EHCI1_SYSFS_PATH))) /* usb1 */
+	else if (!strncmp(udev_sysfs_path, EHCI1_SYSFS_PATH,
+		strlen(EHCI1_SYSFS_PATH))) /* usb1 */
 		ed_test_path = EHCI1_ED_TEST_PATH;
 
-#elif defined (CONFIG_ARCH_SUN8IW6) /* aw1673, a83, r58, h8 */
-	if (!strncmp(udev_sysfs_path, HOST0_SYSFS_PATH, strlen(HOST0_SYSFS_PATH))) /* usb0 */
+#elif defined(CONFIG_ARCH_SUN8IW6)
+	if (!strncmp(udev_sysfs_path, HOST0_SYSFS_PATH,
+		strlen(HOST0_SYSFS_PATH))) /* usb0 */
 		ed_test_path = HOST0_ED_TEST_PATH;
-	else if (!strncmp(udev_sysfs_path, EHCI1_SYSFS_PATH, strlen(EHCI1_SYSFS_PATH))) /* usb1 */
+	else if (!strncmp(udev_sysfs_path, EHCI1_SYSFS_PATH,
+		strlen(EHCI1_SYSFS_PATH))) /* usb1 */
 		ed_test_path = EHCI1_ED_TEST_PATH;
 
-#elif defined (CONFIG_ARCH_SUN9IW1) /* aw1639, a80 */
-	if (!strncmp(udev_sysfs_path, EHCI1_SYSFS_PATH, strlen(EHCI1_SYSFS_PATH))) /* usb1 */
+#elif defined(CONFIG_ARCH_SUN9IW1)
+	if (!strncmp(udev_sysfs_path, EHCI1_SYSFS_PATH,
+		strlen(EHCI1_SYSFS_PATH))) /* usb1 */
 		ed_test_path = EHCI1_ED_TEST_PATH;
-	else if (!strncmp(udev_sysfs_path, EHCI3_SYSFS_PATH, strlen(EHCI3_SYSFS_PATH))) /* usb3 */
+	else if (!strncmp(udev_sysfs_path, EHCI3_SYSFS_PATH,
+		strlen(EHCI3_SYSFS_PATH))) /* usb3 */
 		ed_test_path = EHCI3_ED_TEST_PATH;
 
-#elif defined (CONFIG_ARCH_SUN8IW7) /* aw1680, h3, h2 */
-	if (!strncmp(udev_sysfs_path, EHCI1_SYSFS_PATH, strlen(EHCI1_SYSFS_PATH))) /* usb0 */
+#elif defined(CONFIG_ARCH_SUN8IW7)
+	if (!strncmp(udev_sysfs_path, EHCI1_SYSFS_PATH,
+		strlen(EHCI1_SYSFS_PATH))) /* usb0 */
 		ed_test_path = EHCI1_ED_TEST_PATH;
-	else if (!strncmp(udev_sysfs_path, EHCI2_SYSFS_PATH, strlen(EHCI2_SYSFS_PATH))) /* usb1 */
+	else if (!strncmp(udev_sysfs_path, EHCI2_SYSFS_PATH,
+		strlen(EHCI2_SYSFS_PATH))) /* usb1 */
 		ed_test_path = EHCI2_ED_TEST_PATH;
-	else if (!strncmp(udev_sysfs_path, EHCI3_SYSFS_PATH, strlen(EHCI3_SYSFS_PATH))) /* usb2 */
+	else if (!strncmp(udev_sysfs_path, EHCI3_SYSFS_PATH,
+		strlen(EHCI3_SYSFS_PATH))) /* usb2 */
 		ed_test_path = EHCI3_ED_TEST_PATH;
-	else if (!strncmp(udev_sysfs_path, EHCI4_SYSFS_PATH, strlen(EHCI4_SYSFS_PATH))) /* usb3 */
+	else if (!strncmp(udev_sysfs_path, EHCI4_SYSFS_PATH,
+		strlen(EHCI4_SYSFS_PATH))) /* usb3 */
 		ed_test_path = EHCI4_ED_TEST_PATH;
 
-#elif defined (CONFIG_ARCH_SUN8IW8) /* aw1681, v3, v3s */
-	if (!strncmp(udev_sysfs_path, EHCI1_SYSFS_PATH, strlen(EHCI1_SYSFS_PATH))) /* usb0 */
+#elif defined(CONFIG_ARCH_SUN8IW8)
+	if (!strncmp(udev_sysfs_path, EHCI1_SYSFS_PATH,
+		strlen(EHCI1_SYSFS_PATH))) /* usb0 */
 		ed_test_path = EHCI1_ED_TEST_PATH;
 
-#elif defined (CONFIG_ARCH_SUN8IW9) /* aw1677 */
-	if (!strncmp(udev_sysfs_path, HOST0_SYSFS_PATH, strlen(HOST0_SYSFS_PATH))) /* usb0 */
+#elif defined(CONFIG_ARCH_SUN8IW9)
+	if (!strncmp(udev_sysfs_path, HOST0_SYSFS_PATH,
+		strlen(HOST0_SYSFS_PATH))) /* usb0 */
 		ed_test_path = HOST0_ED_TEST_PATH;
-	else if (!strncmp(udev_sysfs_path, EHCI1_SYSFS_PATH, strlen(EHCI1_SYSFS_PATH))) /* usb1 */
+	else if (!strncmp(udev_sysfs_path, EHCI1_SYSFS_PATH,
+		strlen(EHCI1_SYSFS_PATH))) /* usb1 */
 		ed_test_path = EHCI1_ED_TEST_PATH;
 
 #endif
@@ -127,7 +143,7 @@ static void sunxi_eh_set_ed_test(struct usb_interface *intf, char *test_mode)
 	loff_t pos;
 	char *ed_test_path = NULL;
 
-	dev_info(&intf->dev, "sunxi_eh_set_ed_test2, test_mode:%s\n", test_mode);
+	dev_info(&intf->dev, "sunxi_eh_set_ed_test, test_mode:%s\n", test_mode);
 
 	ed_test_path = sunxi_eh_get_ed_test_path(intf);
 	if (ed_test_path == NULL) {

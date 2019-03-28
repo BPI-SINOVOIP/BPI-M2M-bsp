@@ -85,12 +85,12 @@ static u32 sunxi_load_arisc(void *image, u32 image_size, void *para, u32 para_si
 {
 	u32 ret;
 	struct tee_load_arisc_param *param;
-	
-	if ((image == NULL) || (image_size == 0) || 
+
+	if ((image == NULL) || (image_size == 0) ||
 	    (para == NULL) || (para_size == 0)) {
 		return -EINVAL;
 	}
-	
+
 	/* allocte param buffer */
 	param = kzalloc(sizeof(struct tee_load_arisc_param), GFP_KERNEL);
 	if (param == NULL) {
@@ -116,22 +116,22 @@ static u32 sunxi_load_arisc(void *image, u32 image_size, void *para, u32 para_si
 	}
 	param->para_size   = para_size;
 	param->para_offset = para_offset;
-	
+
 	/* do smc call */
 	ret = sunxi_do_fast_smc(TEE_SMC_PLAFORM_OPERATION, TE_SMC_LOAD_ARISC,
 	                    (u32)virt_to_phys(param), 0);
-	
+
 	kfree(param);
-	
+
 	return ret;
 }
 
 static u32 sunxi_sec_set_secondary_entry(void *entry)
 {
 	u32 ret;
-	
+
 	ret = sunxi_do_fast_smc(TEE_SMC_PLAFORM_OPERATION, TE_SMC_SET_SMP_BOOTENTRY, (u32)entry, 0);
-	
+
 	return ret;
 }
 

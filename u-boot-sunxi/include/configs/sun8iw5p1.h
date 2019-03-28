@@ -52,7 +52,7 @@
 
 #define UBOOT_START_SECTOR_IN_SPINOR     (24*1024/512)
 
-
+#define CONFIG_SPI_DUAL_MODE
 //#define CONFIG_A67_FPGA
 #define CONFIG_ARCH_SUN8IW5
 #define CONFIG_ARCH_SUN8IW5P1
@@ -186,6 +186,7 @@
 
 #define CONFIG_SUNXI_AXP
 #define CONFIG_SUNXI_AXP22
+#define CONFIG_SUNXI_AXP259
 #define CONFIG_SUNXI_AXP_MAIN        PMU_TYPE_22X
 #define PMU_SCRIPT_NAME                 "pmu1_para"
 //#define CONFIG_SUNXI_AXP_CONFIG_ONOFF
@@ -203,6 +204,13 @@
 //#define CONFIG_DISPLAY_BOARDINFO
 #undef CONFIG_DISPLAY_CPUINFO
 #undef CONFIG_DISPLAY_BOARDINFO
+
+/* USB SUSPORT */
+#define CONFIG_EHCI_DCACHE
+#define CONFIG_CMD_USB
+#define CONFIG_USB_STORAGE
+#define CONFIG_USB_EHCI
+#define CONFIG_USB_EHCI_SUNXI
 
 /* Serial & console */
 #define CONFIG_SYS_NS16550
@@ -320,7 +328,7 @@
 #define CONFIG_CMD_SAVEENV
 
 #define CONFIG_EXTRA_ENV_SETTINGS \
-	"bootdelay=5\0" \
+	"bootdelay=3\0" \
 	"bootcmd=run setargs_mmc boot_normal\0" \
 	"console=ttyS0,115200\0" \
 	"fbconsole=tty0\0" \
@@ -346,6 +354,11 @@
 #define CONFIG_BOOTCOMMAND	"nand read 50000000 boot;boota 50000000"
 #define CONFIG_SYS_BOOT_GET_CMDLINE
 #define CONFIG_AUTO_COMPLETE
+
+#define CONFIG_AUTO_UPDATE
+#define CONFIG_UDISK_AUTO_CHECK
+#define CONFIG_FS_FAT
+#define HAVE_BLOCK_DEVICE
 
 #define CONFIG_CMD_FAT			/* with this we can access bootfs in nand */
 #define CONFIG_CMD_BOOTA		/* boot android image */

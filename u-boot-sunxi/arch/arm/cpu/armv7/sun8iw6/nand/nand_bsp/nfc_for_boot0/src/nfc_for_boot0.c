@@ -21,6 +21,7 @@
 #include "../include/nand_drv_cfg.h"
 #include "../include/nfc.h"
 
+
 __u32 NandIOBase[2];
 __u32 NandIndex;
 __u32 	pagesize;
@@ -798,6 +799,8 @@ __s32 NFC_ChangMode(NFC_INIT_INFO *nand_info )
 	   cfg |= ( 0x2 << 8 );
     else if(nand_info->pagesize == 16 )       /*  8K  */
 	   cfg |= ( 0x3 << 8 );
+	else if((nand_info->pagesize > 16 )&&(nand_info->pagesize < 32 ))       /*  12K  */
+	   cfg |= ( 0x4 << 8 );
 	else if(nand_info->pagesize == 32 )       /*  16K  */
 	   cfg |= ( 0x4 << 8 );
 	else                                      /* default 4K */
@@ -817,7 +820,7 @@ __s32 NFC_ChangMode(NFC_INIT_INFO *nand_info )
     }
     else if((nand_info->ddr_type & 0x3) == 3)
 	{
-	    cfg |= 0x3f;
+	    cfg |= 0x1f;
 	    cfg |= 0x2<<8;
 	}
 	NFC_WRITE_REG(NFC_REG_TIMING_CTL,cfg);
@@ -1394,7 +1397,7 @@ __s32 _get_read_retry_cfg(__u8 *rr_cnt, __u8 *rr_reg_cnt, __u8 *rr_tab, __u8 *ot
 __s32 _read_otp_info_hynix(__u32 chip, __u8 *otp_chip)
 {
 	//__u32 rb_index;
-	__u32 i, ndie;
+	__u32 i, ndie;//j
 	__u8 *otp;
 	__u8 abuf[8]={0};
 	__u32 cfg;

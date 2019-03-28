@@ -1160,8 +1160,12 @@ static void uvc_video_decode_isoc(struct urb *urb, struct uvc_streaming *stream,
 							    buf);
 		} while (ret == -EAGAIN);
 
-		if (ret < 0)
+		if (ret < 0) {
+			if (ret == -ENODATA)
+				uvc_trace(UVC_TRACE_FRAME,
+						"uvc device irqqueue no buf\n");
 			continue;
+		}
 
 		/* Decode the payload data. */
 		uvc_video_decode_data(stream, buf, mem + ret,
@@ -1238,6 +1242,8 @@ static void uvc_video_decode_bulk(struct urb *urb, struct uvc_streaming *stream,
 			if (buf->state == UVC_BUF_STATE_READY)
 				buf = uvc_queue_next_buffer(&stream->queue,
 							    buf);
+			if (buf == NULL)
+				uvc_trace(UVC_TRACE_FRAME, "buf is NULL\n");
 		}
 
 		stream->bulk.header_size = 0;

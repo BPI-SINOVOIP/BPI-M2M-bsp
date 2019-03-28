@@ -6,6 +6,7 @@ power_supply-$(CONFIG_LEDS_TRIGGERS)	+= power_supply_leds.o
 
 obj-$(CONFIG_POWER_SUPPLY)	+= power_supply.o
 obj-$(CONFIG_SUNXI_KEY_POWER)	+= sunxi_key_power.o
+obj-$(CONFIG_SUNXI_KEY_POWER_INPUT)	+= sunxi_key_power_input.o
 obj-$(CONFIG_PDA_POWER)		+= pda_power.o
 obj-$(CONFIG_APM_POWER)		+= apm_power.o
 obj-$(CONFIG_MAX8925_POWER)	+= max8925_power.o

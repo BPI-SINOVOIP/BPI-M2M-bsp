@@ -1,7 +1,6 @@
 /* linux/drivers/video/sunxi/disp/dev_disp.c
  *
  * Copyright (c) 2013 Allwinnertech Co., Ltd.
- * Author: Tyle <tyle@allwinnertech.com>
  *
  * Display driver for sunxi platform
  *
@@ -20,7 +19,6 @@
 static disp_drv_info g_disp_drv;
 static u32 init_flag;
 
-#define MY_BYTE_ALIGN(x) ( ( (x + (4*1024-1)) >> 12) << 12)             /* alloc based on 4K byte */
 
 static u32 suspend_output_type[3] = {0,0,0};
 static u32 suspend_status = 0;//0:normal; suspend_status&1 != 0:in early_suspend; suspend_status&2 != 0:in suspend;

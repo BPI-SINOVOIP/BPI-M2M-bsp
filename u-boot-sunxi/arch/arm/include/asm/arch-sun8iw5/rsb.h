@@ -125,6 +125,7 @@
 /* RSB Device Slave Address */
 #define RSB_SADDR_AW1655		RSB_SADDR1
 #define RSB_SADDR_AW1653		RSB_SADDR2
+#define RSB_SADDR_AW1658		RSB_SADDR3//AXP259, 0x3a2
 #define RSB_SADDR1				(0x3A3)//AXP222(AW1655)
 #define RSB_SADDR2				(0x4E6)//(0x0273)
 #define RSB_SADDR3				(0x745)//(0x03a2)

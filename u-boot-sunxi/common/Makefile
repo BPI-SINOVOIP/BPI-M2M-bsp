@@ -43,6 +43,7 @@ COBJS-y += cmd_help.o
 COBJS-y += cmd_nvedit.o
 COBJS-y += cmd_version.o
 
+obj-y += cmd_nvedit.o
 # environment
 COBJS-y += env_common.o
 COBJS-$(CONFIG_ENV_IS_IN_DATAFLASH) += env_dataflash.o
@@ -92,6 +93,7 @@ COBJS-$(CONFIG_CMD_EEPROM) += cmd_eeprom.o
 COBJS-$(CONFIG_CMD_ELF) += cmd_elf.o
 COBJS-$(CONFIG_SYS_HUSH_PARSER) += cmd_exit.o
 COBJS-$(CONFIG_CMD_EXT2) += cmd_ext2.o
+COBJS-$(CONFIG_CMD_EXT4) += cmd_ext4.o
 COBJS-$(CONFIG_CMD_FAT) += cmd_fat.o
 COBJS-$(CONFIG_CMD_FDC)$(CONFIG_CMD_FDOS) += cmd_fdc.o
 COBJS-$(CONFIG_OF_LIBFDT) += cmd_fdt.o fdt_support.o

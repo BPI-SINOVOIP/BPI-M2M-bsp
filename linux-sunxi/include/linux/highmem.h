@@ -1,14 +1,3 @@
-/*
- * include/linux/highmem.h
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #ifndef _LINUX_HIGHMEM_H
 #define _LINUX_HIGHMEM_H
 
@@ -222,8 +211,23 @@ static inline struct page *
 alloc_zeroed_user_highpage_movable(struct vm_area_struct *vma,
 					unsigned long vaddr)
 {
+#ifndef CONFIG_CMA
 	return __alloc_zeroed_user_highpage(__GFP_MOVABLE, vma, vaddr);
+#else
+	return __alloc_zeroed_user_highpage(__GFP_MOVABLE|__GFP_CMA, vma,
+						vaddr);
+#endif
 }
+
+#ifdef CONFIG_CMA
+static inline struct page *
+alloc_zeroed_user_highpage_movable_cma(struct vm_area_struct *vma,
+						unsigned long vaddr)
+{
+	return __alloc_zeroed_user_highpage(__GFP_MOVABLE|__GFP_CMA, vma,
+						vaddr);
+}
+#endif
 
 static inline void clear_highpage(struct page *page)
 {

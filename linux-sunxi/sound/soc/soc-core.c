@@ -583,10 +583,14 @@ int snd_soc_suspend(struct device *dev)
 					  SND_SOC_DAPM_STREAM_SUSPEND);
 	}
 
+	dapm_mark_io_dirty(&card->dapm);
+	snd_soc_dapm_sync(&card->dapm);
+
 	/* suspend all CODECs */
 	list_for_each_entry(codec, &card->codec_dev_list, card_list) {
 		/* If there are paths active then the CODEC will be held with
 		 * bias _ON and should not be suspended. */
+
 		if (!codec->suspended && codec->driver->suspend) {
 			switch (codec->dapm.bias_level) {
 			case SND_SOC_BIAS_STANDBY:
@@ -731,6 +735,7 @@ static void soc_resume_deferred(struct work_struct *work)
 
 	/* userspace can access us now we are back as we were before */
 	snd_power_change_state(card->snd_card, SNDRV_CTL_POWER_D0);
+
 }
 
 /* powers up audio subsystem after a suspend */

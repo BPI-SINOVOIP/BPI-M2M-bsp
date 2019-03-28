@@ -1369,6 +1369,14 @@ config SERIAL_SUNXI
 	  If you have an Allwinner SOC based board and want to use the
 	  built-in UART of the SoC, say Y to this option.
 
+config SERIAL_SUNXI_DMA
+	bool "SUNXI UART USE DMA"
+	depends on SERIAL_SUNXI=y
+	default n
+	help
+	  If you have an Allwinner SOC based board and want to use the
+	  built-in UART DMA of the SoC, say Y to this option.
+
 config SERIAL_SUNXI_CONSOLE
 	bool "Console on SUNXI UART port"
 	depends on SERIAL_SUNXI=y

@@ -116,7 +116,7 @@ static int mmc_clk_io_onoff(int sdc_no, int onoff, const normal_gpio_cfg *gpio_i
 	}
 	else // if(sdc_no == 2)
 	{
-		boot_set_gpio((void *)(gpio_info + offset), 8, 1);
+		boot_set_gpio((void *)(gpio_info + offset), 11, 1);
 	}
 	/* config ahb clock */
 	rval = readl(mmchost->hclkbase);

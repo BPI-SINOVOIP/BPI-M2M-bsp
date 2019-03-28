@@ -1,13 +1,3 @@
-/*
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 extern int fds_run_sl(struct iomap_para reg_addr,struct drammap_para_addr mem_addr,fds_dev_info* ptr_fds_info);
 extern int fds_get_status_sl(struct iomap_para reg_addr);
 extern long fds_get_rtl_sl(fds_dev_info* ptr_fds_info,struct iomap_para reg_addr,struct drammap_para_addr mem_addr,unsigned char* ptr_rtl_det_buf,int frame_num);

@@ -277,7 +277,7 @@ int sunxi_tr_request(void)
 #endif
 	}
 	mutex_unlock(&gsunxi_dev->mlock);
-	//pr_info("%s, count=%d\n", __func__, count);
+	pr_info("%s, count=%d\n", __func__, count);
 
 	return (int)tr;
 }
@@ -315,7 +315,7 @@ int sunxi_tr_release(int hdl)
 		sunxi_tr_clk_disable(gsunxi_dev->clk);
 	}
 	mutex_unlock(&gsunxi_dev->mlock);
-	//pr_info("%s, count=%d\n", __func__, count);
+	pr_info("%s, count=%d\n", __func__, count);
 
 	return 0;
 }

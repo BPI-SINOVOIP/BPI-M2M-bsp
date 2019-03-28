@@ -144,7 +144,11 @@ static int Fb_map_video_memory(struct fb_info *info)
 #else
 	info->screen_base = (char __iomem *)disp_malloc(info->fix.smem_len, (u32 *)(&info->fix.smem_start));
 	if(info->screen_base)	{
-		__inf("Fb_map_video_memory(reserve), pa=0x%x size:0x%x\n",(unsigned int)info->fix.smem_start, (unsigned int)info->fix.smem_len);
+		__inf("%s(reserve),va=0x%p, pa=0x%p size:0x%x\n", __func__,
+			(void *)info->screen_base,
+			(void *)info->fix.smem_start,
+			(unsigned int)info->fix.smem_len);
+
 		memset((void* __force)info->screen_base,0x0,info->fix.smem_len);
 
 		g_fb_addr.fb_paddr = (unsigned int)info->fix.smem_start;
@@ -168,7 +172,22 @@ static inline void Fb_unmap_video_memory(struct fb_info *info)
 
 	free_pages((unsigned long)info->screen_base,get_order(map_size));
 #else
+       if (!info->screen_base) {
+               __wrn("%s: screen_base is null\n", __func__);
+               return;
+       }
+	__inf("%s: screen_base=0x%p, smem=0x%p, len=0x%x\n", __func__,
+		(void *)info->screen_base,
+		(void *)info->fix.smem_start,
+		info->fix.smem_len);
+
 	disp_free((void * __force)info->screen_base, (void*)info->fix.smem_start, info->fix.smem_len);
+	
+	info->screen_base = 0;
+	info->fix.smem_start = 0;
+	g_fb_addr.fb_paddr = 0;
+	g_fb_addr.fb_size = 0;
+
 #endif
 }
 
@@ -528,7 +547,9 @@ static int sunxi_fb_pan_display(struct fb_var_screeninfo *var,struct fb_info *in
 {
 	u32 sel = 0;
 	u32 num_screens;
+	disp_rect dirty_rect;
 
+	int need_wait_vsync = 1;
 	num_screens = bsp_disp_feat_get_num_screens();
 
 	__inf("fb %d, pos=%d,%d\n", info->node, var->xoffset, var->yoffset);
@@ -543,26 +564,52 @@ static int sunxi_fb_pan_display(struct fb_var_screeninfo *var,struct fb_info *in
 			struct disp_manager *mgr = g_disp_drv.mgr[sel];
 
 			memset(&config, 0, sizeof(disp_layer_config));
-			if(mgr && mgr->get_layer_config && mgr->set_layer_config) {
+			if (mgr && mgr->get_layer_config && mgr->set_layer_config) {
 				config.channel = chan;
 				config.layer_id = layer_id;
-				if(0 != mgr->get_layer_config(mgr, &config, 1)) {
-					__wrn("fb %d, get_layer_config(%d,%d,%d) fail\n", info->node, sel, chan, layer_id);
+				if (0 != mgr->get_layer_config(mgr, &config, 1)) {
+					__wrn("fb %d, get_layer_config(%d,%d,%d) fail\n",
+							info->node, sel, chan, layer_id);
 					return -1;
+				}
+				if (mgr->rot_sw) {
+					if (0 != var->reserved[2] && 0 != var->reserved[3]) {
+						dirty_rect.x = var->reserved[0];
+						dirty_rect.y = var->reserved[1];
+						dirty_rect.width = var->reserved[2];
+						dirty_rect.height = var->reserved[3];
+					} else {
+						dirty_rect.x = 0;
+						dirty_rect.y = 0;
+						dirty_rect.width = 0;
+						dirty_rect.height = 0;
+						return 0;
+					}
+					if (mgr->rot_sw->checkout)
+						mgr->rot_sw->checkout(mgr->rot_sw, &config);
 				}
 				config.info.fb.crop.x = ((long long)var->xoffset) << 32;
 				config.info.fb.crop.y = ((unsigned long long)(var->yoffset + y_offset)) << 32;;
 				config.info.fb.crop.width = ((long long)var->xres) << 32;
 				config.info.fb.crop.height = ((long long)(var->yres / buffer_num)) << 32;
-				if(0 != mgr->set_layer_config(mgr, &config, 1)) {
-					__wrn("fb %d, set_layer_config(%d,%d,%d) fail\n", info->node, sel, chan, layer_id);
+				if (mgr->rot_sw && mgr->rot_sw->apply) {
+					if (0 != mgr->rot_sw->apply(mgr->rot_sw, &config, dirty_rect)) {
+						__inf("rot sw need not apply, then return\n");
+						return 0;
+					}
+					need_wait_vsync = 0;
+				}
+				if (0 != mgr->set_layer_config(mgr, &config, 1)) {
+					__wrn("fb %d, set_layer_config(%d,%d,%d) fail\n",
+							info->node, sel, chan, layer_id);
 					return -1;
 				}
 			}
 		}
 	}
 
-	fb_wait_for_vsync(info);
+	if (1 == need_wait_vsync)
+		fb_wait_for_vsync(info);
 
 	return 0;
 }
@@ -682,6 +729,43 @@ static int sunxi_fb_cursor(struct fb_info *info, struct fb_cursor *cursor)
 {
 	__inf("sunxi_fb_cursor\n");
 
+	return 0;
+}
+
+static int sunxi_fb_mmap(struct fb_info *info, struct vm_area_struct *vma)
+{
+	unsigned long off;
+	unsigned long start;
+	u32 len;
+
+	off = vma->vm_pgoff << PAGE_SHIFT;
+
+	/* frame buffer memory */
+	start = info->fix.smem_start;
+	if (start == 0)
+		return -EINVAL;
+	len = PAGE_ALIGN((start & ~PAGE_MASK) + info->fix.smem_len);
+	if (off >= len) {
+		/* memory mapped io */
+		off -= len;
+		if (info->var.accel_flags)
+			return -EINVAL;
+		start = info->fix.mmio_start;
+		len = PAGE_ALIGN((start & ~PAGE_MASK) + info->fix.mmio_len);
+	}
+	start &= PAGE_MASK;
+	if ((vma->vm_end - vma->vm_start + off) > len)
+		return -EINVAL;
+	off += start;
+	vma->vm_pgoff = off >> PAGE_SHIFT;
+	/* This is an IO map - tell maydump to skip this VMA */
+	vma->vm_flags |= VM_IO | VM_RESERVED;
+	vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);
+	/*fb_pgprotect*/
+	vma->vm_page_prot = pgprot_writecombine(vma->vm_page_prot);
+	if (io_remap_pfn_range(vma, vma->vm_start, off >> PAGE_SHIFT,
+                            vma->vm_end - vma->vm_start, vma->vm_page_prot))
+		return -EAGAIN;
 	return 0;
 }
 
@@ -845,6 +929,57 @@ static int sunxi_fb_ioctl(struct fb_info *info, unsigned int cmd,unsigned long a
 		//ret = fb_wait_for_vsync(info);
 		break;
 	}
+	
+	case FBIO_FREE:
+	{
+		int fb_id = 0; /* fb0 */
+		struct fb_info *fbinfo = g_fbi.fbinfo[fb_id];
+
+		if ((!g_fbi.fb_enable[fb_id])
+			|| (fbinfo != info)) {
+			__wrn("%s, fb%d already release ?" \
+				" or fb_info mismatch: fbinfo=0x%p, info=0x%p\n",
+				__func__, fb_id, fbinfo, info);
+			return -1;
+		}
+		
+		__inf("### FBIO_FREE ###\n");
+
+		Fb_unmap_video_memory(fbinfo);
+
+		/* unbound fb0 from layer(1,0)  */
+		g_fbi.layer_hdl[fb_id][0] = 0;
+		g_fbi.layer_hdl[fb_id][1] = 0;
+		g_fbi.fb_mode[fb_id] = 0;
+		g_fbi.fb_enable[fb_id] = 0;
+		break;
+	}
+
+	case FBIO_ALLOC:
+	{
+		int fb_id = 0; /* fb0 */
+		struct fb_info *fbinfo = g_fbi.fbinfo[fb_id];
+
+		if (g_fbi.fb_enable[fb_id]
+			|| (fbinfo != info)) {
+			__wrn("%s, fb%d already enable ?" \
+				" or fb_info mismatch: fbinfo=0x%p, info=0x%p\n",
+				__func__, fb_id, fbinfo, info);
+			return -1;
+		}
+
+		__inf("### FBIO_ALLOC ###\n");
+
+		/* fb0 bound to layer(1,0)  */
+		g_fbi.layer_hdl[fb_id][0] = 1;
+		g_fbi.layer_hdl[fb_id][1] = 0;
+
+		Fb_map_video_memory(fbinfo);
+
+		g_fbi.fb_mode[fb_id] = g_fbi.fb_para[fb_id].fb_mode;
+		g_fbi.fb_enable[fb_id] = 1;
+		break;
+	}
 
 	default:
 		break;
@@ -863,6 +998,7 @@ static struct fb_ops dispfb_ops =
 	.fb_set_par     = sunxi_fb_set_par,
 	.fb_blank       = sunxi_fb_blank,
 	.fb_cursor      = sunxi_fb_cursor,
+	.fb_mmap        = sunxi_fb_mmap,
 #if defined(CONFIG_FB_CONSOLE_SUNXI)
 	.fb_fillrect    = cfb_fillrect,
 	.fb_copyarea    = cfb_copyarea,
@@ -910,7 +1046,7 @@ static int Fb_map_kernel_logo(__u32 sel, struct fb_info *info)
 
 	bmp_bpix = bmp->header.bit_count/8;
 
-	if((bmp_bpix != 3) && (bmp_bpix != 4)) {
+	if ((bmp_bpix != 2) && (bmp_bpix != 3) && (bmp_bpix != 4)) {
 		return -1;
 	}
 
@@ -936,6 +1072,8 @@ static int Fb_map_kernel_logo(__u32 sel, struct fb_info *info)
 		info->var.bits_per_pixel = 24;
 	else if(bmp_bpix == 4)
 		info->var.bits_per_pixel = 32;
+	else if (bmp_bpix == 2)
+		info->var.bits_per_pixel = 16;
 	else
 		info->var.bits_per_pixel = 32;
 
@@ -1095,9 +1233,14 @@ static s32 display_fb_request(u32 fb_id, disp_fb_create_info *fb_para)
 	u32 sel;
 	u32 xres, yres;
 	u32 num_screens;
+#ifdef CONFIG_ARCH_SUN8IW8
 	/* fb bound to layer(1,0)  */
+	g_fbi.layer_hdl[fb_id][0] = 2;
+	g_fbi.layer_hdl[fb_id][1] = 0;
+#else
 	g_fbi.layer_hdl[fb_id][0] = 1;
 	g_fbi.layer_hdl[fb_id][1] = 0;
+#endif
 
 	num_screens = bsp_disp_feat_get_num_screens();
 
@@ -1161,12 +1304,30 @@ static s32 display_fb_request(u32 fb_id, disp_fb_create_info *fb_para)
 				}
 			}
 
-			config.info.screen_win.width = (0 == fb_para->output_width)? src_width:fb_para->output_width;
-			config.info.screen_win.height = (0 == fb_para->output_height)? src_width:fb_para->output_height;
-
+			if (mgr && mgr->rot_sw &&
+				(ROTATION_SW_90 == mgr->rot_sw->degree ||
+				ROTATION_SW_270 == mgr->rot_sw->degree)) {
+				config.info.screen_win.height = (0 == fb_para->output_width)
+					? src_width : fb_para->output_width;
+				config.info.screen_win.width = (0 == fb_para->output_height)
+					? src_width : fb_para->output_height;
+				printk("rot_degree =%d, w=%d, h=%d\n", mgr->rot_sw->degree,
+					config.info.screen_win.width, config.info.screen_win.height);
+			} else {
+			config.info.screen_win.width
+				= (0 == fb_para->output_width) ? src_width : fb_para->output_width;
+			config.info.screen_win.height
+				= (0 == fb_para->output_height) ? src_width : fb_para->output_height;
+			}
 			config.info.mode = LAYER_MODE_BUFFER;
+#ifdef CONFIG_ARCH_SUN8IW8
+			config.info.zorder = 11;
+			config.info.alpha_mode = 1;
+			config.info.alpha_value = 0x80;
+#else
 			config.info.alpha_mode = 1;
 			config.info.alpha_value = 0xff;
+#endif
 			config.info.fb.crop.x = ((long long)0) << 32;
 			config.info.fb.crop.y = ((long long)y_offset) << 32;
 			config.info.fb.crop.width = ((long long)src_width) << 32;
@@ -1187,7 +1348,15 @@ static s32 display_fb_request(u32 fb_id, disp_fb_create_info *fb_para)
 			config.info.fb.size[2].height = fb_para->height;
 			config.info.fb.color_space = DISP_BT601;
 
-			if(mgr && mgr->set_layer_config)
+			if (mgr && mgr->rot_sw && mgr->rot_sw->apply) {
+				disp_rect dirty_rect;
+				dirty_rect.x = config.info.fb.crop.x >> 32;
+				dirty_rect.y = config.info.fb.crop.y >> 32;
+				dirty_rect.width = config.info.fb.crop.width >> 32;
+				dirty_rect.height = config.info.fb.crop.height >> 32;
+				mgr->rot_sw->apply(mgr->rot_sw, &config, dirty_rect);
+			}
+			if (mgr && mgr->set_layer_config)
 				mgr->set_layer_config(mgr, &config, 1);
 		}
 	}

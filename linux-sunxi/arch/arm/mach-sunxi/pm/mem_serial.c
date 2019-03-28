@@ -1,14 +1,3 @@
-/*
- * arch/arm/mach-sunxi/pm/mem_serial.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 /**
  * serial.c - common operations
  * date:    2012-2-13 8:42:56

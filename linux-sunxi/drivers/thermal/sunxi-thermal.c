@@ -369,7 +369,8 @@ int sunxi_ths_register_thermal(struct sunxi_thermal_zone *ths_zone)
 	int ret = 0;
     ths_zone->ptrend =  kzalloc(sizeof(struct sunxi_thermal_zone_trend_info),GFP_KERNEL);
 	ths_zone->therm_dev = thermal_zone_device_register(ths_zone->name,
-		ths_zone->sunxi_ths_sensor_conf->trip_data->trip_count, 0, ths_zone, &sunxi_ths_dev_ops, NULL, 0,
+		ths_zone->sunxi_ths_sensor_conf->trip_data->trip_count, 0,
+		ths_zone, &sunxi_ths_dev_ops, NULL, ACTIVE_INTERVAL,
 		IDLE_INTERVAL);
 
 	if (IS_ERR(ths_zone->therm_dev)) {

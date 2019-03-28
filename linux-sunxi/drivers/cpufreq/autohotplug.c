@@ -1,14 +1,3 @@
-/*
- * drivers/cpufreq/autohotplug.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #include <linux/cpu.h>
 #include <linux/cpumask.h>
 #include <linux/cpufreq.h>
@@ -229,7 +218,7 @@ int do_cpu_down(unsigned int cpu)
 
 }
 
-int do_cpu_up(unsigned int cpu)
+int __ref do_cpu_up(unsigned int cpu)
 {
 	int i, c0_online = 0, c1_online = 0;
     struct cpumask* c0_mask;

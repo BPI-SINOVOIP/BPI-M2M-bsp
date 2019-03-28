@@ -36,6 +36,8 @@
 #include <sys_config.h>
 #include <asm/arch/clock.h>
 
+#include "mmc_test.h"
+
 DECLARE_GLOBAL_DATA_PTR;
 /* Set block count limit because of 16 bit register limit on some hardware*/
 #ifndef CONFIG_SYS_MMC_MAX_BLK_COUNT
@@ -200,6 +202,8 @@ int mmc_set_blocklen(struct mmc *mmc, int len)
 int mmc_set_erase_start_addr(struct mmc *mmc, unsigned int address)
 {
 	struct mmc_cmd cmd;
+	int err = 0;
+	int timeout = 300; //ms
 
 	cmd.cmdidx = MMC_CMD_ERASE_GROUP_START;
 	cmd.resp_type = MMC_RSP_R1;
@@ -210,12 +214,23 @@ int mmc_set_erase_start_addr(struct mmc *mmc, unsigned int address)
 	else
 		cmd.cmdarg = address * mmc->write_bl_len;
 
-	return mmc_send_cmd(mmc, &cmd, NULL);
+	err = mmc_send_cmd(mmc, &cmd, NULL);
+	if (err) {
+		MMCINFO("%s: send erase start addr failed\n", __FUNCTION__);
+		goto ERR_RET;
+	}
+
+	err = mmc_send_status(mmc, timeout); //ms
+
+ERR_RET:
+	return err;
 }
 
 int mmc_set_erase_end_addr(struct mmc *mmc, unsigned int address)
 {
 	struct mmc_cmd cmd;
+	int err = 0;
+	int timeout = 300; //ms
 
 	cmd.cmdidx = MMC_CMD_ERASE_GROUP_END;
 	cmd.resp_type = MMC_RSP_R1;
@@ -226,7 +241,16 @@ int mmc_set_erase_end_addr(struct mmc *mmc, unsigned int address)
 	else
 		cmd.cmdarg = address * mmc->write_bl_len;
 
-	return mmc_send_cmd(mmc, &cmd, NULL);
+	err = mmc_send_cmd(mmc, &cmd, NULL);
+	if (err) {
+		MMCINFO("%s: send erase end addr failed\n", __FUNCTION__);
+		goto ERR_RET;
+	}
+
+	err = mmc_send_status(mmc, timeout); //ms
+
+ERR_RET:
+	return err;
 }
 
 int mmc_launch_erase(struct mmc *mmc, unsigned int erase_arg)
@@ -318,6 +342,21 @@ unsigned int mmc_mmc_update_timeout(struct mmc *mmc)
 		mmc->secure_erase_timeout = mmc->erase_timeout * mmc_ext_csd.sec_erase_mult;
 		mmc->secure_trim_timeout  = mmc->erase_timeout * mmc_ext_csd.sec_trim_mult;
 	}
+	else
+	{
+		if (mmc_ext_csd.rev == 3) {
+			if (mmc_ext_csd.erase_group_def && mmc_ext_csd.hc_erase_timeout)
+				mmc->erase_timeout = mmc_ext_csd.hc_erase_timeout;
+			else
+				mmc->erase_timeout = mmc_mmc_def_erase_timeout(mmc);
+		} else {
+			mmc->erase_timeout = mmc_mmc_def_erase_timeout(mmc);
+		}
+
+		mmc->trim_discard_timeout = 0x0;
+		mmc->secure_erase_timeout = 0x0;
+		mmc->secure_trim_timeout  = 0x0;
+	}
 
 ERR_RET:
 	MMCDBG("---%s %d\n", __FUNCTION__, ret);
@@ -329,15 +368,31 @@ unsigned int mmc_mmc_erase_timeout(struct mmc *mmc, unsigned int arg,
 {
 	unsigned int erase_timeout = 0;
 
-	if (arg == MMC_DISCARD_ARG || arg == MMC_TRIM_ARG)
+	if (arg == MMC_DISCARD_ARG || arg == MMC_TRIM_ARG) {
+		if (!mmc->trim_discard_timeout) {
+			MMCINFO("invalid trim_discard_timeout is %d\n", mmc->trim_discard_timeout);
+			goto ERR_RET;
+		}
 		erase_timeout = mmc->trim_discard_timeout;
-	else if (arg == MMC_ERASE_ARG)
+	} else if (arg == MMC_ERASE_ARG) {
+		if (!mmc->erase_timeout) {
+			MMCINFO("invalid erase_timeout is %d\n", mmc->erase_timeout);
+			goto ERR_RET;
+		}
 		erase_timeout = mmc->erase_timeout;
-	else if (arg == MMC_SECURE_ERASE_ARG)
+	} else if (arg == MMC_SECURE_ERASE_ARG) {
+		if (!mmc->secure_erase_timeout) {
+			MMCINFO("invalid secure_erase_timeout is %d\n", mmc->secure_erase_timeout);
+			goto ERR_RET;
+		}
 		erase_timeout = mmc->secure_erase_timeout;
-	else if (arg == MMC_SECURE_TRIM1_ARG || arg == MMC_SECURE_TRIM2_ARG)
+	} else if (arg == MMC_SECURE_TRIM1_ARG || arg == MMC_SECURE_TRIM2_ARG) {
+		if (!mmc->secure_trim_timeout) {
+			MMCINFO("invalid secure_trim_timeout is %d\n", mmc->secure_trim_timeout);
+			goto ERR_RET;
+		}
 		erase_timeout = mmc->secure_trim_timeout;
-	else {
+	} else {
 		MMCINFO("Unknown erase argument 0x%x\n", arg);
 		goto ERR_RET;
 	}
@@ -1944,7 +1999,7 @@ static int sdmmc_secure_storage_read(s32 dev_num,u32 item,u8 *buf , lbaint_t blk
 		MMCINFO("read first backup failed in fun %s line %d\n",__FUNCTION__,__LINE__);
 		ret = -1;
 	}
-	
+
 out:
 	return ret;
 }
@@ -2199,10 +2254,10 @@ static int mmc_decode_ext_csd(struct mmc *mmc,
 
 
 	dec_ext_csd->rev = ext_csd[EXT_CSD_REV];
-	if (dec_ext_csd->rev > 7) {
-		MMCINFO("unrecognised EXT_CSD revision %d\n", dec_ext_csd->rev);
-		err = -1;
-		goto out;
+	if (dec_ext_csd->rev > 8) {
+		MMCINFO("unrecognised EXT_CSD revision %d, maybe ver5.2 or later version!\n", dec_ext_csd->rev);
+		//err = -1;
+		//goto out;
 	}
 
 	dec_ext_csd->raw_sectors[0] = ext_csd[EXT_CSD_SEC_CNT + 0];
@@ -2267,7 +2322,7 @@ static int mmc_decode_ext_csd(struct mmc *mmc,
 		dec_ext_csd->data_sector_size = 512;
 	}
 
-out:
+//out:
 	return err;
 }
 
@@ -2306,6 +2361,65 @@ int mmc_switch(struct mmc *mmc, u8 set, u8 index, u8 value)
 	int timeout = 1000;
 	return mmc_do_switch(mmc, set, index, value, timeout);
 }
+
+static int mmc_en_emmc_hw_rst(struct mmc *mmc)
+{
+		char ext_csd[512] = {0};
+		int err;
+
+		err = mmc_send_ext_csd(mmc, ext_csd);
+		if (err) {
+			MMCINFO("mmc get extcsd fail -0\n");
+			return err;
+		}
+
+		if (ext_csd[162] & 0x1) {
+			MMCINFO("hw rst already enabled\n");
+			goto OUT;
+		}
+
+		err = mmc_switch(mmc, EXT_CSD_CMD_SET_NORMAL, \
+				EXT_CSD_RST_N_FUNCTION, EXT_CSD_RST_N_ENABLE);
+		if (err) {
+			MMCINFO("mmc enable hw rst fail\n");
+			return err;
+		}
+
+		err = mmc_send_ext_csd(mmc, ext_csd);
+		if (err) {
+			MMCINFO("mmc get extcsd fail -1\n");
+			return err;
+		}
+
+		if (!(ext_csd[162] & 0x1)) {
+			MMCINFO("en hw rst fail, 0x%x\n", ext_csd[162]);
+			return -1;
+		} else {
+			MMCINFO("en hw rst ok, 0x%x\n", ext_csd[162]);
+		}
+
+OUT:
+		return 0;
+}
+
+
+static int mmc_chk_emmc_hw_rst(struct mmc *mmc)
+{
+		char ext_csd[512] = {0};
+		int err;
+
+		err = mmc_send_ext_csd(mmc, ext_csd);
+		if (err) {
+			MMCINFO("mmc get extcsd fail -0\n");
+			return err;
+		}
+
+		if (ext_csd[162] & 0x1)
+			MMCINFO("Warining:hw rst already enabled!!!!!\n");
+		return  0;
+}
+
+
 
 int mmc_change_freq(struct mmc *mmc)
 {
@@ -2496,6 +2610,32 @@ int mmc_switch_part(int dev_num, unsigned int part_num)
 	MMCDBG("switch part succeed\n");
 	return ret;
 
+}
+
+
+int mmc_select_hwpart(int dev_num, int hwpart)
+{
+	struct mmc *mmc = find_mmc_device(dev_num);
+	int ret;
+
+	if (!mmc)
+		return -1;
+
+	if (mmc->part_num == hwpart)
+		return 0;
+
+	if (mmc->part_config == MMCPART_NOAVAILABLE) {
+		printf("Card doesn't support part_switch\n");
+		return -1;
+	}
+
+	ret = mmc_switch_part(dev_num, hwpart);
+	if (ret)
+		return ret;
+
+	mmc->part_num = hwpart;
+
+	return 0;
 }
 
 int sd_switch(struct mmc *mmc, int mode, int group, u8 value, u8 *resp)
@@ -2879,8 +3019,14 @@ int mmc_startup(struct mmc *mmc)
 				case 7:
 					mmc->version = MMC_VERSION_5_0;
 					break;
+				case 8:
+					mmc->version = MMC_VERSION_5_1;
+					break;
 				default:
-					MMCINFO("Invalid ext_csd revision %d\n", ext_csd[192]);
+					if (ext_csd[EXT_CSD_REV] > 8)
+						mmc->version = MMC_VERSION_NEW_VER;
+					else
+						MMCINFO("Invalid ext_csd revision %d\n", ext_csd[192]);
 					break;
 			}
 		}
@@ -2965,7 +3111,7 @@ int mmc_startup(struct mmc *mmc)
 		MMCINFO("Change speed mode failed\n");
 		return err;
 	}
-	
+
 	/* for re-update sample phase */
 	err = mmc_update_phase(mmc);
 	if (err)
@@ -2973,7 +3119,7 @@ int mmc_startup(struct mmc *mmc)
 		MMCINFO("update clock failed\n");
 		return err;
 	}
-	
+
 	/* Restrict card's capabilities by what the host can do */
 	mmc->card_caps &= mmc->host_caps;
 
@@ -3154,20 +3300,37 @@ int mmc_startup(struct mmc *mmc)
 			case MMC_VERSION_5_0:
 				MMCINFO("MMC ver 5.0\n");
 				break;
+			case MMC_VERSION_5_1:
+				MMCINFO("MMC v5.1\n");
+				break;
+			case MMC_VERSION_NEW_VER:
+				MMCINFO("MMC v5.2 or later version\n");
+				break;
 			default:
 				MMCINFO("Unknow MMC ver\n");
 				break;
 		}
 	}
 
-	mmc->clock_after_init = mmc->clock;//back up clock after mmc init
+	mmc->clock_after_init = mmc->clock;/*back up clock after mmc init*/
+	if (!IS_SD(mmc)) {
+		if (mmc->drv_hwrst_feature & DRV_PARA_ENABLE_EMMC_HWRST) {
+			err = mmc_en_emmc_hw_rst(mmc);
+			if (err)
+				return err;
+		} else {
+			err = mmc_chk_emmc_hw_rst(mmc);
+			if (err)
+				return err;
+		}
+	}
 
 	MMCINFO("mmc clk %d\n", mmc->clock);
 	//MMCINFO("---mmc bus_width %d---\n", mmc->bus_width);
 	MMCINFO("SD/MMC Card: %dbit, capacity: %ldMB\n",(mmc->card_caps & MMC_MODE_8BIT)?8:(mmc->card_caps & MMC_MODE_4BIT ? 4 : 1), mmc->block_dev.lba>>11);
 	MMCINFO("boot0 capacity: %dKB,boot1 capacity: %dKB\n"
 						,mmc->boot1_lba*512/1024,mmc->boot2_lba*512/1024);
-	MMCINFO("***SD/MMC %d init OK!!!***\n",mmc->control_num);
+	MMCINFO("***SD/MMC %d init OK!!!***\n", mmc->control_num);
 	//init_part(&mmc->block_dev);
 
 	return 0;
@@ -5355,7 +5518,6 @@ retry:
 		goto retry;
 	}
 
-
 	err = sunxi_write_tuning(mmc);
 	if(err){
 		MMCINFO("Write pattern failed\n");
@@ -5515,17 +5677,49 @@ int mmc_init(struct mmc *mmc)
 	//MMCINFO("trim_discard_to:         %d ms\n", mmc->trim_discard_timeout);
 	//MMCINFO("secure_tirm_to:          %d ms\n", mmc->secure_erase_timeout);
 	//MMCINFO("secure_erase_to:         %d ms\n", mmc->secure_trim_timeout);
-	
-    
-    MMCDBG("support sanitze:         %d \n", mmc->secure_feature & EXT_CSD_SEC_SANITIZE);
-	MMCDBG("support trim:            %d \n", mmc->secure_feature & EXT_CSD_SEC_GB_CL_EN);
-	MMCDBG("support secure purge op: %d \n", mmc->secure_feature & EXT_CSD_SEC_ER_EN);
-	MMCDBG("secure removal type:     0x%x\n", mmc->secure_removal_type);
-	
+
+	MMCDBG("support sanitze:         %d\n",\
+			mmc->secure_feature & EXT_CSD_SEC_SANITIZE);
+	MMCDBG("support trim:            %d\n", \
+			mmc->secure_feature & EXT_CSD_SEC_GB_CL_EN);
+	MMCDBG("support secure purge op: %d\n", \
+			mmc->secure_feature & EXT_CSD_SEC_ER_EN);
+	MMCDBG("secure removal type:     0x%x\n", \
+			mmc->secure_removal_type);
+
     MMCINFO("secure_feature 0x%x\n", mmc->secure_feature);
     MMCINFO("secure_removal_type  0x%x\n", mmc->secure_removal_type);
 
     //MMCINFO("========================================\n\n");
+
+
+#ifdef MMC_INTERNAL_TEST
+	if (((mmc->mmc_test&MMC_ITEST_WHEN_BOOT) && (work_mode == WORK_MODE_BOOT))
+		|| ((mmc->mmc_test&MMC_ITEST_WHEN_PRODUCT) && (work_mode != WORK_MODE_BOOT)) )
+	{
+		if (mmc->mmc_test & MMC_ITEST_RWC) {
+			ret = mmc_t_rwc(mmc, 1024*1024*2, 10);
+			if (ret) {
+				MMCINFO("%s: mmc_t_rwc fail\n", __FUNCTION__);
+			}
+		}
+
+		if (mmc->mmc_test & MMC_ITEST_MEMCPY) {
+			ret = mmc_t_memcpy();
+			if (ret) {
+				MMCINFO("%s: mmc_t_memcpy fail\n", __FUNCTION__);
+			}
+		}
+
+		if (mmc->mmc_test & MMC_ITEST_SEQ_W_SPD) {
+			/* from 1GB, len: 64MB, each: 64KB */
+			ret = mmc_t_seq_write_speed_test(mmc, 1024*1024*2, 64*1024*2, 128);
+			if (ret) {
+				MMCINFO("%s: mmc_t_write_speed_test fail\n", __FUNCTION__);
+			}
+		}
+	}
+#endif
 
 	return ret;
 }
@@ -5652,7 +5846,7 @@ int mmc_exit(void)
 */
 
 	sunxi_mmc_exit(sdc_no);
-	
+
 	MMCINFO("mmc %d exit ok\n",mmc->control_num);
 	return err;
 }

@@ -1,39 +1,38 @@
 /*
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ * Allwinner SoCs hdmi driver.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2016 Allwinner.
  *
+ * This file is licensed under the terms of the GNU General Public
+ * License version 2.  This program is licensed "as is" without any
+ * warranty of any kind, whether express or implied.
  */
+
 #include "hdmi_core.h"
 
 static __s32		hdmi_state = HDMI_State_Idle;
-static __u32		video_on = 0;
-static __u32		audio_on = 0;
-static bool		video_enable = 0;
-static bool		audio_enable = 0;
-static __u32		cts_enable = 0;
-static __u32		hdcp_enable = 0;
-static __u8		isHDMI = 0;
-static __u8		YCbCr444_Support = 0;
-static __s32		HPD = 0;
+static __u32		video_on;
+static __u32		audio_on;
+static bool		video_enable;
+static bool		audio_enable;
+static __u32		cts_enable;
+static __u32		hdcp_enable;
+static __s32		HPD;
 static struct audio_para glb_audio_para;
 static struct video_para glb_video_para;
-//static __u8 video_need_update;
+/* static __u8 video_need_update; */
 static __u8 audio_need_update;
 static HDMI_AUDIO_INFO audio_info;
 
 static __s32 audio_config_internal(void);
 extern __s32 is_exp;
-__u32		hdmi_print = 0;
-__u32		hdmi_pll = 0;//0:video pll 0; 1:video pll 1
+__u32		hdmi_print;
+__u32		hdmi_pll;/* 0:video pll 0; 1:video pll 1 */
 __u32		hdmi_clk = 297000000;
 
-disp_video_timings video_timing[] =
-{
-	//VIC				   PCLK    AVI_PR  X      Y      HT      HBP   HFP   HST    VT     VBP  VFP  VST h_pol v_pol int vac   trd
+disp_video_timings video_timing[] = {
+
+	/* VIC		  PCLK  AVI_PR    X    Y     HT     HBP   HFP   HST    VT   VBP   VFP VST h_pol v_pol int vac   trd */
 	{HDMI1440_480I,     0, 13500000,  1,  720,   480,   858,   57,   19,   62,  525,   15,  4,  3,  0,   0,   1,   0,   0},
 	{HDMI1440_576I,     0, 13500000,  1,  720,   576,   864,   69,   12,   63,  625,   19,  2,  3,  0,   0,   1,   0,   0},
 	{HDMI480P,          0, 27000000,  0,  720,   480,   858,   60,   16,   62,  525,   30,  9,  6,  0,   0,   0,   0,   0},
@@ -47,11 +46,17 @@ disp_video_timings video_timing[] =
 	{HDMI1080P_24,      0, 74250000,  0,  1920,  1080,  2750,  148,  638,  44,  1125,  36,  4,  5,  1,   1,   0,   0,   0},
 	{HDMI1080P_25,      0, 74250000,  0,  1920,  1080,  2640,  148,  528,  44,  1125,  36,  4,  5,  0,   0,   0,   0,   0},
 	{HDMI1080P_30,      0, 74250000,  0,  1920,  1080,  2200,  148,  88,   44,  1125,  36,  4,  5,  0,   0,   0,   0,   0},
-	{HDMI1080P_24_3D_FP,0, 148500000, 0,  1920,  2160,  2750,  148,  638,  44,  1125,  36,  4,  5,  1,   1,   0,   45,  1},
+	{HDMI1080P_24_3D_FP, 0, 148500000, 0,  1920,  2160,  2750,  148,  638,  44,  1125,  36,  4,  5,  1,   1,   0,   45,  1},
 	{HDMI720P_50_3D_FP, 0, 148500000, 0,  1280,  1440,  1980,  220,  440,  40,  750,   20,  5,  5,  1,   1,   0,   30,  1},
 	{HDMI720P_60_3D_FP, 0, 148500000, 0,  1280,  1440,  1650,  220,  110,  40,  750,   20,  5,  5,  1,   1,   0,   30,  1},
 	{HDMI3840_2160P_30, 0, 297000000, 0,  3840,  2160,  4400,  296,  176,  88,  2250,  72,  8, 10,  1,   1,   0,    0,  0},
 	{HDMI3840_2160P_25, 0, 297000000, 0,  3840,  2160,  5280,  296, 1056,  88,  2250,  72,  8, 10,  1,   1,   0,    0,  0},
+	{HDMI3840_2160P_24, 0, 297000000, 0,  3840,  2160,  5500,  296, 1276,  88,  2250,  72,  8, 10,  1,   1,   0,    0,  0},
+	{HDMI4096_2160P_24,  0, 297000000, 0,  4096,  2160,  5500,  296, 1020,  88,  2250,  72,  8, 10,  1,   1,   0,    0,  0},
+	{HDMI1280_1024,      0, 108000000, 0,  1280,  1024,  1688,  248,   48, 112,  1066,  38,  1,  3,  1,   1,   0,    0,  0},
+	{HDMI1024_768,       0, 65000000, 0,  1024,   768,  1344,  160,   24, 136,   806,  29,  3,  6,  1,   1,   0,    0,  0},
+	{HDMI900_540,        0, 74250000, 0,   900,   540,  1650,  400,  300,  50,   750, 120, 80, 10,  1,   1,   0,    0,  0},
+
 };
 
 static void hdmi_para_reset(void)
@@ -70,7 +75,7 @@ static void hdmi_para_init(void)
 	glb_video_para.is_hdmi = 1;
 	glb_video_para.is_yuv = 0;
 	glb_video_para.is_hcts = 0;
-	glb_audio_para.type = 1; //default pcm
+	glb_audio_para.type = 1; /* default pcm */
 	glb_audio_para.sample_rate = 44100;
 	glb_audio_para.sample_bit = 16;
 	glb_audio_para.ch_num = 2;
@@ -79,12 +84,12 @@ static void hdmi_para_init(void)
 
 __s32 hdmi_core_initial(void)
 {
-	memset(&audio_info,0,sizeof(HDMI_AUDIO_INFO));
+	memset(&audio_info, 0, sizeof(HDMI_AUDIO_INFO));
 	bsp_hdmi_set_version(hdmi_get_soc_version());
 	api_set_func(hdmi_delay_us);
 	bsp_hdmi_init();
-	//bsp_hdmi_set_addr(HDMI_BASE); //fixme
-	//bsp_hdmi_standby();
+	/* bsp_hdmi_set_addr(HDMI_BASE); //fixme */
+	/* bsp_hdmi_standby(); */
 	hdmi_para_init();
 	return 0;
 }
@@ -101,29 +106,26 @@ void hdmi_set_base_addr(__u32 base_addr)
 
 static __s32 main_Hpd_Check(void)
 {
-	__s32 i,times;
+	__s32 i, times;
+
 	times	= 0;
 
-	for(i=0;i<3;i++) {
-		if( bsp_hdmi_get_hpd())
-		{
+	for (i = 0; i < 3; i++) {
+		if (bsp_hdmi_get_hpd())
 				times++;
-		}
 		else
-		{
-			//hdmi_state = HDMI_State_Idle;
-		}
+			/* hdmi_state = HDMI_State_Idle; */
 #if defined(__LINUX_PLAT__)
-		if((cts_enable==1) && (hdcp_enable==1))
-			hdmi_delay_ms(20); //200
+		if ((cts_enable == 1) && (hdcp_enable == 1))
+			hdmi_delay_ms(20); /* 200 */
 		else
-			hdmi_delay_ms(200); //200
+			hdmi_delay_ms(200); /* 200 */
 #else
 			hdmi_delay_ms(10);
 #endif
 	}
 
-	if(times >= 3)
+	if (times >= 3)
 		return 1;
 	else
 		return 0;
@@ -131,26 +133,26 @@ static __s32 main_Hpd_Check(void)
 
 __s32 hdmi_main_task_loop(void)
 {
-	static __u32 times = 0;
+	static __u32 times;
 
 	HPD = main_Hpd_Check();
-	if( 0 == HPD )
+	if (0 == HPD)
 	{
-		if(hdmi_state > HDMI_State_Wait_Hpd) {
+		if (hdmi_state > HDMI_State_Wait_Hpd) {
 			__inf("plugout\n");
 			hdmi_state = HDMI_State_Idle;
 			video_on = 0;
 			audio_on = 0;
-			//Hdmi_hpd_event();
+			/* Hdmi_hpd_event(); */
 		}
 
-		if((times++) >= 10) {
+		if ((times++) >= 10) {
 			times = 0;
 			__inf("unplug state !!\n");
 		}
   }
 
-	switch(hdmi_state) {
+	switch (hdmi_state) {
 
 		case HDMI_State_Idle:
 			__inf("HDMI_State_Idle\n");
@@ -160,7 +162,7 @@ __s32 hdmi_main_task_loop(void)
 			hdmi_state = HDMI_State_Wait_Hpd;
 		case HDMI_State_Wait_Hpd:
 			__inf("HDMI_State_Wait_Hpd\n");
-			if(HPD) {
+			if (HPD) {
 				hdmi_state = HDMI_State_EDID_Parse;
 				__inf("plugin\n");
 			} else {
@@ -172,14 +174,14 @@ __s32 hdmi_main_task_loop(void)
 		case HDMI_State_EDID_Parse:
 			__inf("HDMI_State_EDID_Parse\n");
 			ParseEDID();
-			//Hdmi_hpd_event();
-			if(video_enable)
+			/* Hdmi_hpd_event(); */
+			if (video_enable)
 				set_video_enable(true);
 			hdmi_state = HDMI_State_HPD_Done;
 
 		case HDMI_State_HPD_Done:
-			//__inf("HDMI_State_HPD_Done\n");
-			if(video_on && hdcp_enable)
+			/* __inf("HDMI_State_HPD_Done\n"); */
+			if (video_on && hdcp_enable)
 				bsp_hdmi_hdl();
 			return 0;
 		default:
@@ -191,7 +193,7 @@ __s32 hdmi_main_task_loop(void)
 
 __s32 Hpd_Check(void)
 {
-	if(hdmi_state >= HDMI_State_HPD_Done)
+	if (hdmi_state >= HDMI_State_HPD_Done)
 		return 1;
 	else
 		return 0;
@@ -199,10 +201,11 @@ __s32 Hpd_Check(void)
 
 __s32 get_video_info(__s32 vic)
 {
-	__s32 i,count;
+	__s32 i, count;
+
 	count = sizeof(video_timing)/sizeof(disp_video_timings);
-	for(i=0;i<count;i++) {
-		if(vic == video_timing[i].vic)
+	for (i = 0; i < count; i++) {
+		if (vic == video_timing[i].vic)
 			return i;
 	}
 	__wrn("can't find the video timing parameters\n");
@@ -211,60 +214,94 @@ __s32 get_video_info(__s32 vic)
 
 __s32 get_audio_info(__s32 sample_rate)
 {
-	//ACR_N 32000 44100 48000 88200 96000 176400 192000
-	//		4096  6272  6144  12544 12288  25088  24576
+	/* ACR_N 32000 44100 48000 88200 96000 176400 192000 */
+	/* 4096  6272  6144  12544 12288  25088  24576 */
 	__inf("sample_rate:%d in get_audio_info\n", sample_rate);
 
-	switch(sample_rate) {
-		case 32000 :{	audio_info.ACR_N = 4096 ;
-			audio_info.CH_STATUS0 = (3 <<24);
-			audio_info.CH_STATUS1 = 0x0000000b;
-			break;}
-		case 44100 :{	audio_info.ACR_N = 6272 ;
-			audio_info.CH_STATUS0 = (0 <<24);
-			audio_info.CH_STATUS1 = 0x0000000b;
-			break;}
-		case 48000 :{	audio_info.ACR_N = 6144 ;
-			audio_info.CH_STATUS0 = (2 <<24);
-			audio_info.CH_STATUS1 = 0x0000000b;
-			break;}
-		case 88200 :{	audio_info.ACR_N = 12544;
-			audio_info.CH_STATUS0 = (8 <<24);
-			audio_info.CH_STATUS1 = 0x0000000b;
-			break;}
-		case 96000 :{	audio_info.ACR_N = 12288;
-			audio_info.CH_STATUS0 = (10<<24);
-			audio_info.CH_STATUS1 = 0x0000000b;
-			break;}
-		case 176400:{	audio_info.ACR_N = 25088;
-			audio_info.CH_STATUS0 = (12<<24);
-			audio_info.CH_STATUS1 = 0x0000000b;
-			break;}
-		case 192000:{	audio_info.ACR_N = 24576;
-			audio_info.CH_STATUS0 = (14<<24);
-			audio_info.CH_STATUS1 = 0x0000000b;
-			break;}
-		default:	{	__wrn("un-support sample_rate,value=%d\n",sample_rate);
-				return -1;}
+	switch (sample_rate) {
+	case 32000:
+	{
+		audio_info.ACR_N = 4096;
+		audio_info.CH_STATUS0 = (3 << 24);
+		audio_info.CH_STATUS1 = 0x0000000b;
+		break;
+	}
+	case 44100:
+	{
+		audio_info.ACR_N = 6272;
+		audio_info.CH_STATUS0 = (0 << 24);
+		audio_info.CH_STATUS1 = 0x0000000b;
+		break;
+	}
+	case 48000:
+	{
+		audio_info.ACR_N = 6144;
+		audio_info.CH_STATUS0 = (2 << 24);
+		audio_info.CH_STATUS1 = 0x0000000b;
+		break;
+	}
+	case 88200:
+	{
+		audio_info.ACR_N = 12544;
+		audio_info.CH_STATUS0 = (8 << 24);
+		audio_info.CH_STATUS1 = 0x0000000b;
+		break;
+	}
+	case 96000:
+	{
+		audio_info.ACR_N = 12288;
+		audio_info.CH_STATUS0 = (10<<24);
+		audio_info.CH_STATUS1 = 0x0000000b;
+		break;
+	}
+	case 176400:
+	{
+		audio_info.ACR_N = 25088;
+		audio_info.CH_STATUS0 = (12<<24);
+		audio_info.CH_STATUS1 = 0x0000000b;
+		break;
+	}
+	case 192000:
+	{
+		audio_info.ACR_N = 24576;
+		audio_info.CH_STATUS0 = (14<<24);
+		audio_info.CH_STATUS1 = 0x0000000b;
+		break;
+	}
+	default:
+	{
+		__wrn("un-support sample_rate,value=%d\n", sample_rate);
+		return -1;
+	}
 	}
 
-	if((glb_video_para.vic == HDMI1440_480I) || (glb_video_para.vic == HDMI1440_576I) ||
-		/*(glb_video_para.vic == HDMI480P)	 || */(glb_video_para.vic == HDMI576P)) {
-		audio_info.CTS =   ((27000000/100) *(audio_info.ACR_N /128)) / (sample_rate/100);
-	} else if( (glb_video_para.vic == HDMI720P_50 )||(glb_video_para.vic == HDMI720P_60 ) ||
-				 (glb_video_para.vic == HDMI1080I_50)||(glb_video_para.vic == HDMI1080I_60) ||
-				 (glb_video_para.vic == HDMI1080P_24)||(glb_video_para.vic == HDMI1080P_25) ||
-				 (glb_video_para.vic == HDMI1080P_30)) {
-		audio_info.CTS =   ((74250000/100) *(audio_info.ACR_N /128)) / (sample_rate/100);
-	} else if( (glb_video_para.vic == HDMI1080P_50)||(glb_video_para.vic == HDMI1080P_60)	   ||
-			(glb_video_para.vic == HDMI1080P_24_3D_FP)||(glb_video_para.vic == HDMI720P_50_3D_FP) ||
-			(glb_video_para.vic == HDMI720P_60_3D_FP) ) {
-		audio_info.CTS =   ((148500000/100) *(audio_info.ACR_N /128)) / (sample_rate/100);
+	if ((glb_video_para.vic == HDMI1440_480I) ||
+		(glb_video_para.vic == HDMI1440_576I) ||
+		/*(glb_video_para.vic == HDMI480P)	 || */
+		(glb_video_para.vic == HDMI576P)) {
+		audio_info.CTS = ((27000000 / 100) * (audio_info.ACR_N / 128))
+				/ (sample_rate / 100);
+	} else if ((glb_video_para.vic == HDMI720P_50) ||
+			(glb_video_para.vic == HDMI720P_60) ||
+			(glb_video_para.vic == HDMI1080I_50) ||
+			(glb_video_para.vic == HDMI1080I_60) ||
+			(glb_video_para.vic == HDMI1080P_24) ||
+			(glb_video_para.vic == HDMI1080P_25) ||
+			(glb_video_para.vic == HDMI1080P_30)) {
+		audio_info.CTS = ((74250000 / 100) * (audio_info.ACR_N / 128))
+							/ (sample_rate / 100);
+	} else if ((glb_video_para.vic == HDMI1080P_50) ||
+			(glb_video_para.vic == HDMI1080P_60)	   ||
+			(glb_video_para.vic == HDMI1080P_24_3D_FP) ||
+			(glb_video_para.vic == HDMI720P_50_3D_FP) ||
+			(glb_video_para.vic == HDMI720P_60_3D_FP)) {
+		audio_info.CTS = ((148500000 / 100) *
+				(audio_info.ACR_N / 128)) / (sample_rate / 100);
 	} else {
 		__wrn("unkonwn video format when configure audio\n");
 		return -1;
 	}
-	__inf("audio CTS calc:%d\n",audio_info.CTS);
+	__inf("audio CTS calc:%d\n", audio_info.CTS);
 	return 0;
 }
 
@@ -273,7 +310,7 @@ void set_hdcp_enable(__u32 enable)
 	hdcp_enable = enable;
 }
 
-__u32 get_hdcp_enable()
+__u32 get_hdcp_enable(void)
 {
 	return hdcp_enable;
 }
@@ -283,7 +320,7 @@ void set_cts_enable(__u32 enable)
 	cts_enable = enable;
 }
 
-__u32 get_cts_enable()
+__u32 get_cts_enable(void)
 {
 	return cts_enable;
 }
@@ -292,19 +329,19 @@ __u32 get_csc_type(void)
 {
 	int csc = 1;
 
-	if((get_cts_enable() == 1) &&(GetIsYUV() == 0))
+	if ((get_cts_enable() == 1) && (GetIsYUV() == 0))
 		csc = 0;
 
-	if((is_exp == 1) &&
+	if ((is_exp == 1) &&
 		((glb_video_para.vic == HDMI1080P_24)
-  	|| (glb_video_para.vic == HDMI1080P_24_3D_FP)
-  	|| (glb_video_para.vic == HDMI3840_2160P_24)
-  	|| (glb_video_para.vic == HDMI3840_2160P_30)
-  	|| (glb_video_para.vic == HDMI3840_2160P_25))
-  	) {
-  		csc = 0;
-  	}
-  
+	|| (glb_video_para.vic == HDMI1080P_24_3D_FP)
+	|| (glb_video_para.vic == HDMI3840_2160P_24)
+	|| (glb_video_para.vic == HDMI3840_2160P_30)
+	|| (glb_video_para.vic == HDMI3840_2160P_25)
+	|| (glb_video_para.vic == HDMI4096_2160P_24))
+	)
+		csc = 0;
+
 	return csc;
 }
 
@@ -312,30 +349,22 @@ __s32 set_audio_enable(bool enable)
 {
 	int ret = 0;
 
-	__inf("set_audio_enable = %x!\n",enable);
-	if(enable && audio_need_update)
-	{
+	__inf("set_audio_enable = %x!\n", enable);
+	if (enable && audio_need_update) {
 		audio_need_update = 0;
-		if(audio_config_internal())
-		{
+		if (audio_config_internal()) {
 			__wrn("set_audio_enable err!\n");
 			ret = -1;
-		}
-		else
-		{
+		} else
 			audio_on = 1;
-		}
-	}
-	else
-	{
+	} else
 		audio_on = 0;
-	}
 	audio_enable = enable;
 
 	return ret;
 }
 
-bool get_audio_enable()
+bool get_audio_enable(void)
 {
 	bool ret;
 
@@ -343,35 +372,35 @@ bool get_audio_enable()
 	return ret;
 }
 
-static __s32 audio_config_internal()
+static __s32 audio_config_internal(void)
 {
-	__inf("audio_config_internal, type code:%d\n", glb_audio_para.type);
-	__inf("audio_config_internal, sample_rate:%d\n", glb_audio_para.sample_rate);
-	__inf("audio_config_internal, sample_bit:%d\n", glb_audio_para.sample_bit);
-	__inf("audio_config_internal, channel_num:%d\n", glb_audio_para.ch_num);
-	__inf("audio_config_internal, channel allocation:%d\n", glb_audio_para.ca);
+	__u8 isHDMI = GetIsHdmi();
 
-	if(video_on)
-	{
+	__inf("audio_config_internal, type code:%d\n", glb_audio_para.type);
+	__inf("audio_config_internal, sample_rate:%d\n",
+						glb_audio_para.sample_rate);
+	__inf("audio_config_internal, sample_bit:%d\n",
+						glb_audio_para.sample_bit);
+	__inf("audio_config_internal, channel_num:%d\n",
+						glb_audio_para.ch_num);
+	__inf("audio_config_internal, channel allocation:%d\n",
+						glb_audio_para.ca);
+
+	if (video_on) {
 		__inf("audio_config_internal when video on");
-		if((cts_enable==1) && (isHDMI == 0))
-		{
+		if ((cts_enable == 1) && (isHDMI == 0)) {
 			__inf("sink is not hdmi, not sending audio\n");
 			return 0;
 		}
 
-		if(bsp_hdmi_audio(&glb_audio_para))
-		{
-	  	__wrn("set hdmi audio error!\n");
-	  	return -1;
-	  }
+		if (bsp_hdmi_audio(&glb_audio_para)) {
+			__wrn("set hdmi audio error!\n");
+			return -1;
+		}
 
-	  audio_on = 1;
-	}
-	else
-	{
+		audio_on = 1;
+	} else
 		__inf("audio_config_internal when video off");
-	}
 
 	return 0;
 }
@@ -393,11 +422,11 @@ __s32 audio_config(struct audio_para *audio_param)
 	return ret;
 }
 
-__u32 get_video_mode()
+__u32 get_video_mode(void)
 {
 	__u32 ret;
 
-	if(video_enable == 0)
+	if (video_enable == 0)
 		ret = 0;
 	else
 		ret =  glb_video_para.vic;
@@ -409,6 +438,7 @@ __u32 get_video_mode()
 __s32 set_video_mode(__u32 vic)
 {
 	__u32 ret = 0;
+
 	glb_video_para.vic = vic;
 
 	return ret;
@@ -417,35 +447,32 @@ __s32 set_video_mode(__u32 vic)
 __s32 set_video_enable(bool enable)
 {
 	int ret = 0;
-	__inf("set_video_enable = %x!\n",enable);
-	__inf("video_on @ set_video_enable = %d!\n",video_on);
-	if((hdmi_state == HDMI_State_HPD_Done) && enable && (0 == video_on))
-	{
+
+	__inf("set_video_enable = %x!\n", enable);
+	__inf("video_on @ set_video_enable = %d!\n", video_on);
+	if ((hdmi_state == HDMI_State_HPD_Done) && enable && (video_on == 0)) {
 		video_config(glb_video_para.vic);
 		__inf("set_video_enable, vic:%d,is_hdmi:%d,is_yuv:%d,is_hcts:%d\n",
-			glb_video_para.vic, glb_video_para.is_hdmi,glb_video_para.is_yuv, glb_video_para.is_hcts);
-		if(bsp_hdmi_video(&glb_video_para))
-	  {
-	  	__wrn("set hdmi video error!\n");
-	  	ret = -1;
-	  	goto video_en_end;
-	  }
+			glb_video_para.vic, glb_video_para.is_hdmi,
+			glb_video_para.is_yuv, glb_video_para.is_hcts);
+		if (bsp_hdmi_video(&glb_video_para)) {
+			__wrn("set hdmi video error!\n");
+			ret = -1;
+			goto video_en_end;
+		}
 
-	  bsp_hdmi_set_video_en(enable);
-	  video_on = 1;
+		bsp_hdmi_set_video_en(enable);
+		video_on = 1;
 #if 0
-	  if(audio_config_internal())
+	  if (audio_config_internal())
 	  {
-	  	__wrn("set audio_config_internal error!\n");
-	  	ret = -1;
-	  	goto video_en_end;
+		__wrn("set audio_config_internal error!\n");
+		ret = -1;
+		goto video_en_end;
 	  }
 #endif
-	}
-	else
-	{
+	} else
 		video_on = 0;
-	}
 
 	video_enable = enable;
 
@@ -453,9 +480,10 @@ video_en_end:
 	return ret;
 }
 
-bool get_video_enable()
+bool get_video_enable(void)
 {
 	bool ret;
+
 	ret = video_enable;
 	return ret;
 }
@@ -468,35 +496,64 @@ __s32 hdmi_core_get_list_num(void)
 __s32 video_config(__u32 vic)
 {
 	int ret = 0;
+	__u8 isHDMI = 1;
 
-//	cts_enable = 1;
-  isHDMI = GetIsHdmi();
-  YCbCr444_Support = GetIsYUV();
-//  hdcp_enable = 0;
+	disp_video_timings *info;
+	int i;
+
+	isHDMI = GetIsHdmi();
 
 	__inf("video_config, vic:%d,cts_enable:%d,isHDMI:%d,YCbCr444_Support:%d,hdcp_enable:%d\n",
-    vic,cts_enable,isHDMI,YCbCr444_Support,hdcp_enable);
+		vic, cts_enable, isHDMI, YCbCr444_Support, hdcp_enable);
 
 	glb_video_para.vic = vic;
-	if((cts_enable==1) && (isHDMI == 0))
-  	glb_video_para.is_hdmi = 0;
-  else
-  	glb_video_para.is_hdmi = 1;
+	if ((cts_enable == 1) && (isHDMI == 0))
+		glb_video_para.is_hdmi = 0;
+	else
+		glb_video_para.is_hdmi = 1;
 
 	glb_video_para.is_yuv = get_csc_type();
 
-  if(hdcp_enable)
-  {
-			glb_video_para.is_hcts = 1;
-			bsp_hdmi_hrst();
-      __inf("hdmi full function\n");
-  }
-  else
-  {
-      glb_video_para.is_hcts = 0;
-      __inf("hdmi video + audio\n");
-  }
-	__inf("video_on @ video_config = %d!\n",video_on);
+	if (hdcp_enable) {
+		glb_video_para.is_hcts = 1;
+		bsp_hdmi_hrst();
+		__inf("hdmi full function\n");
+
+	} else {
+		glb_video_para.is_hcts = 0;
+		__inf("hdmi video + audio\n");
+	}
+
+	info = &video_timing[0];
+	for (i = 0; i < ARRAY_SIZE(video_timing); i++) {
+		if (info->vic == vic) {
+			glb_video_para.pixel_clk        = info->pixel_clk;
+			glb_video_para.clk_div          = hdmi_clk_get_div();
+			glb_video_para.pixel_repeat     = info->pixel_repeat;
+			glb_video_para.x_res            = info->x_res;
+			glb_video_para.y_res            = info->y_res;
+			glb_video_para.hor_total_time   = info->hor_total_time;
+			glb_video_para.hor_back_porch   = info->hor_back_porch;
+			glb_video_para.hor_front_porch  = info->hor_front_porch;
+			glb_video_para.hor_sync_time    = info->hor_sync_time;
+			glb_video_para.ver_total_time   = info->ver_total_time;
+			glb_video_para.ver_back_porch   = info->ver_back_porch;
+			glb_video_para.ver_front_porch  = info->ver_front_porch;
+			glb_video_para.ver_sync_time    = info->ver_sync_time;
+			glb_video_para.hor_sync_polarity =
+							info->hor_sync_polarity;
+			glb_video_para.ver_sync_polarity =
+							info->ver_sync_polarity;
+			glb_video_para.b_interlace      = info->b_interlace;
+			break;
+		}
+		info++;
+	}
+
+	if (i >= ARRAY_SIZE(video_timing))
+		__wrn("cant found proper video timing for vic %d\n", vic);
+
+	__inf("video_on @ video_config = %d!\n", video_on);
 	return ret;
 }
 

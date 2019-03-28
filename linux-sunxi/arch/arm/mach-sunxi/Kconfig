@@ -360,18 +360,21 @@ config EVB_PLATFORM
        help
          Support for Allwinner's EVB board
 endchoice
+
 config SUN9IW1_PERF5_BOARD
        bool "SUN9IW1 PERF5 BOARD"
        depends on ARCH_SUN9IW1
        default n
-    help
+       help
         Support for SUN9IW1 PERF5 BOARD
+
 source "arch/arm/mach-sunxi/Kconfig.conf"
 
 config SUNXI_TRUSTZONE
        bool "SUNXI trustzone security"
        default n
-    help
+
+       help
         Support for SUNXI trustzone security
 
 config HOMLET_PLATFORM
@@ -382,15 +385,37 @@ config HOMLET_PLATFORM
          For example, fsync & sync immediatetly to nand disk.
 
 config SUNXI_BOOTUP_EXTEND
-        bool "Homlet platform bootup extend"
-        depends on HOMLET_PLATFORM
-        default n
-    help
-        Support system bootup triggered by ir, when system is poweroff.
-config ROOT_DEVICE
-	bool "easy way to root device"
-	depends on ARCH_SUNXI
-	default n
+       bool "Sunxi platform bootup extend"
+       default n
+       help
+         Support sunxi extend bootup.
+
+if SUNXI_BOOTUP_EXTEND
+choice
+	prompt "Select sunxi bootup extend feature"
+	default SUNXI_FAKE_SHUTDOWN
 	help
-		Enable root my device
+
+config SUNXI_RTC_REBOOT
+       bool "Sunxi rtc reboot Feature"
+       help
+         Support sunxi rtc reboot, which can save state in rtc reg
+         according to the reboot arg.
+         This feature need support of reboot program in the userspace,
+         such as android reboot. Busybox reboot doesn't support this
+         feature.
+
+config SUNXI_FAKE_SHUTDOWN
+       bool "Sunxi fake shutdown Feature"
+       depends on HOMLET_PLATFORM
+       help
+         Support system enter fake shutdown(boot standby), which can
+         be booted up by IR directly. This featch changes the standard
+         reboot route. It also ignores the reboot arg.
+         TODO: This feature should be realized through reboot arg
+         from the userspace
+         Say N if you are unsure.
+endchoice
+endif
+
 endif

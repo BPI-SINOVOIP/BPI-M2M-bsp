@@ -44,8 +44,9 @@
 
 #define CONFIG_SUN8IW8P1_SPI 
 #define CONFIG_SUNXI_SPINOR 
-#define CONFIG_SPINOR_LOGICAL_OFFSET        ((256 - 16) * 1024/512)
+#define CONFIG_SPINOR_LOGICAL_OFFSET        ((512 - 16) * 1024/512)
 
+#define CONFIG_SPI_DUAL_MODE
 /*
  * High Level Configuration Options
  */
@@ -54,7 +55,7 @@
 #define	CONFIG_SUNXI				/* which is sunxi family */
 
 #define CONFIG_ARCH_SUN8IW8P1
-
+#define CONFIG_ARCH_SUN8IW8
 //#define FORCE_BOOT_STANDBY
 #define CONFIG_NO_BOOT_STANDBY
 #define CONFIG_SYS_SDRAM_BASE		     (0x40000000)
@@ -82,13 +83,6 @@
 #define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + (4 << 20))
 
 
-
-#define FASTBOOT_TRANSFER_BUFFER		(CONFIG_SYS_SDRAM_BASE + 0x01000000)
-#define FASTBOOT_TRANSFER_BUFFER_SIZE	(256 << 20)
-
-#define FASTBOOT_ERASE_BUFFER			(CONFIG_SYS_SDRAM_BASE)
-#define FASTBOOT_ERASE_BUFFER_SIZE      (16 << 20)
-
 /*
 * define all parameters
 */
@@ -108,13 +102,13 @@
 
 #define DRAM_PARA_STORE_ADDR		     (CONFIG_SYS_SDRAM_BASE + 0x00800000)
 
-#define SYS_CONFIG_MEMBASE               (CONFIG_SYS_SDRAM_BASE + 0x03000000)
+#define SYS_CONFIG_MEMBASE               (CONFIG_SYS_SDRAM_BASE + SZ_16M)
 #define CONFIG_SMALL_MEMSIZE                    
 
 #define CONFIG_SUNXI_LOGBUFFER
 #define CONFIG_READ_LOGO_FOR_KERNEL
-#define SUNXI_DISPLAY_FRAME_BUFFER_ADDR  (CONFIG_SYS_SDRAM_BASE + 0x06400000)
-#define SUNXI_DISPLAY_FRAME_BUFFER_SIZE  0x01000000
+#define SUNXI_DISPLAY_FRAME_BUFFER_ADDR  (CONFIG_SYS_SDRAM_BASE + 0x03200000)
+#define SUNXI_DISPLAY_FRAME_BUFFER_SIZE  0x0100000
 
 #define FEL_BASE                         0xFFFF0020
 /*
@@ -173,11 +167,12 @@
 #define CONFIG_USE_IRQ
 #define CONFIG_CMD_IRQ
 //#define CONFIG_CMD_ELF
-//#define CONFIG_DOS_PARTITION
-#define CONFIG_CMD_BOOTA
+#define CONFIG_DOS_PARTITION
+//#define CONFIG_CMD_BOOTA
 #define CONFIG_SUNXI_DMA
 //#define CONFIG_CMD_MEMORY
 //#define CONFIG_SUNXI_DISPLAY
+
 
 #define CONFIG_SUNXI_AXP
 #define CONFIG_SUNXI_AXP20
@@ -213,9 +208,9 @@
 
 
 /* Nand config */
-#define CONFIG_NAND
-#define CONFIG_STORAGE_NAND
-#define CONFIG_NAND_SUNXI
+//#define CONFIG_NAND
+//#define CONFIG_STORAGE_NAND
+//#define CONFIG_NAND_SUNXI
 //#define CONFIG_CMD_NAND                         /* NAND support */
 #define CONFIG_SYS_MAX_NAND_DEVICE      1
 #define CONFIG_SYS_NAND_BASE            0x00
@@ -226,7 +221,7 @@
 #define CONFIG_CMDLINE_EDITING
 
 /* mmc config */
-#define CONFIG_MMC
+//#define CONFIG_MMC
 //#define CONFIG_GENERIC_MMC
 //#define CONFIG_CMD_MMC
 //#define CONFIG_MMC_SUNXI
@@ -234,7 +229,16 @@
 #define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_STORAGE_EMMC
 #define CONFIG_MMC_LOGICAL_OFFSET   (20 * 1024 * 1024/512)
-#define USE_EMMC_BOOT_PART
+//#define USE_EMMC_BOOT_PART
+
+#define CONFIG_SUNXI_KEY_BURN
+#define CONFIG_SUNXI_PRIVATE_KEY
+#define CONFIG_SUNXI_MODULE_USB
+#define CONFIG_SUNXI_KEY_SUPPORT
+#define CONFIG_SUNXI_MODULE_SPRITE
+#ifdef CONFIG_SUNXI_KEY_BURN
+    #define CONFIG_CMD_SUNXI_BURN
+#endif
 
 //#define CONFIG_DOS_PARTITION
 /*
@@ -322,7 +326,9 @@
 #define CONFIG_SYS_BOOT_GET_CMDLINE
 #define CONFIG_AUTO_COMPLETE
 
-//#define CONFIG_CMD_FAT			/* with this we can access bootfs in nand */
+#define HAVE_BLOCK_DEVICE
+
+#define CONFIG_CMD_FAT			/* with this we can access bootfs in nand */
 #define CONFIG_CMD_BOOTA		/* boot android image */
 #define CONFIG_CMD_RUN			/* run a command */
 #define CONFIG_CMD_BOOTD		/* boot the default command */
@@ -345,5 +351,7 @@
 #define CONFIG_GATEWAYIP 192.168.0.1
 #define CONFIG_BOOTFILE        "uImage"
 #define CONFIG_LOADADDR        0x40008000
+
+#define CONFIG_PWR_GPIO
 
 #endif /* __CONFIG_H */

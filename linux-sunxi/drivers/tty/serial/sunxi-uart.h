@@ -19,6 +19,8 @@
 #define _SUNXI_UART_H_
 
 #include <linux/regulator/consumer.h>
+#include <linux/dmaengine.h>
+#include <linux/dma/sunxi-dma.h>
 
 struct sw_uart_pdata {
 	unsigned int used;
@@ -30,6 +32,41 @@ struct sw_uart_pdata {
 	char			  regulator_id[16];
 	struct regulator *regulator;
 };
+
+#ifdef CONFIG_SERIAL_SUNXI_DMA
+struct sw_uart_dma {
+	u32 use_dma; /* 1:used */
+
+	/* receive and transfer buffer */
+	char *rx_buffer; /* visual memory */
+	char *tx_buffer;
+	dma_addr_t rx_phy_addr; /* physical memory */
+	dma_addr_t tx_phy_addr;
+	u32 rb_size; /* buffer size */
+	u32 tb_size;
+
+	/* regard the rx buffer as a circular buffer */
+	u32 rb_head;
+	u32 rb_tail;
+	u32 rx_size;
+
+	dma_cookie_t rx_cookie;
+
+	char tx_dma_inited; /* 1:dma tx channel has been init */
+	char rx_dma_inited; /* 1:dma rx channel has been init */
+	char tx_dma_used;   /* 1:dma tx is working */
+	char rx_dma_used;   /* 1:dma rx is working */
+
+	/* timer to poll activity on rx dma */
+	char use_timer;
+	int rx_timeout;
+	struct timer_list rx_timer;
+
+	struct dma_chan *dma_chan_rx, *dma_chan_tx;
+	struct scatterlist rx_sgl, tx_sgl;
+	unsigned int		rx_bytes, tx_bytes;
+};
+#endif
 
 struct sw_uart_port {
 	struct uart_port port;
@@ -45,6 +82,12 @@ struct sw_uart_port {
 	unsigned char msr_saved_flags;
 	unsigned int lsr_break_flag;
 	struct sw_uart_pdata *pdata;
+#ifdef CONFIG_SERIAL_SUNXI_DMA
+	struct sw_uart_dma *dma;
+	u32 rx_last_pos;
+#define SUNXI_UART_DRQ_RX(ch)		(DRQSRC_UART0RX + ch)
+#define SUNXI_UART_DRQ_TX(ch)		(DRQSRC_UART0RX + ch)
+#endif
 
 	/* for debug */
 #define MAX_DUMP_SIZE	1024
@@ -246,4 +289,3 @@ static int gs_uart_io_num[SUNXI_UART_NUM] = {2};
 struct platform_device *sw_uart_get_pdev(int uart_id);
 
 #endif /* end of _SUNXI_UART_H_ */
-

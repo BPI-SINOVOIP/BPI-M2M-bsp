@@ -472,8 +472,12 @@ static void __USBC_Dev_Rx_ClearStall(__u32 usbc_base_addr)
 
 static void __USBC_Dev_ClearDma_Trans(__u32 usbc_base_addr)
 {
-	/* in 1667 1673 and later ic, this bit is fix to 1, set when drv initialize;
-	 * in 1667 1673 former ic, we donot use inner dma, so this bit should be 0 */
+	/*
+	 * in SUN8IW5, SUN8IW6 and later ic, this bit is fix to 1, set when
+	 * drv initialize;
+	 * in SUN8IW5, SUN8IW6 former ic, we donot use inner dma, so this bit
+	 * should be 0.
+	 */
 #if !defined (CONFIG_ARCH_SUN8IW5) && !defined (CONFIG_ARCH_SUN8IW6) && !defined (CONFIG_ARCH_SUN8IW9) && !defined (CONFIG_ARCH_SUN8IW8) && !defined (CONFIG_ARCH_SUN8IW7)
 
 	__u32 reg_val;
@@ -486,9 +490,12 @@ static void __USBC_Dev_ClearDma_Trans(__u32 usbc_base_addr)
 
 static void __USBC_Dev_ConfigDma_Trans(__u32 usbc_base_addr)
 {
-	/* in 1667 and later ic, this bit is fix to 1, set when drv initialize, so donot set here;
-	 * in 1667 former ic(eg A23), we donot use inner dma(use cpu or outer dma),
-	 *	this bit should be 0, so cannot set here */
+	/*
+	 * in SUN8IW5 and later ic, this bit is fix to 1, set when drv
+	 * initialize, so donot set here;
+	 * in SUN8IW5 former ic(eg SUN8IW3), we donot use inner dma(use cpu
+	 * or outer dma), this bit should be 0, so cannot set here.
+	 */
 #if 0
 	__u32 reg_val;
 

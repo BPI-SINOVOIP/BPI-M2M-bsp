@@ -131,6 +131,34 @@ int sunxi_soc_is_secure(void)
 }
 EXPORT_SYMBOL(sunxi_soc_is_secure);
 
+static int sunxi_boot_secure_status = 2;
+int  sunxi_boot_is_secure(void)
+{
+	if (sunxi_boot_secure_status != 2) {
+		/* sunxi_boot_secure_status initialize already,
+		   use the initialized value derectly. */
+
+		return sunxi_boot_secure_status;
+	} else {
+		/* default is non-secure, in order to
+		 * compatible with other non-secure platform.
+		 */
+
+#if (defined CONFIG_ARCH_SUN9IW1P1)
+	sunxi_boot_secure_status = ((sunxi_smc_readl(SUNXI_SID_VBASE
+						+ 0x200 + 0x1F4)) >> 11) & 1;
+#elif (defined CONFIG_ARCH_SUN8IW6P1) || (defined CONFIG_ARCH_SUN8IW7P1)
+	sunxi_boot_secure_status = ((sunxi_smc_readl(SUNXI_SID_VBASE
+						+ 0x200 + 0xF4)) >> 11) & 1;
+#endif
+		pr_debug("secure boot flag in kernel 0x%d\n",
+				sunxi_boot_secure_status);
+		return sunxi_boot_secure_status ;
+	}
+
+}
+EXPORT_SYMBOL(sunxi_boot_is_secure);
+
 /*
  * get sunxi soc bin
  *

@@ -65,6 +65,7 @@ static	int pa_double_used 				= 0;
 static	int phone_mic_vol 			= 4;
 static	int headphone_direct_used 		= 0;
 static bool pa_gpio_config = false;
+static int pa_class;
 
 static struct clk *codec_pll2clk,*codec_moduleclk;
 
@@ -1249,9 +1250,10 @@ static int codec_pa_play_open(void)
 #else
 	codec_wr_control(SUNXI_DAC_FIFOC ,0x1, DAC_FIFO_FLUSH, 0x1);
 #endif
-
+	msleep(20);
 	codec_wr_prcm_control(DAC_PA_SRC, 0x1, DACALEN, 0x1);
 	codec_wr_prcm_control(DAC_PA_SRC, 0x1, DACAREN, 0x1);
+
 	if (version_v3_used) {
 		if (!pa_double_used) {
 			codec_wr_control(SUNXI_DAC_DPC, 0x3f, DIGITAL_VOL, 0x6);
@@ -1523,7 +1525,6 @@ static int sndpcm_prepare(struct snd_pcm_substream *substream,
 	unsigned int reg_val;
 	unsigned int ret = 0;
 	struct snd_pcm_runtime *runtime = substream->runtime;
-
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		switch (substream->runtime->rate) {
 			case 44100:
@@ -1835,13 +1836,14 @@ static int sndpcm_prepare(struct snd_pcm_substream *substream,
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		if (runtime->status->state == SNDRV_PCM_STATE_XRUN) {
 			pr_warn("[audio codec]play xrun.\n");
-			if (codec_speaker_headset_en == 1) {
-				ret = codec_pa_play_open();
-			} else if (codec_speaker_headset_en == 0) {
-				ret = codec_headphone_play_open();
-			}else if(codec_speaker_headset_en == 2) {
-				ret = codec_pa_headphone_play_open();
-			}
+		}
+
+		if (codec_speaker_headset_en == 1) {
+			ret = codec_pa_play_open();
+		} else if (codec_speaker_headset_en == 0) {
+			ret = codec_headphone_play_open();
+		} else if (codec_speaker_headset_en == 2) {
+			ret = codec_pa_headphone_play_open();
 		}
 		return ret;
 	} else {
@@ -2005,9 +2007,22 @@ static int codec_get_spk_headset(struct snd_kcontrol *kcontrol,
 }
 
 
+static int hp_vol_set(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	headphone_vol = ucontrol->value.integer.value[0];
+	pa_vol = ucontrol->value.integer.value[0];
+	if (headphone_vol > 0x3f)
+		headphone_vol = 0x3f;
+	if (pa_vol > 0x1f)
+		pa_vol = 0x1f;
+	return snd_codec_put_volsw(kcontrol, ucontrol);
+}
+
 static const struct snd_kcontrol_new sunxi_codec_controls[] = {
 
-	CODEC_SINGLE("Master Playback Volume", HP_VOLC, 0, 0x3f, 0),
+	/*CODEC_SINGLE("Master Playback Volume", HP_VOLC, 0, 0x3f, 0),*/
+	CODEC_SINGLE_EXT("Master Playback Volume", HP_VOLC, 0, 0x3f, 0, hp_vol_set),
 	CODEC_SINGLE("Line Volume", LINEOUT_VOLC, LINEOUTVOL, 0x1f, 0),
 	CODEC_SINGLE("MIC1_G boost stage output mixer control", 	MIC_GCTR, MIC1G, 0x7, 0),
 	CODEC_SINGLE("MIC2_G boost stage output mixer control", 	MIC_GCTR, MIC2G, 0x7, 0),
@@ -2202,14 +2217,16 @@ static ssize_t store_audio_reg(struct device *dev, struct device_attribute *attr
 {
 	int ret;
 	int input_reg_group =0;
-	int input_reg_offset =0;
-	int input_reg_val =0;
+	unsigned int input_reg_offset = 0;
+	unsigned int input_reg_val = 0;
 	int reg_val_read;
 	int rw_flag;
 
 	printk("%s,line:%d\n",__func__,__LINE__);
-	ret = sscanf(buf, "%d,%d,0x%x,0x%x", &rw_flag,&input_reg_group, &input_reg_offset, &input_reg_val);
-	printk("ret:%d, reg_group:%d, reg_offset:%d, reg_val:0x%x\n", ret, input_reg_group, input_reg_offset, input_reg_val);
+	ret = sscanf(buf, "%d,%d,0x%x,0x%x", &rw_flag, &input_reg_group,
+			&input_reg_offset, &input_reg_val);
+	printk("ret:%d, reg_group:%d, reg_offset:0x%x, reg_val:0x%x\n", ret,
+			input_reg_group, input_reg_offset, input_reg_val);
 
 	if (!(input_reg_group ==1 || input_reg_group ==2)){
 		pr_err("not exist reg group\n");
@@ -2256,7 +2273,7 @@ static struct attribute_group audio_debug_attr_group = {
 };
 
 
-static int __init sndpcm_codec_probe(struct platform_device *pdev)
+static int sndpcm_codec_probe(struct platform_device *pdev)
 {
 	int err = -1;
 	int req_status;
@@ -2306,6 +2323,21 @@ static int __init sndpcm_codec_probe(struct platform_device *pdev)
 			regulator_enable(hp_ldo);
 		}
 	}
+
+	/* pa class */
+	type = script_get_item("audio0", "pa_class", &item);
+	if (SCIRPT_ITEM_VALUE_TYPE_INT != type)
+		pr_err("script_get_item return pa_class type err!\n");
+	else
+		pa_class = item.val;
+	type = script_get_item("audio0", "pa_class_ctrl", &item);
+	if (SCIRPT_ITEM_VALUE_TYPE_PIO != type) {
+		pr_err("script_get_item return pa_class type err!\n");
+	} else {
+		gpio_direction_output(item.gpio.gpio, pa_class);
+		gpio_set_value(item.gpio.gpio, pa_class);
+	}
+
 	/*get the default pa val(close)*/
 	type = script_get_item("audio0", "audio_pa_ctrl", &item);
 	if (SCIRPT_ITEM_VALUE_TYPE_PIO != type) {
@@ -2321,6 +2353,14 @@ static int __init sndpcm_codec_probe(struct platform_device *pdev)
 		gpio_direction_output(item.gpio.gpio, 1);
 
 		gpio_set_value(item.gpio.gpio, 0);
+	}
+
+	type = script_get_item("audio0", "audio_pa_always_on", &item);
+	if (SCIRPT_ITEM_VALUE_TYPE_PIO != type) {
+		/* do nothing here */
+	} else {
+		pa_gpio_config = false;
+		gpio_set_value(item.gpio.gpio, 1);
 	}
 
 	snd_soc_register_codec(&pdev->dev, &soc_codec_dev_sndpcm, &sndpcm_dai, 1);

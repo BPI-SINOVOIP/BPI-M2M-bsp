@@ -1,14 +1,3 @@
-/*
- * drivers/video/sunxi/disp2/disp/de/disp_private.h
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #ifndef _DISP_PRIVATE_H_
 #define _DISP_PRIVATE_H_
 
@@ -198,6 +187,7 @@ struct disp_manager {
 	struct disp_enhance *enhance;
 	struct disp_capture *cptr;
 
+	struct disp_rotation_sw *rot_sw;
 	struct list_head lyr_list;
 
 	/* function fields */
@@ -398,6 +388,23 @@ struct disp_capture {
 	s32 (*apply)(struct disp_capture *cptr);
 };
 
+struct disp_rotation_sw {
+	u32 disp;
+	u32 degree;
+	disp_rectsz screen_size;
+	struct disp_manager *manager;
+	s32 (*init)(struct disp_rotation_sw *rot_sw);
+	s32 (*exit)(struct disp_rotation_sw *rot_sw);
+	s32 (*set_manager)(struct disp_rotation_sw *rot_sw,
+		struct disp_manager *mgr);
+	s32 (*unset_manager)(struct disp_rotation_sw *rot_sw);
+	s32 (*apply)(struct disp_rotation_sw *rot_sw,
+		disp_layer_config *lyr_config,
+		disp_rect src_dirty_rect);
+	s32 (*checkout)(struct disp_rotation_sw *rot_sw,
+		disp_layer_config *lyr_config);
+};
+
 extern struct disp_device* disp_get_lcd(u32 disp);
 
 extern struct disp_device* disp_get_hdmi(u32 disp);
@@ -410,6 +417,7 @@ extern struct disp_smbl* disp_get_smbl(u32 disp);
 extern struct disp_enhance* disp_get_enhance(u32 disp);
 extern struct disp_capture* disp_get_capture(u32 disp);
 
+extern struct disp_rotation_sw *disp_get_rotation_sw(u32 disp);
 extern s32 disp_delay_ms(u32 ms);
 extern s32 disp_delay_us(u32 us);
 extern s32 disp_init_lcd(disp_bsp_init_para * para);
@@ -426,6 +434,7 @@ extern s32 disp_init_enhance(disp_bsp_init_para * para);
 extern s32 disp_init_smbl(disp_bsp_init_para * para);
 extern s32 disp_init_capture(disp_bsp_init_para *para);
 
+extern s32 disp_init_rotation_sw(disp_bsp_init_para *para);
 #if defined(CONFIG_ARCH_SUN8IW6)
 #include "./lowlevel_sun8iw6/disp_al.h"
 #elif defined(CONFIG_ARCH_SUN8IW7)

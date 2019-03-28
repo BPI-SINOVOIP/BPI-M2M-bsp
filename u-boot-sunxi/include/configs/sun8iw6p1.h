@@ -25,8 +25,8 @@
 #ifndef __CONFIG_H
 #define __CONFIG_H
 
-//#define DEBUG
-//#undef DEBUG
+/* #define DEBUG */
+/* #undef DEBUG */
 
 #ifndef __KERNEL__
 #define __KERNEL__
@@ -45,7 +45,7 @@
 #define CONFIG_ALLWINNER			/* It's a Allwinner chip */
 #define	CONFIG_SUNXI				/* which is sunxi family */
 
-//#define CONFIG_A73_FPGA
+/* #define CONFIG_A73_FPGA */
 #define CONFIG_ARCH_SUN8IW6
 #define CONFIG_ARCH_SUN8IW6P1
 #define CONFIG_ARCH_R58
@@ -57,12 +57,12 @@
 #define CONFIG_SUNXI_SECURE_STORAGE
 #define CONFIG_SUNXI_SECURE_SYSTEM
 #define CONFIG_SUNXI_HDCP_IN_SECURESTORAGE
-//#define FORCE_BOOT_STANDBY
+/* #define FORCE_BOOT_STANDBY */
 #undef FORCE_BOOT_STANDBY
 #define CONFIG_SYS_SDRAM_BASE		     (0x40000000)
 #define CONFIG_SYS_TEXT_BASE		     (0x4A000000)
 #define CONFIG_SYS_OBLIGATE_BASE         (0xF0000000)
-// the sram base address, and the stack address in stage1
+/* the sram base address, and the stack address in stage1 */
 #define CONFIG_SYS_INIT_RAM_ADDR	     (0)
 #define CONFIG_SYS_INIT_RAM_SIZE	     0x00007d00
 
@@ -109,7 +109,7 @@
 
 #define SYS_CONFIG_MEMBASE               (CONFIG_SYS_SDRAM_BASE + 0x03000000)
 
-//#define CONFIG_SUNXI_LOGBUFFER
+/* #define CONFIG_SUNXI_LOGBUFFER */
 #define SUNXI_DISPLAY_FRAME_BUFFER_ADDR  (CONFIG_SYS_SDRAM_BASE + 0x06400000)
 #define SUNXI_DISPLAY_FRAME_BUFFER_SIZE  0x01000000
 
@@ -150,7 +150,7 @@
 #define CONFIG_SYS_SRAM_BASE             (0x0000)
 #define CONFIG_SYS_SRAMA2_BASE           (0x20000)
 #define CONFIG_SYS_SRAMA2_SIZE           (0x8000)
-#define TOC0_MMU_BASE_ADDRESS		 	 (0x48000)
+#define TOC0_MMU_BASE_ADDRESS			 (0x48000)
 
 #define CONFIG_SBROMSW_BASE              (CONFIG_SYS_SRAMA2_BASE)
 #define CONFIG_STACK_BASE                (CONFIG_SYS_INIT_RAM_ADDR + CONFIG_SYS_INIT_RAM_SIZE - 0x10)
@@ -195,10 +195,11 @@
 #define CONFIG_SUNXI_DMA
 #define CONFIG_CMD_MEMORY
 #define CONFIG_SUNXI_DISPLAY
+#define CONFIG_SUNXI_CLK
 
 #define CONFIG_SUNXI_AXP
 #if defined(CONFIG_ARCH_HOMELET)
-	#define CONFIG_CPUS_STANDBY		//cpus standby for box
+	#define CONFIG_CPUS_STANDBY		/* cpus standby for box */
 #endif
 #define CONFIG_SUNXI_AXP81X
 #define CONFIG_SUNXI_AXP_MAIN        PMU_TYPE_81X
@@ -213,29 +214,30 @@
 /*
  * Display CPU and Board information
  */
-//#define CONFIG_DISPLAY_CPUINFO
-//#define CONFIG_DISPLAY_BOARDINFO
+/* #define CONFIG_DISPLAY_CPUINFO */
+/* #define CONFIG_DISPLAY_BOARDINFO */
 #undef CONFIG_DISPLAY_CPUINFO
 #undef CONFIG_DISPLAY_BOARDINFO
 
 /* Serial & console */
 #define CONFIG_SYS_NS16550
 #define CONFIG_SYS_NS16550_SERIAL
-#define CONFIG_SYS_NS16550_REG_SIZE	(-4)		/* ns16550 reg in the low bits of cpu reg */
+#define CONFIG_SYS_NS16550_REG_SIZE	(-4)
+/* ns16550 reg in the low bits of cpu reg */
 #define CONFIG_SYS_NS16550_CLK		(24000000)
 #define CONFIG_SYS_NS16550_COM1		SUNXI_UART0_BASE
 #define CONFIG_SYS_NS16550_COM2		SUNXI_UART1_BASE
 #define CONFIG_SYS_NS16550_COM3		SUNXI_UART2_BASE
 #define CONFIG_SYS_NS16550_COM4		SUNXI_UART3_BASE
 
-#define CONFIG_CONS_INDEX			1			/* which serial channel for console */
+#define CONFIG_CONS_INDEX	1	/* which serial channel for console */
 
 
 /* Nand config */
 #define CONFIG_NAND
 #define CONFIG_STORAGE_NAND
 #define CONFIG_NAND_SUNXI
-//#define CONFIG_CMD_NAND                         /* NAND support */
+/* #define CONFIG_CMD_NAND  */                       /* NAND support */
 #define CONFIG_SYS_MAX_NAND_DEVICE      1
 #define CONFIG_SYS_NAND_BASE            0x00
 
@@ -253,8 +255,11 @@
 #define CONFIG_ENV_IS_IN_MMC
 #define CONFIG_STORAGE_EMMC
 #define CONFIG_MMC_LOGICAL_OFFSET   (20 * 1024 * 1024/512)
-//#define USE_EMMC_BOOT_PART
-//#define USE_EMMC_USER_WHEN_USE_BOOT_PART //use eMMC boot and user part at the same time,if you want to use it,use USE_EMMC_BOOT_PART at the same time
+/* #define USE_EMMC_BOOT_PART */
+/* #define USE_EMMC_USER_WHEN_USE_BOOT_PART */
+/* use eMMC boot and user part at the same time,
+ * if you want to use it,use USE_EMMC_BOOT_PART at the same time
+ */
 
 #define CONFIG_DOS_PARTITION
 
@@ -278,21 +283,21 @@
 /*
  * Miscellaneous configurable options
  */
-#define CONFIG_SYS_LONGHELP				/* undef to save memory */
-#define CONFIG_SYS_HUSH_PARSER			/* use "hush" command parser	*/
+#define CONFIG_SYS_LONGHELP			/* undef to save memory */
+#define CONFIG_SYS_HUSH_PARSER		/* use "hush" command parser	*/
 #define CONFIG_SYS_PROMPT_HUSH_PS2	"> "
 #define CONFIG_SYS_PROMPT		"sunxi#"
-#define CONFIG_SYS_CBSIZE	256			/* Console I/O Buffer Size */
-#define CONFIG_SYS_PBSIZE	384			/* Print Buffer Size */
-#define CONFIG_SYS_MAXARGS	16			/* max number of command args */
+#define CONFIG_SYS_CBSIZE	256		/* Console I/O Buffer Size */
+#define CONFIG_SYS_PBSIZE	384		/* Print Buffer Size */
+#define CONFIG_SYS_MAXARGS	16	/* max number of command args */
 
 /* Boot Argument Buffer Size */
 #define CONFIG_SYS_BARGSIZE			CONFIG_SYS_CBSIZE
 
 /* memtest works on */
 #define CONFIG_SYS_MEMTEST_START	CONFIG_SYS_SDRAM_BASE
-#define CONFIG_SYS_MEMTEST_END		((CONFIG_SYS_SDRAM_BASE + 256)<<20)	/* 256M */
-#define CONFIG_SYS_LOAD_ADDR		0x50000000					/* default load address */
+#define CONFIG_SYS_MEMTEST_END	((CONFIG_SYS_SDRAM_BASE + 256)<<20) /* 256M */
+#define CONFIG_SYS_LOAD_ADDR		0x50000000 /* default load address */
 
 #define CONFIG_SYS_HZ				1000
 
@@ -305,7 +310,7 @@
  *
  * The stack sizes are set up in start.S using the settings below
  */
-#define CONFIG_STACKSIZE			(256 << 10)				/* 256 KiB */
+#define CONFIG_STACKSIZE	(256 << 10)	/* 256 KiB */
 #define LOW_LEVEL_SRAM_STACK		0x00003FFC
 
 #ifdef CONFIG_USE_IRQ
@@ -321,7 +326,7 @@
 #define CONFIG_SYS_MONITOR_LEN		(256 << 10)	/* 256 KiB */
 #define CONFIG_IDENT_STRING			" Allwinner Technology "
 
-#define CONFIG_ENV_IS_IN_NAND_SUNXI	    /* we store env in one partition of our nand */
+#define CONFIG_ENV_IS_IN_NAND_SUNXI/*we store env in one partition of our nand*/
 #define CONFIG_SUNXI_ENV_PARTITION		"env"	/* the partition name */
 
 /*------------------------------------------------------------------------
@@ -360,7 +365,7 @@
 #define CONFIG_SYS_BOOT_GET_CMDLINE
 #define CONFIG_AUTO_COMPLETE
 
-#define CONFIG_CMD_FAT			/* with this we can access bootfs in nand */
+#define CONFIG_CMD_FAT		/* with this we can access bootfs in nand */
 #define CONFIG_CMD_BOOTA		/* boot android image */
 #define CONFIG_CMD_RUN			/* run a command */
 #define CONFIG_CMD_BOOTD		/* boot the default command */

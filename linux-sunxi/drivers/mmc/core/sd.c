@@ -217,6 +217,9 @@ static int mmc_read_ssr(struct mmc_card *card)
 	unsigned int au, es, et, eo;
 	int err, i;
 	u32 *ssr;
+	u32 speed_class[] = {0, 2, 4, 6, 10};
+	char *mmc_sunxi_event[] = { NULL, NULL };
+	char mmc_sunxi_spc_str[] = {"mmc_sunxi_event=mmc_core_classunknow"};
 
 	if (!(card->csd.cmdclass & CCC_APP_SPEC)) {
 		pr_warning("%s: card lacks mandatory SD Status "
@@ -256,6 +259,19 @@ static int mmc_read_ssr(struct mmc_card *card)
 	} else {
 		pr_warning("%s: SD Status: Invalid Allocation Unit "
 			"size.\n", mmc_hostname(card->host));
+	}
+
+	if (UNSTUFF_BITS(ssr, 440 - 384, 8) <= 4) {
+		card->ssr.speed_class = speed_class[UNSTUFF_BITS(ssr, 440 - 384, 8)];
+		snprintf(mmc_sunxi_spc_str, sizeof(mmc_sunxi_spc_str),
+				"mmc_sunxi_event=mmc_core_class%d", card->ssr.speed_class);
+		mmc_sunxi_event[0] = mmc_sunxi_spc_str;
+		kobject_uevent_env(&mmc_dev(card->host)->kobj, KOBJ_CHANGE, mmc_sunxi_event);
+	} else{
+		/*unkown speed class*/
+		card->ssr.speed_class = 0xffffffff;
+		mmc_sunxi_event[0] = mmc_sunxi_spc_str;
+		kobject_uevent_env(&mmc_dev(card->host)->kobj, KOBJ_CHANGE, mmc_sunxi_event);
 	}
 out:
 	kfree(ssr);

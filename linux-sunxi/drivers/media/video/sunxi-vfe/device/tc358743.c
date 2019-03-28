@@ -1,14 +1,4 @@
 /*
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
-/*
  * A V4L2 driver for TC358743 cameras.
  *
  */
@@ -1636,7 +1626,7 @@ static ssize_t sensor_input_width_show(struct device *dev, struct device_attribu
 	struct v4l2_subdev *sd = cci_drv->sd;
 	input_width = 0;
 	sensor_g_width(sd, &input_width);
-	return sprintf(buf, "%u\n", input_width);
+	return sprintf(buf, "%d\n", input_width);
 }
 
 static ssize_t sensor_input_height_show(struct device *dev, struct device_attribute *attr, char *buf)
@@ -1645,7 +1635,7 @@ static ssize_t sensor_input_height_show(struct device *dev, struct device_attrib
 	struct v4l2_subdev *sd = cci_drv->sd;
 	input_height = 0;
 	sensor_g_height(sd, &input_height);
-	return sprintf(buf, "%u\n", input_height);
+	return sprintf(buf, "%d\n", input_height);
 }
 
 

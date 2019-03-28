@@ -1,14 +1,3 @@
-/*
- * drivers/video/sunxi/disp2/hdmi/aw/hdmi_edid.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #include "hdmi_core.h"
 
 static __s32 is_hdmi;
@@ -215,14 +204,26 @@ static __s32 Parse_DTD_Block(__u8 *pbuf)
 static __s32 Parse_VideoData_Block(__u8 *pbuf,__u8 size)
 {
 	int i=0;
-	while(i<size) {
-		Device_Support_VIC[pbuf[i] &0x7f] = 1;
-		if(pbuf[i] &0x80)	{
-			__inf("Parse_VideoData_Block: VIC %d(native) support\n", pbuf[i]&0x7f);
-		}
-		else {
-			__inf("Parse_VideoData_Block: VIC %d support\n", pbuf[i]);
-		}
+	u8 vic_data = 0;
+
+	while (i < size) {
+		vic_data = pbuf[i] & 0x7f;
+		if ((vic_data == 93) ||
+		    (vic_data == 94) ||
+		    (vic_data == 95))
+			Device_Support_VIC[96 - vic_data + 0x100] = 1;
+		else if (vic_data == 98)
+			Device_Support_VIC[0x104] = 1;
+		else
+			Device_Support_VIC[vic_data] = 1;
+
+
+		if (pbuf[i] & 0x80)
+			__inf("edid_parse_videodata_block: VIC %d(native) support\n",
+				pbuf[i]&0x7f);
+		else
+			__inf("edid_parse_videodata_block: VIC %d support\n", pbuf[i]);
+
 		i++;
 	}
 
@@ -246,15 +247,18 @@ static __s32 Parse_AudioData_Block(__u8 *pbuf,__u8 size)
 
 static __s32 Parse_HDMI_VSDB(__u8 * pbuf,__u8 size)
 {
-	__u8 index = 8;
-	__u8 vic_len = 0;
-	__u8 i;
+	u8 index = 8;
+	u8 vic_len = 0;
+	u8 vsbd_vic = 0;
+	u8 i;
 
 	/* check if it's HDMI VSDB */
 	if((pbuf[0] ==0x03) &&	(pbuf[1] ==0x0c) &&	(pbuf[2] ==0x00)) {
 		is_hdmi = 1;
 		__inf("Find HDMI Vendor Specific DataBlock\n");
 	} else {
+		is_hdmi = 0;
+		is_yuv = 0;
 		return 0;
 	}
 
@@ -274,18 +278,23 @@ static __s32 Parse_HDMI_VSDB(__u8 * pbuf,__u8 size)
 		Device_Support_VIC[HDMI720P_50_3D_FP] = 1;
 		Device_Support_VIC[HDMI720P_60_3D_FP] = 1;
 		__inf("3D_present\n");
-	} else {
-		return 0;
 	}
 
 	if( ((pbuf[index]&0x60) ==1) || ((pbuf[index]&0x60) ==2) )
 		__inf("3D_multi_present\n");
 
 	vic_len = pbuf[index+1]>>5;
-	for(i=0; i<vic_len; i++) {
+	__inf("vsdb_vic_len = %d\n", vic_len);
+	for (i = 0; i < vic_len; i++) {
 		/* HDMI_VIC for extended resolution transmission */
-		Device_Support_VIC[pbuf[index+1+1+i] + 0x100] = 1;
-		__inf("Parse_HDMI_VSDB: VIC %d support\n", pbuf[index+1+1+i]);
+		vsbd_vic = pbuf[index+2+i];
+		if ((0 < vsbd_vic) && (vsbd_vic < 0x05)) {
+			Device_Support_VIC[vsbd_vic + 0x100] = 1;
+			__inf("edid_parse_vsdb: VIC %d support\n", vsbd_vic);
+		} else {
+			__inf("edid_parse_vsdb: VIC %d is a reserved VIC\n",
+				vsbd_vic);
+		}
 	}
 
 	index += (pbuf[index+1]&0xe0) + 2;
@@ -300,7 +309,7 @@ static __s32 Parse_HDMI_VSDB(__u8 * pbuf,__u8 size)
 static __s32 Check_EDID(__u8 *buf_src, __u8*buf_dst)
 {
 	__u32 i;
-	
+
 	for(i = 0; i < 2; i++)
 	{
 		if(buf_dst[i] != buf_src[8+i])
@@ -313,7 +322,7 @@ static __s32 Check_EDID(__u8 *buf_src, __u8*buf_dst)
 	}
 	if(buf_dst[15] != buf_src[0x7f])
 		return -1;
-	
+
 	return 0;
 }
 
@@ -328,8 +337,8 @@ __s32 ParseEDID(void)
 
 	memset(Device_Support_VIC,0,sizeof(Device_Support_VIC));
 	memset(EDID_Buf,0,sizeof(EDID_Buf));
-	is_hdmi = 0;
-	is_yuv = 0;
+	is_hdmi = 1;
+	is_yuv = 1;
 	is_exp = 0;
 	DDC_Init();
 
@@ -357,6 +366,12 @@ __s32 ParseEDID(void)
 		is_exp = 1;
 	}
 
+	if (BlockCount == 0) {
+		is_hdmi = 0;
+		is_yuv = 0;
+		return 0;
+	}
+
 	if( BlockCount > 0 ) {
 		if ( BlockCount > 4 )
 			BlockCount = 4 ;
@@ -377,7 +392,8 @@ __s32 ParseEDID(void)
 							__inf("rgb only test!\n");
 							is_yuv = 0;
 						}
-					}
+					} else
+						is_yuv = 0;
 				}
 
 				offset = EDID_Buf[0x80*i+2];

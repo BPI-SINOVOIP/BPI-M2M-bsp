@@ -68,6 +68,7 @@
 #define PLL_LOCK            0x0200
 #define CPU_LOCK            0x0204
 #define PLL_CPUPAT          0x0280
+#define PLL_AUDIOPAT        0x0284
 #define PLL_VIDEOPAT        0x0288
 #define PLL_VEPAT           0x028c
 #define PLL_GPUPAT          0x029c

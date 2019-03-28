@@ -17,6 +17,7 @@ config SH_LCD_MIPI_DSI
 
 source "drivers/char/agp/Kconfig"
 
+source "modules/gpu/Kconfig"
 source "drivers/gpu/vga/Kconfig"
 
 source "drivers/gpu/drm/Kconfig"
@@ -2440,4 +2441,10 @@ config FB_SH_MOBILE_MERAM
 	  Up to 4 memory channels can be configured, allowing 4 RGB or
 	  2 YCbCr framebuffers to be configured.
 
+config FB_SSD1306
+	tristate "SSD1306 OLED support"
+	depends on I2C
+	help
+	  This driver implements support for SSD1306
+	  OLED controller over I2C.
 endmenu

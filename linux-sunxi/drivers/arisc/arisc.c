@@ -668,25 +668,25 @@ u32 sunxi_load_arisc(void *image, u32 image_size, void *para, u32 para_size)
 {
 	u32   ret;
 	void *dest;
-	
+
 	if (sunxi_soc_is_secure()) {
 		flush_cache_all();
-		ret = call_firmware_op(load_arisc, image, image_size, 
+		ret = call_firmware_op(load_arisc, image, image_size,
 		                       para, para_size, ARISC_PARA_ADDR_OFFSET);
 	} else {
 		/* clear sram_a2 area */
 		memset((void *)arisc_sram_a2_vbase, 0, SUNXI_SRAM_A2_SIZE);
-		
+
 		/* load arisc system binary data to sram_a2 */
 		memcpy((void *)arisc_sram_a2_vbase, image, image_size);
 		ARISC_INF("load arisc image finish\n");
-		
+
 		/* setup arisc parameters */
 		dest = (void *)(arisc_sram_a2_vbase + ARISC_PARA_ADDR_OFFSET);
 		memcpy(dest, (void *)para, para_size);
 		ARISC_INF("setup arisc para finish\n");
 		flush_cache_all();
-		
+
 		/* relese arisc reset */
 		sunxi_deassert_arisc();
 		ARISC_INF("release arisc reset finish\n");
@@ -762,7 +762,7 @@ static int __devinit sunxi_arisc_probe(struct platform_device *pdev)
 	/* initialize hwmsgbox */
 	ARISC_INF("hwmsgbox initialize\n");
 	arisc_hwmsgbox_init();
-	
+
 	/* setup arisc parameter */
 	memset(&para, 0, sizeof(struct arisc_para));
 	sunxi_arisc_para_init(&para);
@@ -776,7 +776,7 @@ static int __devinit sunxi_arisc_probe(struct platform_device *pdev)
 	if (sunxi_soc_is_secure()) {
 		message_addr = (u32)dma_alloc_coherent(NULL, PAGE_SIZE, &(message_phys), GFP_KERNEL);
 		message_size = PAGE_SIZE;
-		para.message_pool_phys = message_phys;	 
+		para.message_pool_phys = message_phys;
 		para.message_pool_size = message_size;
 	} else {
 		/* use sram-a2 last 4k byte */
@@ -785,13 +785,13 @@ static int __devinit sunxi_arisc_probe(struct platform_device *pdev)
 		para.message_pool_phys = ARISC_MESSAGE_POOL_START;
 		para.message_pool_size = ARISC_MESSAGE_POOL_END - ARISC_MESSAGE_POOL_START;
 	}
-	
+
 	/* initialize message manager */
 	ARISC_INF("message manager initialize start:%x, end:%x\n", message_addr, message_size);
 	arisc_message_manager_init((void *)message_addr, message_size);
 
 	/* load arisc */
-	sunxi_load_arisc((void *)(&arisc_binary_start), binary_len, 
+	sunxi_load_arisc((void *)(&arisc_binary_start), binary_len,
 	                 (void *)(&para), sizeof(struct arisc_para));
 
 	/* wait arisc ready */
@@ -811,7 +811,7 @@ static int __devinit sunxi_arisc_probe(struct platform_device *pdev)
 	 * include soc chip id, pmu chip id and serial.
 	 */
 	sunxi_chip_id_init();
-	
+
 	/* config dvfs v-f table */
 	if (arisc_dvfs_cfg_vf_table()) {
 		ARISC_WRN("config dvfs v-f table failed\n");

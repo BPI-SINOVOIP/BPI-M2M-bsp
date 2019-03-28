@@ -62,7 +62,7 @@ config AW_AXP20
 	depends on AXP_TWI_USED
 	---help---
 	AXP20 driver
-
+	
 if AW_AXP20
 choice
 	prompt "AXP calculate type:"
@@ -83,7 +83,7 @@ choice
 
 endchoice
 endif # !AW_AXP20
-
+	
 config AW_AXP152
 	bool "AXP152 driver (AXP15X)"
 	depends on ARCH_SUN8IW8P1 || ARCH_SUN8IW7P1

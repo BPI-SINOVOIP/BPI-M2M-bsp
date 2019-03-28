@@ -142,6 +142,11 @@ int register_budget_cooling_notifier(struct notifier_block *nb)
 }
 EXPORT_SYMBOL(register_budget_cooling_notifier);
 
+int unregister_budget_cooling_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_unregister(&budget_cooling_notifier_list, nb);
+}
+EXPORT_SYMBOL(unregister_budget_cooling_notifier);
 /**
  * cpu_budget_apply_cooling - function to apply frequency clipping.
  * @cpu_budget_device: cpu_budget_cooling_device pointer containing frequency
@@ -168,12 +173,14 @@ int cpu_budget_update_state(struct cpu_budget_cooling_device *cpu_budget_device)
     ret = 0;
 #ifdef CONFIG_HOTPLUG_CPU
 // update cpu limit
+    get_online_cpus();
     for_each_online_cpu(i) {
-        if (cpumask_test_cpu(i, &cpu_budget_device->cluster0_cpus))
-            c0_online++;
-        else if (cpumask_test_cpu(i, &cpu_budget_device->cluster1_cpus))
-            c1_online++;
+	    if (cpumask_test_cpu(i, &cpu_budget_device->cluster0_cpus))
+		    c0_online++;
+	    else if (cpumask_test_cpu(i, &cpu_budget_device->cluster1_cpus))
+		    c1_online++;
     }
+    put_online_cpus();
 
     c1_max = (cpu_budget_device->cluster1_num_roof >=cpu_budget_device->cluster1_num_limit)?
              cpu_budget_device->cluster1_num_limit:cpu_budget_device->cluster1_num_roof;

@@ -1,14 +1,3 @@
-/*
- * drivers/video/sunxi/disp2/disp/de/disp_hdmi.c
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #include "disp_hdmi.h"
 
 #if defined(SUPPORT_HDMI)
@@ -94,17 +83,62 @@ static s32 hdmi_clk_exit(struct disp_device *hdmi)
 	return 0;
 }
 
+static bool hdmi_is_divide_by(unsigned long dividend,
+			       unsigned long divisor)
+{
+	bool divide = false;
+	unsigned long temp;
+
+	if (divisor == 0)
+		goto exit;
+
+	temp = dividend / divisor;
+	if (dividend == (temp * divisor))
+		divide = true;
+
+exit:
+	return divide;
+}
+
 static s32 hdmi_clk_config(struct disp_device *hdmi)
 {
 	struct disp_device_private_data *hdmip = disp_hdmi_get_priv(hdmi);
-	unsigned long rate = 0;
+	unsigned long rate = 0, rate_set;
+	unsigned long rate_round, rate_parent;
+	int i;
 
 	if(!hdmi || !hdmip) {
 	    DE_WRN("hdmi clk init null hdl!\n");
 	    return DIS_FAIL;
 	}
-	rate = hdmip->video_info->pixel_clk * (hdmip->video_info->pixel_repeat + 1);
+	rate = hdmip->video_info->pixel_clk *
+		(hdmip->video_info->pixel_repeat + 1);
+	rate_parent = disp_sys_clk_get_rate(hdmip->clk_parent);
+	if (!hdmi_is_divide_by(rate_parent, rate)) {
+		if (hdmi_is_divide_by(297000000, rate))
+			disp_sys_clk_set_rate(hdmip->clk_parent, 297000000);
+		else if (hdmi_is_divide_by(594000000, rate))
+			disp_sys_clk_set_rate(hdmip->clk_parent, 594000000);
+	}
+
+
 	disp_sys_clk_set_rate(hdmip->clk, rate);
+	rate_set = disp_sys_clk_get_rate(hdmip->clk);
+
+	if (rate_set != rate) {
+		for (i = 1; i < 10; i++) {
+			rate_parent = rate * i;
+			rate_round = disp_sys_clk_round_rate(hdmip->clk_parent, rate_parent);
+			if (rate_round == rate_parent) {
+				disp_sys_clk_set_rate(hdmip->clk_parent, rate_parent);
+				disp_sys_clk_set_rate(hdmip->clk, rate);
+				break;
+			}
+		}
+		if (i == 10)
+			DE_WRN("clk_set_rate fail.we need %ldhz, but get %ldhz\n",
+				rate, rate_set);
+	}
 
 	return 0;
 }
@@ -468,12 +502,15 @@ static s32 disp_hdmi_get_input_csc(struct disp_device* hdmi)
 static s32 disp_hdmi_get_input_color_range(struct disp_device* hdmi)
 {
 	struct disp_device_private_data *hdmip = disp_hdmi_get_priv(hdmi);
-	if((NULL == hdmi) || (NULL == hdmip)) {
+	if ((NULL == hdmi) || (NULL == hdmip)) {
 		DE_WRN("hdmi set func null  hdl!\n");
 		return DIS_FAIL;
 	}
 
-	return DISP_COLOR_RANGE_0_255;
+	if (0 == disp_hdmi_get_input_csc(hdmi))
+		return DISP_COLOR_RANGE_0_255;
+	else
+		return DISP_COLOR_RANGE_16_235;
 }
 
 static s32 disp_hdmi_get_edid(struct disp_device* hdmi)

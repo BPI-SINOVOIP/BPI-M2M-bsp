@@ -486,7 +486,7 @@ int board_display_framebuffer_set(int width, int height, int bitcount, void *buf
 	memset((void *)layer_para, 0, sizeof(disp_layer_config));
 	layer_para->info.fb.addr[0]		= (uint)buffer;
 	tick_printf("frame buffer address %x\n", (uint)buffer);
-	gd->fb_base = (uint)buffer - sizeof(bmp_header_t);
+	gd->fb_base = (uint)buffer - MY_BYTE_ALIGN(sizeof(bmp_header_t));
 #if defined(CONFIG_ARCH_SUN8IW8)
 	layer_para->channel = 2;
 #else
@@ -546,6 +546,7 @@ int board_display_framebuffer_set(int width, int height, int bitcount, void *buf
 	memset((void *)layer_para, 0, sizeof(disp_layer_info));
 	layer_para->fb.addr[0]		= (uint)buffer;
 	debug("frame buffer address %x\n", (uint)buffer);
+	gd->fb_base = (uint)buffer - MY_BYTE_ALIGN(sizeof(bmp_header_t));
 	layer_para->fb.format		= (bitcount == 24)? DISP_FORMAT_RGB_888:DISP_FORMAT_ARGB_8888;
 	layer_para->fb.size.width	= width;
 	layer_para->fb.size.height	= height;

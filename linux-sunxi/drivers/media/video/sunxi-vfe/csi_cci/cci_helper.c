@@ -94,9 +94,16 @@ static ssize_t cci_sys_store(struct device *dev,
 	struct cci_driver *cci_drv = dev_get_drvdata(dev); 
 	struct v4l2_subdev *sd = cci_drv->sd;
 	val = simple_strtoul(buf, NULL, 16);
+#ifdef USE_SPECIFIC_CCI
 	csi_cci_init_helper(cci_drv->cci_id);
-	reg = (val >> 16) & 0xFFFF;
-	value =  val & 0xFFFF;
+#endif
+	if (cci_drv->addr_width == 16) {
+		reg = (val >> 16) & 0xFFFF;
+		value =  val & 0xFFFF;
+	} else {
+		reg = (val >> 8) & 0xFF;
+		value =  val & 0xFF;
+	}
 	if(0 == cci_drv->read_flag)
 	{
 		cci_write(sd, (addr_type)reg, (addr_type)value);
@@ -338,6 +345,7 @@ int cci_dev_probe_helper(struct v4l2_subdev *sd, struct i2c_client *client,
 	if(client)
 	{
 		v4l2_i2c_subdev_init(sd, client, sensor_ops);
+		v4l2_set_subdev_hostdata(sd, cci_drv);
 		cci_drv->sd = sd;
 	}
 	else
@@ -839,7 +847,11 @@ EXPORT_SYMBOL_GPL(cci_write_a16_d8_continuous_helper);
 
 int cci_write(struct v4l2_subdev *sd, addr_type addr, data_type value)
 {
+#ifdef USE_SPECIFIC_CCI
 	struct cci_driver *cci_drv = v4l2_get_subdevdata(sd);
+#else
+	struct cci_driver *cci_drv = v4l2_get_subdev_hostdata(sd);
+#endif
 	int addr_width = cci_drv->addr_width;
 	int data_width = cci_drv->data_width;
 
@@ -873,7 +885,11 @@ EXPORT_SYMBOL_GPL(cci_write);
 
 int cci_read(struct v4l2_subdev *sd, addr_type addr, data_type *value)
 {
+#ifdef USE_SPECIFIC_CCI
 	struct cci_driver *cci_drv = v4l2_get_subdevdata(sd);
+#else
+	struct cci_driver *cci_drv = v4l2_get_subdev_hostdata(sd);
+#endif
 	int addr_width = cci_drv->addr_width;
 	int data_width = cci_drv->data_width;
 	*value = 0;

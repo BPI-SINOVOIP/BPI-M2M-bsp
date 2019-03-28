@@ -237,6 +237,7 @@ static int sunxi_bmp_probe_info(uint addr)
 	return(0);
 }
 
+
 /*
  * Subroutine:  bmp_display
  *
@@ -284,7 +285,7 @@ int sunxi_bmp_decode(unsigned long addr, sunxi_bmp_store_t *bmp_info)
 	if (0 == (bmp->header.height & 0x80000000))
 		bmp->header.height = (-bmp->header.height);
 	memcpy(bmp_info->buffer, bmp, sizeof(bmp_header_t));
-	bmp_info->buffer += sizeof(bmp_header_t);
+	bmp_info->buffer += MY_BYTE_ALIGN(sizeof(bmp_header_t));
 	bmp->header.height = tmp;
 
 	tmp_buffer = (char *)bmp_info->buffer;
@@ -357,5 +358,4 @@ U_BOOT_CMD(
 	"show default logo",
 	"no args\n"
 );
-
 

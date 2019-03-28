@@ -64,26 +64,52 @@ build_nand_lib()
 	fi
 }
 
-build_gpu()
+build_gpu_sun8i()
 {
-    if [ $OUT ]; then
+    GPU_TYPE=`fgrep CONFIG_SUNXI_GPU_TYPE ${LICHEE_KDIR}/.config | cut -d \" -f 2`
+    if [ "X$GPU_TYPE" = "XNone" -o "X$GPU_TYPE" = "X" ]; then
     {
-        unset OUT
+        gpu_message "No GPU type is configured in ${LICHEE_KDIR}/.config."
+        return
     }
     fi
 
-    if [ $TOP ]; then
+    gpu_message "Building $GPU_TYPE device driver..."
+
+    if [ "X${LICHEE_PLATFORM}" = "Xandroid" -o "X${LICHEE_PLATFORM}" = "Xsecureandroid" ] ; then
     {
+        TMP_OUT=$OUT
+        TMP_TOP=$TOP
+        unset OUT
         unset TOP
     }
-	fi
+    fi
 
-	make -C modules/gpu LICHEE_MOD_DIR=${LICHEE_MOD_DIR} LICHEE_KDIR=${LICHEE_KDIR}
+    make -C modules/gpu LICHEE_MOD_DIR=${LICHEE_MOD_DIR} LICHEE_KDIR=${LICHEE_KDIR}
+
+    if [ "X${LICHEE_PLATFORM}" = "Xandroid" -o "X${LICHEE_PLATFORM}" = "Xsecureandroid" ] ; then
+    {
+        export OUT=$TMP_OUT
+        export TOP=$TMP_TOP
+    }
+    fi
+
+    gpu_message "$GPU_TYPE device driver has been built."
 }
 
 clean_gpu()
 {
-	make -C modules/gpu LICHEE_MOD_DIR=${LICHEE_MOD_DIR} LICHEE_KDIR=${LICHEE_KDIR} clean
+    GPU_TYPE=`fgrep CONFIG_SUNXI_GPU_TYPE ${LICHEE_KDIR}/.config | cut -d \" -f 2`
+    if [ "X$GPU_TYPE" = "XNone" -o "X$GPU_TYPE" = "X" ]; then
+    {
+        gpu_message "No GPU type is configured in .config."
+        return
+    }
+    fi
+
+    gpu_message "Cleaning $GPU_TYPE device driver..."
+    make -C modules/gpu LICHEE_MOD_DIR=${LICHEE_MOD_DIR} LICHEE_KDIR=${LICHEE_KDIR} clean
+    gpu_message "$GPU_TYPE device driver has been cleaned."
 }
 
 build_kernel()
@@ -101,7 +127,7 @@ build_kernel()
 
     if [ ! -f .config ] ; then
         printf "\n\033[0;31;1mUsing default config ${LICHEE_KERN_DEFCONF} ...\033[0m\n\n"
-        cp arch/arm/configs/${LICHEE_KERN_DEFCONF} .config
+	make ARCH=${ARCH}  ${LICHEE_KERN_DEFCONF}
     fi
 
     if [ "x$SUNXI_CHECK" = "x1" ];then

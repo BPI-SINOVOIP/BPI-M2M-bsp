@@ -792,7 +792,7 @@ static struct snd_soc_dai_driver sunxi_daudio_dai = {
 };
 
 static struct pinctrl *daudio_pinctrl;
-static int __init sunxi_daudio_dev_probe(struct platform_device *pdev)
+static int sunxi_daudio_dev_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	script_item_u val;

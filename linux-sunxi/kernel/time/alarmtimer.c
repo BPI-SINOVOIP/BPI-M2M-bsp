@@ -334,6 +334,11 @@ static void alarmtimer_shutdown(struct platform_device *dev)
         if (!min.tv64 || (delta.tv64 < min.tv64))
             min = delta;
 
+        /*if the current time is less 50 seconds than the alarm time, the alarm should turn off*/
+        if (ktime_to_ms(min) < 50 * MSEC_PER_SEC) {
+            printk("[alarmtimer] shutdown alarm interval is too short, less than 50s! %s %d\n", __FUNCTION__, __LINE__);
+            return;
+        }
         /* Setup an rtc timer to fire that far in the future */
         rtc_timer_cancel(rtc, &rtctimer);
         rtc_read_time(rtc, &tm);

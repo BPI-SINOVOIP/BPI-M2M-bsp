@@ -1099,7 +1099,7 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 
 		if (copy_from_user(&data, (void __user *)arg, sizeof(data))) {
 			printk("%s(%d) err: copy_from_user failed\n", __func__, __LINE__);
-			return -EFAULT;
+ 			return -EFAULT;
 		}
 
 #ifdef CONFIG_ARCH_SUNXI /* auto select CARVEOUT or CMA heap */
@@ -1120,7 +1120,7 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		if (IS_ERR(data.handle)) {
 			printk("%s(%d) err: ion alloc failed, size 0x%x, head_id_mask 0x%x\n", __func__, __LINE__, data.len,
 				data.heap_id_mask);
-			return PTR_ERR(data.handle);
+ 			return PTR_ERR(data.handle);
 		}
 
 		if (copy_to_user((void __user *)arg, &data, sizeof(data))) {

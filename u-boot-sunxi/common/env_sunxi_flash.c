@@ -102,7 +102,8 @@ static int flash_saveenv(void)
 	env_t	env_new;
 	ssize_t	len;
 	char	*res;
-	u32     start;
+	u32	start;
+	int	ret;
 
 	start = sunxi_partition_get_offset_byname(CONFIG_SUNXI_ENV_PARTITION);
 	if(!start){
@@ -118,7 +119,9 @@ static int flash_saveenv(void)
 	}
 	env_new.crc   = crc32(0, env_new.data, ENV_SIZE);
 
-	return sunxi_flash_write(start, env_size/512, &env_new);
+	ret =  sunxi_flash_write(start, env_size/512, &env_new);
+	sunxi_flash_flush();
+	return ret;
 }
 
 int saveenv(void)

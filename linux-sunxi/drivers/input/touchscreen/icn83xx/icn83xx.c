@@ -1189,6 +1189,7 @@ static int ts_resume(struct i2c_client *client)
         }
 	return 0;
 }
+
 #endif
 
 /***********************************************************************************************
@@ -1440,8 +1441,8 @@ static struct i2c_driver icn83xx_ts_driver = {
         .probe      = icn83xx_ts_probe,
         .remove     = __devexit_p(icn83xx_ts_remove),
 #ifndef CONFIG_HAS_EARLYSUSPEND
-	.suspend    = ts_suspend,
-	.resume     = ts_resume,
+        .suspend    = ts_suspend,
+        .resume     = ts_resume,
 #endif
         .id_table   = icn83xx_ts_id,
         .driver = {

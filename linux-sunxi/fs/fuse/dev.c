@@ -421,6 +421,11 @@ void fuse_request_send(struct fuse_conn *fc, struct fuse_req *req)
 		req->out.h.error = -ECONNREFUSED;
 	else {
 		req->in.h.unique = fuse_get_unique(fc);
+
+#ifdef FUSE_MMAP_
+		DBG_INFO("unique = 0x%llx", req->in.h.unique);
+#endif
+
 		queue_request(fc, req);
 		/* acquire extra reference, since request is still needed
 		   after request_end() */
@@ -640,6 +645,7 @@ static int fuse_copy_fill(struct fuse_copy_state *cs)
 			cs->iov++;
 			cs->nr_segs--;
 		}
+
 		err = get_user_pages_fast(cs->addr, 1, cs->write, &cs->pg);
 		if (err < 0)
 			return err;
@@ -659,6 +665,12 @@ static int fuse_copy_fill(struct fuse_copy_state *cs)
 static int fuse_copy_do(struct fuse_copy_state *cs, void **val, unsigned *size)
 {
 	unsigned ncpy = min(*size, cs->len);
+
+#ifdef FUSE_MMAP_
+	DBG_INFO("ncpy = 0x%X", ncpy);
+	DBG_INFO("cs->len = 0x%X", cs->len);
+#endif
+
 	if (val) {
 		if (cs->write)
 			memcpy(cs->buf, *val, ncpy);
@@ -863,6 +875,20 @@ static int fuse_copy_pages(struct fuse_copy_state *cs, unsigned nbytes,
 	unsigned offset = req->page_offset;
 	unsigned count = min(nbytes, (unsigned) PAGE_SIZE - offset);
 
+#ifdef FUSE_MMAP_
+	DBG_INFO("start...");
+
+	if (is_for_ntfs(cs->fc)) {
+		__u32 opcode = cs->req->in.h.opcode;
+		if ((FUSE_WRITE == opcode)
+			|| ((FUSE_READ == opcode) && (req->single_mmap_flag))) {
+			DBG_INFO("do not copy data for read and write");
+			DBG_INFO("opcode = %i", opcode);
+			return 0;
+		}
+	}
+#endif
+
 	for (i = 0; i < req->num_pages && (nbytes || zeroing); i++) {
 		int err;
 
@@ -875,12 +901,17 @@ static int fuse_copy_pages(struct fuse_copy_state *cs, unsigned nbytes,
 		count = min(nbytes, (unsigned) PAGE_SIZE);
 		offset = 0;
 	}
+
 	return 0;
 }
 
 /* Copy a single argument in the request to/from userspace buffer */
 static int fuse_copy_one(struct fuse_copy_state *cs, void *val, unsigned size)
 {
+#ifdef FUSE_MMAP_
+	DBG_INFO("size = 0x%X", size);
+#endif
+
 	while (size) {
 		if (!cs->len) {
 			int err = fuse_copy_fill(cs);
@@ -889,6 +920,7 @@ static int fuse_copy_one(struct fuse_copy_state *cs, void *val, unsigned size)
 		}
 		fuse_copy_do(cs, &val, &size);
 	}
+
 	return 0;
 }
 
@@ -900,6 +932,10 @@ static int fuse_copy_args(struct fuse_copy_state *cs, unsigned numargs,
 	int err = 0;
 	unsigned i;
 
+#ifdef FUSE_MMAP_
+	DBG_INFO("numargs = %i", numargs);
+#endif
+
 	for (i = 0; !err && i < numargs; i++)  {
 		struct fuse_arg *arg = &args[i];
 		if (i == numargs - 1 && argpages)
@@ -907,6 +943,7 @@ static int fuse_copy_args(struct fuse_copy_state *cs, unsigned numargs,
 		else
 			err = fuse_copy_one(cs, arg->value, arg->size);
 	}
+
 	return err;
 }
 
@@ -1111,6 +1148,10 @@ static ssize_t fuse_dev_do_read(struct fuse_conn *fc, struct file *file,
 	struct fuse_in *in;
 	unsigned reqsize;
 
+#ifdef FUSE_MMAP_
+	DBG_INFO("start");
+#endif
+
  restart:
 	spin_lock(&fc->lock);
 	err = -EAGAIN;
@@ -1118,7 +1159,16 @@ static ssize_t fuse_dev_do_read(struct fuse_conn *fc, struct file *file,
 	    !request_pending(fc))
 		goto err_unlock;
 
+#ifdef FUSE_MMAP_
+	DBG_INFO("request_wait...");
+#endif
+
 	request_wait(fc);
+
+#ifdef FUSE_MMAP_
+	DBG_INFO("wake up");
+#endif
+
 	err = -ENODEV;
 	if (!fc->connected)
 		goto err_unlock;
@@ -1140,9 +1190,17 @@ static ssize_t fuse_dev_do_read(struct fuse_conn *fc, struct file *file,
 			fc->forget_batch = 16;
 	}
 
+#ifdef FUSE_MMAP_
+	DBG_INFO("start get req...");
+#endif
+
 	req = list_entry(fc->pending.next, struct fuse_req, list);
 	req->state = FUSE_REQ_READING;
 	list_move(&req->list, &fc->io);
+
+#ifdef FUSE_MMAP_
+	DBG_INFO("get req ok");
+#endif
 
 	in = &req->in;
 	reqsize = in->h.len;
@@ -1157,11 +1215,27 @@ static ssize_t fuse_dev_do_read(struct fuse_conn *fc, struct file *file,
 	}
 	spin_unlock(&fc->lock);
 	cs->req = req;
+
+#ifdef FUSE_MMAP_
+	DBG_INFO("unique = 0x%llx, nodeid = 0x%llx, opcode = 0x%X",
+				in->h.unique, in->h.nodeid, in->h.opcode);
+	DBG_INFO("copy data start...");
+#endif
+
 	err = fuse_copy_one(cs, &in->h, sizeof(in->h));
 	if (!err)
 		err = fuse_copy_args(cs, in->numargs, in->argpages,
 				     (struct fuse_arg *) in->args, 0);
 	fuse_copy_finish(cs);
+
+#ifdef FUSE_MMAP_
+	DBG_INFO("copy data finish");
+	if (is_for_ntfs(fc)) {
+		fc->cur_req = req;
+		fc->cur_req_id = req->in.h.unique;
+	}
+#endif
+
 	spin_lock(&fc->lock);
 	req->locked = 0;
 	if (req->aborted) {
@@ -1182,10 +1256,20 @@ static ssize_t fuse_dev_do_read(struct fuse_conn *fc, struct file *file,
 			queue_interrupt(fc, req);
 		spin_unlock(&fc->lock);
 	}
+
+#ifdef FUSE_MMAP_
+	DBG_INFO("ok");
+#endif
+
 	return reqsize;
 
  err_unlock:
 	spin_unlock(&fc->lock);
+
+#ifdef FUSE_MMAP_
+	/* DBG_ERR_INFO("fail, err = %i", err); */
+#endif
+
 	return err;
 }
 
@@ -2056,6 +2140,150 @@ static int fuse_dev_fasync(int fd, struct file *file, int on)
 	return fasync_helper(fd, file, on, &fc->fasync);
 }
 
+#ifdef FUSE_MMAP_
+static int fuse_vma_fault(struct vm_area_struct *vma,
+					struct vm_fault *vmf)
+{
+	struct page *page;
+	unsigned long data_index = vmf->pgoff;
+	struct fuse_conn *fc = (struct fuse_conn *)vma->vm_private_data;
+	struct fuse_req *req;
+
+	if (!fc) {
+		DBG_ERR_INFO("fc is null!!!");
+		return VM_FAULT_ERROR;
+	}
+
+	DBG_INFO("start...");
+	DBG_INFO("data_index = %i", data_index);
+
+	spin_lock(&fc->lock);
+
+	req = fc->cur_req;
+	if (!req) {
+		DBG_ERR_INFO("req is null");
+		goto err;
+	}
+
+	if (data_index >= req->num_pages) {
+		DBG_ERR_INFO("invalid arg, data_index = %i, req->num_pages = %i",
+									data_index, req->num_pages);
+		goto err;
+	}
+
+	page = req->pages[data_index];
+
+	if (!page) {
+		DBG_ERR_INFO("page is null");
+		goto err;
+	}
+
+	get_page(page);
+	vmf->page = page;
+
+	spin_unlock(&fc->lock);
+
+	DBG_INFO("finish");
+	return 0;
+
+err:
+	spin_unlock(&fc->lock);
+	return VM_FAULT_ERROR;
+}
+
+static const struct vm_operations_struct fuse_vm_ops = {
+	.fault = fuse_vma_fault,
+};
+
+static int fuse_dev_mmap(struct file *file, struct vm_area_struct *vma)
+{
+	unsigned long phy_addr;
+	struct page *page;
+	struct fuse_req *req;
+	__u32 opcode;
+	unsigned long start = (unsigned long)vma->vm_start;
+	unsigned long size = (unsigned long)(vma->vm_end - vma->vm_start);
+	unsigned long data_index = vma->vm_pgoff;
+	struct fuse_conn *fc = fuse_get_conn(file);
+
+	DBG_INFO("start...");
+	DBG_INFO("vm_start = 0x%x, vm_size = %i, data_index = %i",
+						start, size, data_index);
+
+	if (!fc) {
+		DBG_ERR_INFO("fc is null!!!");
+		return -EPERM;
+	}
+
+	req = fc->cur_req;
+	if (!req) {
+		DBG_ERR_INFO("req is null!!!");
+		return -EPERM;
+	}
+
+	opcode = req->in.h.opcode;
+	if ((opcode != FUSE_WRITE) && (opcode != FUSE_READ)) {
+		DBG_ERR_INFO("invalid req, opcode = %i", opcode);
+		return -EINVAL;
+	}
+
+	if (fc->cur_req_id != req->in.h.unique) {
+		DBG_ERR_INFO("invalid req!!!");
+		DBG_ERR_INFO("fc->cur_req_id = 0x%llx, req->in.h.unique = 0x%llx",
+					fc->cur_req_id, req->in.h.unique);
+		return -EINVAL;
+	}
+
+	if (size & (~PAGE_MASK)) {
+		DBG_ERR_INFO("invalid arg, size = %i", size);
+		return -EINVAL;
+	}
+
+	if (req->num_pages > REQ_MAX_PAGE_MUN) {
+		DBG_ERR_INFO("invalid arg, REQ_MAX_PAGE_MUN = %i, req->num_pages = %i",
+									REQ_MAX_PAGE_MUN, req->num_pages);
+		return -EINVAL;
+	}
+
+	if (data_index >= req->num_pages) {
+		DBG_ERR_INFO("invalid arg, data_index = %i, req->num_pages = %i",
+									data_index, req->num_pages);
+		return -EINVAL;
+	}
+
+	vma->vm_flags &= ~VM_IO;
+	vma->vm_flags |= VM_RESERVED;
+
+	if (FUSE_WRITE == opcode) {
+		vma->vm_ops = &fuse_vm_ops;
+		vma->vm_private_data = fc;
+	} else {
+		if((!(req->single_mmap_flag)) && (size > PAGE_SIZE)) {
+			DBG_ERR_INFO("read mmap size too large, size = %i", size);
+			return -EINVAL;
+		}
+
+		page = req->pages[data_index];
+		if (!page) {
+			DBG_ERR_INFO("page is null");
+			return -EPERM;
+		}
+
+		/* SetPageReserved(page); */
+		phy_addr =  (unsigned long)PFN_PHYS(page_to_pfn(page));
+
+		if(remap_pfn_range(vma, start, phy_addr>>PAGE_SHIFT,
+							size, PAGE_SHARED)) {
+			DBG_ERR_INFO("remap_pfn_range fail !!!");
+			return -EAGAIN;
+		}
+	}
+
+	DBG_INFO("finish");
+	return 0;
+}
+#endif
+
 const struct file_operations fuse_dev_operations = {
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
@@ -2068,6 +2296,9 @@ const struct file_operations fuse_dev_operations = {
 	.poll		= fuse_dev_poll,
 	.release	= fuse_dev_release,
 	.fasync		= fuse_dev_fasync,
+#ifdef FUSE_MMAP_
+	.mmap   	= fuse_dev_mmap,
+#endif
 };
 EXPORT_SYMBOL_GPL(fuse_dev_operations);
 

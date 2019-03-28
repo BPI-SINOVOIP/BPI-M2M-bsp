@@ -14,6 +14,16 @@ define KernelPackage/sunxi-vfe
   FILES+=$(LINUX_DIR)/drivers/media/video/sunxi-vfe/vfe_subdev.ko
   FILES+=$(LINUX_DIR)/drivers/media/video/sunxi-vfe/device/gc0308.ko
   FILES+=$(LINUX_DIR)/drivers/media/video/sunxi-vfe/vfe_v4l2.ko
+  KCONFIG:= \
+    CONFIG_MEDIA_SUPPORT=y \
+    CONFIG_VIDEO_CAPTURE_DRIVERS=y \
+    CONFIG_V4L_PLATFORM_DRIVERS=y \
+    CONFIG_VIDEO_V4L2=y \
+    CONFIG_VIDEO_SUNXI_VFE \
+    CONFIG_CSI_VFE \
+    CONFIG_VIDEOBUF_DMA_CONTIG \
+    CONFIG_VIDEOBUF_DMA_SG \
+    CONFIG_VIDEOBUF_GEN
   AUTOLOAD:=$(call AutoLoad,90,videobuf-core videobuf-dma-contig cci vfe_os vfe_subdev gc0308 vfe_v4l2)
 endef
 
@@ -22,6 +32,30 @@ define KernelPackage/sunxi-vfe/description
 endef
 
 $(eval $(call KernelPackage,sunxi-vfe))
+
+define KernelPackage/sunxi-uvc
+  SUBMENU:=$(VIDEO_MENU)
+  TITLE:=sunxi-uvc support
+  DEPENDS:=@USB_SUPPORT +kmod-usb-core +kmod-input-core +kmod-dma-buf
+  FILES:=$(LINUX_DIR)/drivers/media/video/videobuf2-core.ko
+  FILES+=$(LINUX_DIR)/drivers/media/video/videobuf2-memops.ko
+  FILES+=$(LINUX_DIR)/drivers/media/video/videobuf2-vmalloc.ko
+  FILES+=$(LINUX_DIR)/drivers/media/video/uvc/uvcvideo.ko
+  KCONFIG:= \
+    CONFIG_V4L_USB_DRIVERS=y \
+    CONFIG_VIDEOBUF2_CORE \
+    CONFIG_VIDEOBUF2_MEMOPS \
+    CONFIG_VIDEOBUF2_VMALLOC \
+    CONFIG_USB_VIDEO_CLASS \
+    CONFIG_MEDIA_USB_SUPPORT
+  AUTOLOAD:=$(call AutoProbe,videobuf2-core videobuf2-memops videobuf2_vmalloc uvcvideo)
+endef
+
+define KernelPackage/sunxi-uvc/description
+Kernel modules for sunxi-uvc support
+endef
+
+$(eval $(call KernelPackage,sunxi-uvc))
 
 define KernelPackage/leds-sunxi
   SUBMENU:=$(LEDS_MENU)
@@ -56,7 +90,7 @@ define KernelPackage/sunxi-disp
   SUBMENU:=$(VIDEO_MENU)
   TITLE:=SUNXI-DISP support
   FILES:=$(LINUX_DIR)/drivers/video/sunxi/disp/disp.ko
-  AUTOLOAD:=$(call AutoLoad,50,disp)
+  AUTOLOAD:=$(call AutoLoad,50,disp,1)
 endef
 
 define KernelPackage/sunxi-disp/description
@@ -70,7 +104,7 @@ define KernelPackage/sunxi-lcd
   TITLE:=SUNXI-LCD support
   DEPENDS:=+kmod-sunxi-disp
   FILES:=$(LINUX_DIR)/drivers/video/sunxi/lcd/lcd.ko
-  AUTOLOAD:=$(call AutoLoad,50,lcd)
+  AUTOLOAD:=$(call AutoLoad,50,lcd,1)
 endef
 
 define KernelPackage/sunxi-lcd/description

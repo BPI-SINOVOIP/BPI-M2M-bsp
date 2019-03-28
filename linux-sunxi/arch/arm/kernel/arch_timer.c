@@ -381,7 +381,7 @@ static void arch_timer_stop(struct clock_event_device *clk)
 	arch_timer_set_mode(CLOCK_EVT_MODE_UNUSED, clk);
 }
 
-static int arch_timer_cpu_notify(struct notifier_block *self,
+static int __ref arch_timer_cpu_notify(struct notifier_block *self,
 					   unsigned long action, void *hcpu)
 {
 	/*

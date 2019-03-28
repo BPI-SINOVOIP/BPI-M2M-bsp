@@ -594,8 +594,11 @@ void USBC_SelectBus(__hdle hUSB, __u32 io_type, __u32 ep_type, __u32 ep_index)
 #endif
 	}
 
-	/* in 1667 1673 and later ic, FIFO_BUS_SEL bit(bit24 of reg0x40 for host/device)
-	 * is fixed to 1, the hw guarantee that it's ok for cpu/inner_dma/outer_dma transfer */
+	/*
+	 * in SUN8IW5 SUN8IW6 and later ic, FIFO_BUS_SEL bit(bit24 of reg0x40
+	 * for host/device) is fixed to 1, the hw guarantee that it's ok for
+	 * cpu/inner_dma/outer_dma transfer.
+	 */
 #if defined (CONFIG_ARCH_SUN8IW5) || defined (CONFIG_ARCH_SUN8IW6) || defined (CONFIG_ARCH_SUN8IW9) || defined (CONFIG_ARCH_SUN8IW8) || defined (CONFIG_ARCH_SUN8IW7)
 	reg_val |= 0x1<<USBC_BP_VEND0_BUS_SEL;
 #endif

@@ -1,13 +1,3 @@
-/*
- *
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- */
 #include <linux/device.h>
 #include <linux/module.h>
 
@@ -196,11 +186,15 @@ int vfe_gpio_write(struct v4l2_subdev *sd, enum gpio_type gpio_type, unsigned in
 			break;
 		case PWDN:
 			gpio = dev->gpio->pwdn_io;
+#if !defined(CONFIG_ARCH_SUN8IW8)
 			force_value_flag = 0;
+#endif
 			break;
 		case RESET:
 			gpio = dev->gpio->reset_io;
+#if !defined(CONFIG_ARCH_SUN8IW8)
 			force_value_flag = 0;
+#endif
 			break;
 		case AF_PWDN:
 			gpio = dev->gpio->af_pwdn_io;

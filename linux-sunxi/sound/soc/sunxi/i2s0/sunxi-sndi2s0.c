@@ -180,6 +180,9 @@ static struct snd_soc_dai_link sunxi_sndi2s0_dai_link = {
 #elif defined(CONFIG_ARCH_SUN8IW5) && defined(CONFIG_SND_SOC_TAS5707)
 	.codec_dai_name = "tas5707-pcm0",
 	.codec_name		= "tas5707.0-001b",
+#elif defined(CONFIG_ARCH_SUN8IW5) && defined(CONFIG_SND_SOC_AC108)
+	.codec_dai_name = "ac108-pcm0",
+	.codec_name		= "ac108.1-003b",
 #else
 	.codec_dai_name = "sndi2s0",
 	.codec_name 	= "sunxi-i2s0-codec.0",
@@ -226,7 +229,19 @@ static int __devinit sunxi_sndi2s0_dev_probe(struct platform_device *pdev)
         pr_err("[I2S0] signal_inversion type err!\n");
     }
 	signal_inversion = val.val;
+#ifdef CONFIG_SND_SOC_AC108
+	type = script_get_item("ac108", "codec_name", &val);
+	if (SCIRPT_ITEM_VALUE_TYPE_STR != type) {
+		pr_err("[I2S0] get codec_name type err!\n");
+	}
+	card->dai_link->codec_name = val.str;
 
+	type = script_get_item("ac108", "codec_dai_name", &val);
+	if (SCIRPT_ITEM_VALUE_TYPE_STR != type) {
+		pr_err("[I2S0] codec_dai_name type err!\n");
+	}
+	card->dai_link->codec_dai_name = val.str;
+#endif
 	card->dev = &pdev->dev;
 	ret = snd_soc_register_card(card);
 	if (ret) {

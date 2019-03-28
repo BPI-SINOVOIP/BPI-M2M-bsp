@@ -140,7 +140,6 @@ static int sunxi_pcm_hw_params(struct snd_pcm_substream *substream,
 #endif
 #endif
 
-
 	snd_pcm_set_runtime_buffer(substream, &substream->dma_buffer);
 	return 0;
 }

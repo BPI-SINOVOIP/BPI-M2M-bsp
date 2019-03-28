@@ -37,7 +37,7 @@ uvc_send_response(struct uvc_device *uvc, struct uvc_request_data *data)
 	struct usb_request *req = uvc->control_req;
 
 	if (data->length < 0)
-#if defined (CONFIG_ARCH_SUN8IW8)
+#if defined (CONFIG_ARCH_SUN8IW8) || defined (CONFIG_ARCH_SUN8IW6)
 		return 0;
 #else
 		return usb_ep_set_halt(cdev->gadget->ep0);

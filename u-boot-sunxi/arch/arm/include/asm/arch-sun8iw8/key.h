@@ -34,8 +34,8 @@ struct sunxi_lradc {
 };
 
 #define LRADC_EN                  (0x1)   /* LRADC enable */
-#define LRADC_SAMPLE_RATE         0x2    /* 32.25 Hz */
-#define LEVELB_VOL                0x2    /* 0x33(~1.6v) */
+#define LRADC_SAMPLE_RATE         (0x3 << 2)   /* 0:250Hz 1:125Hz 2:52.5Hz 3:32.25Hz */
+#define LEVELB_VOL                (0x0 << 4)   /* 0:0x3c(~1.9v) 1:0x39(~1.8v) 2:0x36(~1.7v) 3:0x33(~1.6v) */
 #define LRADC_HOLD_EN             (0x1 << 6)    /* sample hold enable */
 #define KEY_MODE_SELECT           0x0    /* normal mode */
 

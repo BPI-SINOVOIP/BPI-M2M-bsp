@@ -622,7 +622,7 @@ void handle_IPI(int ipinr, struct pt_regs *regs)
 	switch (ipinr) {
 	case IPI_WAKEUP:
 		break;
-	
+
 	case IPI_TIMER:
 		irq_enter();
 		tick_receive_broadcast();

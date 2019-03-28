@@ -206,7 +206,7 @@ void reload_config(void)
     script_length = script_head->length;
     if(script_length)
     {
-        printf("reload config to 0x43000000 \n");
+        printf("reload config to 0x%x\n", SYS_CONFIG_MEMBASE);
         memcpy((void*)SYS_CONFIG_MEMBASE,(void*)script_head ,script_length);
     }
     return ;

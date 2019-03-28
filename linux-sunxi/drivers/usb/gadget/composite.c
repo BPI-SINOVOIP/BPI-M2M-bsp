@@ -1278,7 +1278,7 @@ unknown:
 			ctrl->bRequestType, ctrl->bRequest,
 			w_value, w_index, w_length);
 
-#if defined (CONFIG_ARCH_SUN8IW8)
+#if defined (CONFIG_ARCH_SUN8IW8) || defined (CONFIG_ARCH_SUN8IW6)
 		/* getcur request about request error code of webcam. */
 		if (ctrl->bRequest == 0x81 && ctrl->bRequestType == 0xa1 && ctrl->wLength == 0x1
 			&& ctrl->wValue == 0x200 && ctrl->wIndex == 0x0) {

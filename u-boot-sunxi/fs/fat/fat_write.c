@@ -30,7 +30,7 @@
 #include <part.h>
 
 extern block_dev_desc_t *cur_dev;
-extern unsigned long part_offset;
+extern unsigned long part_offset_fat;
 
 extern __u8 get_dentfromdir_block[MAX_CLUSTSIZE];
 extern __u8 do_fat_read_block[MAX_CLUSTSIZE];
@@ -69,7 +69,7 @@ static int disk_write(__u32 startblock, __u32 getsize, __u8 *bufptr)
 		return -1;
 	}
 
-	startblock += part_offset;
+	startblock += part_offset_fat;
 
 	if (cur_dev->block_read) {
 		return cur_dev->block_write(cur_dev->dev, startblock, getsize,
@@ -1072,7 +1072,7 @@ static int do_fat_write(const char *filename, void *buffer,
 
 		ret = check_overflow(mydata, start_cluster, size);
 		if (ret) {
-			printf("Error: %ld overflow\n", size);
+			printf("Error: %lu overflow\n", size);
 			goto exit;
 		}
 
@@ -1119,7 +1119,7 @@ static int do_fat_write(const char *filename, void *buffer,
 
 		ret = check_overflow(mydata, start_cluster, size);
 		if (ret) {
-			printf("Error: %ld overflow\n", size);
+			printf("Error: %lu overflow\n", size);
 			goto exit;
 		}
 

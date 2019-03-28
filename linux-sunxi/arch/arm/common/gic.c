@@ -355,7 +355,7 @@ asmlinkage void __exception_irq_entry gic_handle_irq(struct pt_regs *regs)
 		if (sunxi_soc_is_secure()) {
 			irqstat = readl_relaxed(cpu_base + GIC_CPU_AINTACK);
 		} else {
-			irqstat = readl_relaxed(cpu_base + GIC_CPU_INTACK);	
+			irqstat = readl_relaxed(cpu_base + GIC_CPU_INTACK);
 		}
 #else
 		irqstat = readl_relaxed(cpu_base + GIC_CPU_INTACK);
@@ -372,7 +372,7 @@ asmlinkage void __exception_irq_entry gic_handle_irq(struct pt_regs *regs)
 			if (sunxi_soc_is_secure()) {
 				writel_relaxed(irqstat, cpu_base + GIC_CPU_AEOI);
 			} else {
-				writel_relaxed(irqstat, cpu_base + GIC_CPU_EOI);	
+				writel_relaxed(irqstat, cpu_base + GIC_CPU_EOI);
 #ifdef CONFIG_ARCH_SUN8IW6P1
                 check_irq_active_after_eoi(raw_smp_processor_id(),irqnr);
 #endif
@@ -614,7 +614,7 @@ static void gic_dist_restore(unsigned int gic_nr)
 	for (i = 0; i < DIV_ROUND_UP(gic_irqs, 32); i++)
 		writel_relaxed(gic_data[gic_nr].saved_spi_enable[i],
 			dist_base + GIC_DIST_ENABLE_SET + i * 4);
-	
+
 #if defined(CONFIG_ARCH_SUN8IW6P1) || defined(CONFIG_ARCH_SUN9IW1P1)
 	if (sunxi_soc_is_secure()) {
 		writel_relaxed(0x3, dist_base + GIC_DIST_CTRL);
@@ -680,7 +680,7 @@ static void gic_cpu_restore(unsigned int gic_nr)
 		writel_relaxed(0xa0a0a0a0, dist_base + GIC_DIST_PRI + i * 4);
 
 	writel_relaxed(0xf0, cpu_base + GIC_CPU_PRIMASK);
-	
+
 #if defined(CONFIG_ARCH_SUN8IW6P1) || defined(CONFIG_ARCH_SUN9IW1P1)
 	if (sunxi_soc_is_secure()) {
 		writel_relaxed(0xb, cpu_base + GIC_CPU_CTRL);

@@ -1034,12 +1034,7 @@ dhdpcie_enable_device(dhd_bus_t *bus)
 		ret = pci_enable_device(bus->dev);
 		if (!ret)
 			pci_set_master(bus->dev);
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 0, 0))
 	}
-#endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0) and
-		* (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 0, 0)) && \
-		* (LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0)
-		*/
 
 	if (ret)
 		pci_disable_device(bus->dev);

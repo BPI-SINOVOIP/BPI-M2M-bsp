@@ -1,12 +1,13 @@
 /*
- * Copyright (c) 2016 Allwinnertech Co., Ltd.
+ * Allwinner SoCs display driver.
  *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * Copyright (C) 2016 Allwinner.
  *
+ * This file is licensed under the terms of the GNU General Public
+ * License version 2.  This program is licensed "as is" without any
+ * warranty of any kind, whether express or implied.
  */
+
 #include "panels.h"
 
 struct sunxi_lcd_drv g_lcd_drv;
@@ -14,13 +15,16 @@ struct sunxi_lcd_drv g_lcd_drv;
 extern __lcd_panel_t default_panel;
 extern __lcd_panel_t lt070me05000_panel;
 extern __lcd_panel_t t27p06_panel;
+extern __lcd_panel_t sl006p_panel;
 
 __lcd_panel_t* panel_array[] = {
 	&default_panel,
 	&lt070me05000_panel,
 	&t27p06_panel,
 	/* add new panel below */
-
+#ifndef CONFIG_ARCH_SUN8IW8P1
+	&sl006p_panel,
+#endif
 	NULL,
 };
 

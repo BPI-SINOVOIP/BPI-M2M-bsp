@@ -423,7 +423,7 @@ static void sunxi_start_ehci(struct sunxi_hci_hcd *sunxi_ehci)
 {
 
 	sunxi_ehci->set_usbc_regulator(sunxi_ehci, 1);
-#if defined (CONFIG_ARCH_SUN8IW6) || defined (CONFIG_ARCH_SUN9IW1)	
+#if defined (CONFIG_ARCH_SUN8IW6) || defined (CONFIG_ARCH_SUN9IW1)
 	sunxi_ehci->hci_phy_ctrl(sunxi_ehci, 1);
 #endif
 	open_ehci_clock(sunxi_ehci);
@@ -438,7 +438,7 @@ static void sunxi_stop_ehci(struct sunxi_hci_hcd *sunxi_ehci)
 	sunxi_ehci_port_configure(sunxi_ehci, 0);
 	sunxi_ehci->usb_passby(sunxi_ehci, 0);
 	close_ehci_clock(sunxi_ehci);
-#if defined (CONFIG_ARCH_SUN8IW6) || defined (CONFIG_ARCH_SUN9IW1)	
+#if defined (CONFIG_ARCH_SUN8IW6) || defined (CONFIG_ARCH_SUN9IW1)
 	sunxi_ehci->hci_phy_ctrl(sunxi_ehci, 0);
 #endif
 	sunxi_ehci->set_usbc_regulator(sunxi_ehci, 0);

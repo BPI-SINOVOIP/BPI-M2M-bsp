@@ -1200,12 +1200,12 @@ static int axp22_set_gpio0ldo(int set_vol, int onoff)
 	if(onoff == 0)
 	{
 		reg_value &= ~(7 << 0);
-		reg_value |=  (3 << 0);
+		reg_value |=  (4 << 0);
 	}
 	else
 	{
 		reg_value &= ~(7 << 0);
-		reg_value |=  (2 << 0);
+		reg_value |=  (3 << 0);
 	}
     if(axp_i2c_write(AXP22_ADDR, BOOT_POWER22_GPIO0_CTL, reg_value))
 	{
@@ -1271,12 +1271,12 @@ static int axp22_set_gpio1ldo(int set_vol, int onoff)
 	if(onoff == 0)
 	{
 		reg_value &= ~(7 << 0);
-		reg_value |=  (3 << 0);
+		reg_value |=  (4 << 0);
 	}
 	else
 	{
 		reg_value &= ~(7 << 0);
-		reg_value |=  (2 << 0);
+		reg_value |=  (3 << 0);
 	}
     if(axp_i2c_write(AXP22_ADDR, BOOT_POWER22_GPIO1_CTL, reg_value))
 	{
@@ -1373,9 +1373,9 @@ static int axp22_set_gpioldo_output(int sppply_index, int vol_value, int onoff)
 {
 	switch(sppply_index)
 	{
-		case 1:
+		case 0:
 			return axp22_set_gpio0ldo(vol_value, onoff);
-		case 2:
+		case 1:
 			return axp22_set_gpio1ldo(vol_value, onoff);
 	}
 

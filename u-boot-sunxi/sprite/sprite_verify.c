@@ -343,9 +343,15 @@ int sunxi_sprite_verify_mbr(void *buffer)
 	sunxi_mbr_t *local_mbr;
 	char        *tmp_buf = (char *)buffer;
 	int          i;
-
+	int          mbr_num = 0;
+	int          storage_type;
 	tmp_buf = buffer;
-	for(i=0;i<SUNXI_MBR_COPY_NUM;i++)
+	storage_type = get_boot_storage_type();
+	if (storage_type == 3)  /*spinor*/
+		mbr_num = SUNXI_MBR_COPY_NUM_SPINOR;
+	else
+		mbr_num = SUNXI_MBR_COPY_NUM;
+	for(i=0;i<mbr_num;i++)
     {
     	local_mbr = (sunxi_mbr_t *)tmp_buf;
     	if(crc32(0, (const unsigned char *)(tmp_buf + 4), SUNXI_MBR_SIZE - 4) != local_mbr->crc32)
@@ -365,6 +371,38 @@ int sunxi_sprite_verify_mbr(void *buffer)
 #endif
 
     return 0;
+}
+
+int sunxi_sprite_get_one_valid_mbr(void *valid_mbr_buffer, void *source_mbr_buffer)
+{
+	sunxi_mbr_t *local_mbr;
+	char        *tmp_buf;
+	int          i;
+	int          mbr_num = 0;
+	int          storage_type;
+
+	tmp_buf = (char *)source_mbr_buffer;
+	storage_type = get_boot_storage_type();
+	if (storage_type == 3)  /*spinor*/
+		mbr_num = SUNXI_MBR_COPY_NUM_SPINOR;
+	else
+		mbr_num = SUNXI_MBR_COPY_NUM;
+	for (i = 0; i < mbr_num; i++) {
+		local_mbr = (sunxi_mbr_t *)tmp_buf;
+		if (crc32(0, (const unsigned char *)(tmp_buf + 4),
+				SUNXI_MBR_SIZE - 4) != local_mbr->crc32) {
+			printf("the %d mbr table is bad\n", i);
+			tmp_buf += SUNXI_MBR_SIZE;
+		} else {
+			printf("the %d mbr table is ok\n", i);
+			memmove(valid_mbr_buffer, tmp_buf, SUNXI_MBR_SIZE);
+#if 1
+			__mbr_map_dump(valid_mbr_buffer);
+#endif
+			return 0;
+		}
+	}
+	return -1;
 }
 /*
 ************************************************************************************************************

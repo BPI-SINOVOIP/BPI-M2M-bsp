@@ -14,7 +14,7 @@ config BCMDHD_FW_PATH
 config BCMDHD_NVRAM_PATH
 	depends on BCMDHD
 	string "NVRAM path"
-	default "/lib/etc/firmware/nvram.txt"
+	default "/lib/firmware/nvram.txt"
 	---help---
 	  Path to the calibration file.
 
