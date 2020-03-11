@@ -45,6 +45,7 @@ dcdc2_vol       = 1100
 dcdc3_vol       = 1200
 dcdc4_vol       = 0
 dcdc5_vol       = 1500
+aldo1_vol       = 3300
 aldo2_vol       = 2500
 aldo3_vol       = 3000
 ;BPI-M2I CSI
