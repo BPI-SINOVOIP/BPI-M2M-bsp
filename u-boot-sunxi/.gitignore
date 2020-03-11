@@ -6,7 +6,6 @@
 # Normal rules
 #
 .*
-
 *.o
 *.o.*
 *.a
@@ -26,10 +25,14 @@
 # host programs on Cygwin
 *.exe
 
+# Build tree
+/build-*
+
 #
 # Top-level generic files
 #
-
+/MLO*
+/SPL
 /System.map
 /u-boot*
 
@@ -43,14 +46,20 @@
 # Generated files
 #
 
-*.depend
 /LOG
 /errlog
 /reloc_off
 
+/spl/
+/tpl/
+
+#
+# Generated include files
+#
+/include/config/
 /include/generated/
-/lib/asm-offsets.s
-asm-offsets.s
+/include/spl-autoconf.mk
+/include/tpl-autoconf.mk
 
 # stgit generated dirs
 patches-*
@@ -70,14 +79,16 @@ cscope.*
 /tags
 /ctags
 /etags
-/cur.log
-/filenametags
 
-# OneNAND IPL files
-/onenand_ipl/onenand-ipl*
-/onenand_ipl/board/*/onenand*
-/onenand_ipl/board/*/*.S
+# gnu global files
+GPATH
+GRTAGS
+GSYMS
+GTAGS
 
 *.orig
 *~
 \#*#
+
+sunxi_spl/
+onenand_ipl/board/apollon/low_levelinit.S
