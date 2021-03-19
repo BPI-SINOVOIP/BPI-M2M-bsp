@@ -515,32 +515,32 @@ boot0:  spl_lib depend
 		$(MAKE) -C $(SPLBASE)/sunxi_spl/boot0 all
 ifdef CONFIG_STORAGE_MEDIA_NAND
 		@git show HEAD --pretty=format:"%H" | head -n 1 > cur.log
-		@../add_hash.sh -f $(SPLBASE)/sunxi_spl/boot0/boot0_nand.bin -m boot0
+		@$(SPLBASE)/../tools/add_hash.sh -f $(SPLBASE)/sunxi_spl/boot0/boot0_nand.bin -m boot0
 		@$(TOPDIR)/tools/gen_check_sum $(SPLBASE)/sunxi_spl/boot0/boot0_nand.bin boot0_nand_$(TARGET).bin > /dev/null
 		@if [ -z "$(findstring $(OTA_TEST_NAME), $(SUNXI_MODE))" ]; then \
-			cp -v boot0_nand_$(CONFIG_TARGET_NAME).bin $(TOPDIR)/../../../target/allwinner/$(TARGET_PLATFORM)-common/bin/boot0_nand_$(CONFIG_TARGET_NAME).bin; \
+			cp -v boot0_nand_$(CONFIG_TARGET_NAME).bin $(TOPDIR)/../sunxi-pack/allwinner/$(TARGET_PLATFORM)-common/bin/boot0_nand_$(CONFIG_TARGET_NAME).bin; \
 		else \
-			cp -v boot0_nand_$(CONFIG_TARGET_NAME).bin $(TOPDIR)/../../../target/allwinner/$(TARGET_PLATFORM)-common/bin/boot0_nand_$(CONFIG_TARGET_NAME)-$(SUNXI_MODE).bin; \
+			cp -v boot0_nand_$(CONFIG_TARGET_NAME).bin $(TOPDIR)/../sunxi-pack/allwinner/$(TARGET_PLATFORM)-common/bin/boot0_nand_$(CONFIG_TARGET_NAME)-$(SUNXI_MODE).bin; \
 		fi
 endif
 ifdef CONFIG_STORAGE_MEDIA_MMC
 		@git show HEAD --pretty=format:"%H" | head -n 1 > cur.log
-		@../add_hash.sh -f $(SPLBASE)/sunxi_spl/boot0/boot0_sdcard.bin -m boot0
+		@$(SPLBASE)/../tools/add_hash.sh -f $(SPLBASE)/sunxi_spl/boot0/boot0_sdcard.bin -m boot0
 		@$(TOPDIR)/tools/gen_check_sum $(SPLBASE)/sunxi_spl/boot0/boot0_sdcard.bin boot0_sdcard_$(TARGET).bin > /dev/null
 		@if [ -z "$(findstring $(OTA_TEST_NAME), $(SUNXI_MODE))" ]; then \
-			cp -v boot0_sdcard_$(CONFIG_TARGET_NAME).bin $(TOPDIR)/../../../target/allwinner/$(TARGET_PLATFORM)-common/bin/boot0_sdcard_$(CONFIG_TARGET_NAME).bin; \
+			cp -v boot0_sdcard_$(CONFIG_TARGET_NAME).bin $(TOPDIR)/../sunxi-pack/allwinner/$(TARGET_PLATFORM)-common/bin/boot0_sdcard_$(CONFIG_TARGET_NAME).bin; \
 		else \
-			cp -v boot0_sdcard_$(CONFIG_TARGET_NAME).bin $(TOPDIR)/../../../target/allwinner/$(TARGET_PLATFORM)-common/bin/boot0_sdcard_$(CONFIG_TARGET_NAME)-$(SUNXI_MODE).bin; \
+			cp -v boot0_sdcard_$(CONFIG_TARGET_NAME).bin $(TOPDIR)/../sunxi-pack/target/allwinner/$(TARGET_PLATFORM)-common/bin/boot0_sdcard_$(CONFIG_TARGET_NAME)-$(SUNXI_MODE).bin; \
 		fi
 endif
 ifdef CONFIG_STORAGE_MEDIA_SPINOR
 		@git show HEAD --pretty=format:"%H" | head -n 1 > cur.log
-		@../add_hash.sh -f $(SPLBASE)/sunxi_spl/boot0/boot0_spinor.bin -m boot0
+		@$(SPLBASE)/../tools/add_hash.sh -f $(SPLBASE)/sunxi_spl/boot0/boot0_spinor.bin -m boot0
 		@$(TOPDIR)/tools/gen_check_sum $(SPLBASE)/sunxi_spl/boot0/boot0_spinor.bin boot0_spinor_$(TARGET).bin > /dev/null
 		@if [ -z "$(findstring $(OTA_TEST_NAME), $(SUNXI_MODE))" ]; then \
-			cp -v boot0_spinor_$(CONFIG_TARGET_NAME).bin $(TOPDIR)/../../../target/allwinner/$(TARGET_PLATFORM)-common/bin/boot0_spinor_$(CONFIG_TARGET_NAME).bin; \
+			cp -v boot0_spinor_$(CONFIG_TARGET_NAME).bin $(TOPDIR)/../sunxi-pack/allwinner/$(TARGET_PLATFORM)-common/bin/boot0_spinor_$(CONFIG_TARGET_NAME).bin; \
 		else \
-			cp -v boot0_spinor_$(CONFIG_TARGET_NAME).bin $(TOPDIR)/../../../target/allwinner/$(TARGET_PLATFORM)-common/bin/boot0_spinor_$(CONFIG_TARGET_NAME)-$(SUNXI_MODE).bin; \
+			cp -v boot0_spinor_$(CONFIG_TARGET_NAME).bin $(TOPDIR)/../sunxi-pack/allwinner/$(TARGET_PLATFORM)-common/bin/boot0_spinor_$(CONFIG_TARGET_NAME)-$(SUNXI_MODE).bin; \
 		fi
 endif
 sboot:  spl_lib depend
