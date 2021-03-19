@@ -60,7 +60,7 @@ axp22_ldoio1    = 3300
 ; 当keyen_flag = 0 时，不支持
 ;---------------------------------------------------------------------------------
 [key_detect_en]
-keyen_flag = 1
+keyen_flag = 0
 
 [fel_key]
 fel_key_max            =07
