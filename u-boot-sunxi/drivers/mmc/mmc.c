@@ -5776,7 +5776,15 @@ int mmc_initialize(bd_t *bis)
 int mmc_exit(void)
 {
 	int err;
-	int sdc_no = 2;
+	int sdc_no;
+
+	if(uboot_spare_head.boot_data.storage_type == 1)
+		sdc_no = 0;
+	else if(uboot_spare_head.boot_data.storage_type == 2)
+		sdc_no = 2;
+	else
+		sdc_no = 2;
+	
 	struct mmc *mmc = find_mmc_device(sdc_no);
 	if(mmc == NULL){
 		MMCINFO(" mmc %s not find,so not exit\n",sdc_no);
