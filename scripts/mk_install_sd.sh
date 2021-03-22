@@ -1,8 +1,14 @@
 #!/bin/bash
 
+[ -s "./env.sh" ] || die "please run ./configure first."
+
+. ./env.sh
+
+board=$(echo ${BOARD%-*} | tr '[A-Z]' '[a-z]')
+
 DEVICE=
 VARIANT=
-TARGET=SD/bpi-m2m
+TARGET=SD/${board}
 
 if [ ! -d ${TARGET} ]; then
 	echo -e "\033[31mNo download files exits, check build and pack. \033[0m"
@@ -49,7 +55,7 @@ esac
 
 echo
 
-BOOTLOADER=${TARGET}/100MB/BPI-M2M-${VARIANT}-8k.img.gz
+BOOTLOADER=${TARGET}/100MB/${BOARD%-*}-${VARIANT}-8k.img.gz
 
 ## download bootloader
 if [ ! -f ${BOOTLOADER} ]; then
