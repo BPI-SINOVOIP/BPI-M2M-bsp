@@ -1,15 +1,14 @@
 bpi=bananapi
 board=bpi-m2m
-type=lcd7
+variant=lcd7
 chip=r16
 service=linux
 kernel=uImage
 
-ahello=echo Banaan Pi ${board} chip: $chip Service: $service
+setargs_mmc=setenv bootargs "board=bpi-m2m enforcing=1 console=tty1 console=ttyS2,115200 root=/dev/mmcblk0p2 rw rootwait init=/init ion_cma_list="8m,32m,64m,128m,256m" loglevel=8 fsck.mode=force fsck.repair=yes panic=10"
 
-aboot=if fatload $device $partition 0x43100000 ${bpi}/${board}/${service}/uInitrd; then bootm 0x48000000 0x43100000; else bootm 0x48000000; fi
-aload_kernel=fatload $device $partition 0x48000000 ${bpi}/${board}/${service}/${kernel}
+aboot=if fatload $devtype $devnum 0x43100000 ${bpi}/${board}/${service}/uInitrd; then bootm 0x48000000 0x43100000; else bootm 0x48000000; fi
 
-uenvcmd=run aload_kernel aboot
+aload_kernel=fatload $devtype $devnum 0x48000000 ${bpi}/${board}/${service}/${kernel}
 
-bootargs=board=bpi-m2m enforcing=1 console=tty1 console=ttyS2,115200 root=/dev/mmcblk0p2 rw rootwait init=/sbin/init ion_cma_list="8m,32m,64m,128m,256m" loglevel=8 bootmenutimeout=10 datadev=mmcblk0p2 fsck.mode=force fsck.repair=yes panic=10
+uenvcmd=run setargs_mmc aload_kernel aboot

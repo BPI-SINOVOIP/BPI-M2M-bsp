@@ -653,7 +653,7 @@ int sunxi_flash_boot_handler(int workmode)
 			puts("MMC init failed\n");
 			return  -1;
 		}
-		debug("mmc %d init ok\n", card_no);
+		printf("mmc %d init ok\n", card_no);
 
 		sunxi_flash_read_pt  = sunxi_flash_mmc_read;
 		sunxi_flash_write_pt = sunxi_flash_mmc_write;

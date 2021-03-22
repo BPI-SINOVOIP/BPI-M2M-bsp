@@ -694,15 +694,21 @@ int check_android_misc(void)
 	strcpy(boot_commond, getenv("bootcmd"));
 	printf("base bootcmd=%s\n", boot_commond);
 	//≈–∂œ¥Ê¥¢ΩÈ÷ 
-	if((uboot_spare_head.boot_data.storage_type == 1) || (uboot_spare_head.boot_data.storage_type == 2))
+	if(uboot_spare_head.boot_data.storage_type == 1)
 	{
-		sunxi_str_replace(boot_commond, "setargs_nand", "setargs_mmc");
-		printf("bootcmd set setargs_mmc\n");
+		printf("boot from SD\n");
+		setenv("devnum", "0");
+	} 
+	else if(uboot_spare_head.boot_data.storage_type == 2)
+	{
+		printf("boot from eMMC\n");
+		setenv("devnum", "2");
 	}
 	else
 	{
-		printf("bootcmd set setargs_nand\n");
+		printf("boot from Nand\n");
 	}
+	
 	misc_message = (struct bootloader_message *)misc_args;
 	memset(misc_args, 0x0, 2048);
 	memset(misc_fill, 0xff, 2048);
