@@ -1220,26 +1220,18 @@ i2s1_din             = port:PG13<2><1><default><default>
 ;--------------------------------------------------------------------------------
 [audio0]
 audio_used          	= 1
-audio_hp_ldo       	= "none"
 headphone_vol		= 0x3b
-earpiece_vol 		= 0x3e
-cap_vol			= 0x5
-pa_single_vol		= 0x3a
-pa_double_used		= 0
-pa_double_vol		= 0x3e
+pa_double_used		= 1
 headphone_direct_used	= 1
 headset_mic_vol 	= 3
 main_mic_vol        	= 1
-audio_lowlevel_detect	= 1
 ;audio_linein_detect    = port:PB07<0><default><default><0>
 audio_pa_ctrl          	= port:PH09<1><default><default><0>
+pa_gpio_reverse 	= 0
 aif2_used              	= 0
 aif3_used              	= 0
 headphone_mute_used 	= 0
-pa_gpio_reverse 	= 0
-agc_used		= 1
-drc_used		= 0
-aif1_lrlk_div  = 0x40
+aif1_lrlk_div           = 0x40
 
 [codec_aif2]
 aif2_lrlk_div = 0x20
