@@ -126,6 +126,14 @@ uart_debug_port  = 0
 uart_debug_tx    = port:PF02<3><1><default><default>
 uart_debug_rx    = port:PF04<3><1><default><default>
 
+;uart_debug_port  = 2
+;uart_debug_tx    = port:PB00<2><1><default><default>
+;uart_debug_rx    = port:PB01<2><1><default><default>
+
+;uart_debug_port   = 3
+;uart_debug_tx     = port:PH06<3><1><default><default>
+;uart_debug_rx     = port:PH07<3><1><default><default>
+
 [force_uart_para]
 force_uart_port  = 0
 force_uart_tx    = port:PF02<3><1><default><default>

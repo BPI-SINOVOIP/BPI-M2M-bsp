@@ -262,7 +262,7 @@ twi_sda         = port:PE13<3><default><default><default>
 ;uart_type       = 2:2 wire,4:4 wire,8:8 wire, full function
 ;----------------------------------------------------------------------------------
 [uart0]
-uart_used       = 0
+uart_used       = 1
 uart_port       = 0
 uart_type       = 2
 uart_tx         = port:PF02<3><1><default><default>
@@ -358,11 +358,11 @@ mode          = 3
 ;----------------------------------------------------------------------------------
 [ctp_para]
 ctp_used            	= 1
-ctp_name            	= "gt9147_bpi"
+ctp_name            	= "bpi_lcd7"
 ctp_twi_id          	= 0
 ctp_twi_addr        	= 0x5d
-ctp_screen_max_x    	= 720
-ctp_screen_max_y    	= 1280
+ctp_screen_max_x    	= 800
+ctp_screen_max_y    	= 480
 ctp_revert_x_flag   	= 0
 ctp_revert_y_flag   	= 0
 ctp_exchange_x_y_flag 	= 0
@@ -381,7 +381,7 @@ ctp_power_io        	=
 ;--------------------------------------------------------------------------------
 [ctp_list_para]
 ctp_det_used              = 1
-ft5x_ts                   = 0
+ft5x_ts                   = 1
 gt82x                     = 0
 gslX680                   = 0
 gslX680new                = 0
@@ -586,29 +586,29 @@ lcd1_hue                 = 50
 [lcd0_para]
 lcd_used            = 1
 
-lcd_driver_name     = "LHR050H41_MIPI_RGB"
+lcd_driver_name     = "S070WV20_MIPI_RGB"
 lcd_if              = 4
 lcd_dsi_if          = 0
 lcd_dsi_lane        = 4
 lcd_dsi_format      = 0
 lcd_dsi_te          = 0
 
-lcd_x               = 720
-lcd_y               = 1280
-lcd_width           = 62
-lcd_height          = 110
+lcd_x               = 800
+lcd_y               = 480
+lcd_width           = 86
+lcd_height          = 154
 
-lcd_hspw            = 24
-lcd_hbp             = 124
-lcd_ht              = 896
-lcd_vspw            = 4
-lcd_vbp             = 24
-lcd_vt              = 1312
-lcd_dclk_freq       = 71
+lcd_hspw            = 48
+lcd_hbp             = 88
+lcd_ht              = 928
+lcd_vspw            = 3
+lcd_vbp             = 32
+lcd_vt              = 525
+lcd_dclk_freq       = 30
 
 lcd_pwm_used        = 1
 lcd_pwm_ch          = 0
-lcd_pwm_freq        = 10000
+lcd_pwm_freq        = 50000
 lcd_pwm_pol         = 1
 lcd_pwm_max_limit   = 150
 lcd_bl_en           = port:PL04<1><0><default><1>
@@ -803,7 +803,7 @@ led3_active_low		= 1
 ;     that supports SD3.0 cards and eMMC4.4+ flashes
 ;-------------------------------------------------------------------------------
 [mmc0_para]
-sdc_used          = 1
+sdc_used          = 0
 sdc_detmode       = 3
 sdc_buswidth      = 4
 sdc_d1            = port:PF00<2><1><2><default>

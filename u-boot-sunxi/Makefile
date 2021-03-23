@@ -1153,6 +1153,12 @@ clobber:	clean
 	@[ ! -d $(obj)nand_spl ] || find $(obj)nand_spl -name "*" -type l -print | xargs rm -f
 	@[ ! -d $(obj)onenand_ipl ] || find $(obj)onenand_ipl -name "*" -type l -print | xargs rm -f
 	@[ ! -d $(obj)mmc_spl ] || find $(obj)mmc_spl -name "*" -type l -print | xargs rm -f
+ifeq ($(SPLSUPPORT), y)
+	@find $(SPLDIR) -type f \( -name '*.depend' \
+		-o -name '*.srec' -o -name '*.bin' -o -name u-boot.img \) \
+		-print0 \
+		| xargs -0 rm -f
+endif
 
 mrproper \
 distclean:	clobber unconfig
