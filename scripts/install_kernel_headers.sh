@@ -58,7 +58,7 @@ find "$TARGET/scripts" -type f | while read i; do if file -b $i | egrep -q "^ELF
 (cd scripts/basic && ${CROSS_COMPILE}gcc fixdep.c -o "$TARGET/scripts/basic/fixdep")
 (cd scripts/mod && ${CROSS_COMPILE}gcc modpost.c file2alias.c sumversion.c -o "$TARGET/scripts/mod/modpost")
 (cd scripts/mod && ${CROSS_COMPILE}gcc mk_elfconfig.c -o "$TARGET/scripts/mod/mk_elfconfig")
-(cd scripts/genksyms && ${CROSS_COMPILE}gcc genksyms.c lex.lex.c -o "$TARGET/scripts/genksyms/genksyms")
+(cd scripts/genksyms && ${CROSS_COMPILE}gcc genksyms.c parse.tab.c lex.lex.c -o "$TARGET/scripts/genksyms/genksyms")
 
 find arch/*/include   \
                -print | cpio -pdL --preserve-modification-time "$TARGET";
