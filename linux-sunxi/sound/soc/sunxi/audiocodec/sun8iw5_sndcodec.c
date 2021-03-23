@@ -1083,8 +1083,8 @@ static const struct snd_kcontrol_new sunxi_codec_controls[] = {
 	/*ADC input gain */
 	SOC_SINGLE_TLV("ADC input gain", ADC_AP_EN, ADCG, 0x7, 0,
 		       adc_input_vol_tlv),
-	SOC_SINGLE_BOOL_EXT("SRC FUCTION", 0, get_src_function,
-			    set_src_function),
+	//SOC_SINGLE_BOOL_EXT("SRC FUCTION", 0, get_src_function,
+	//		    set_src_function),
 };
 
 /*AIF1 AD0 OUT */
